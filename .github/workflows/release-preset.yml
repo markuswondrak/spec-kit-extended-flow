@@ -1,0 +1,41 @@
+name: Release preset package
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build preset package
+        run: scripts/package-preset.sh
+
+      - name: Verify preset package
+        run: |
+          unzip -t dist/spec-kit-extended-flow.zip
+          unzip -Z1 dist/spec-kit-extended-flow.zip
+
+      - name: Publish GitHub release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          asset="dist/spec-kit-extended-flow.zip"
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --clobber
+          else
+            gh release create "$tag" "$asset" \
+              --title "$tag" \
+              --notes "Spec-Kit Extended Flow preset package."
+          fi

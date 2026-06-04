@@ -15,8 +15,11 @@ The result: every feature that ships through this workflow has been reviewed for
 ## Quickstart
 
 ```bash
-# 1. Install the preset
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow
+# 1. Install the latest published preset ZIP
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+
+# Or pin a specific release
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
 
 # 2. Install the workflow
 specify workflow add .specify/presets/spec-kit-extended-flow/workflow.yml
@@ -49,6 +52,18 @@ Run these BEFORE the workflow — they set up your project's foundation:
 ```
 
 The workflow assumes your project is already initialized (`specify init`) and has a constitution in place. The plan step infers tech stack/architecture from your existing project — no planning constraints input needed at runtime.
+
+## Installation notes
+
+`specify preset add --from` expects a ZIP package URL. Do not pass the GitHub repository landing page URL; that downloads HTML, not a preset package.
+
+For local development from a checkout of this repository, use:
+
+```bash
+specify preset add --dev .
+```
+
+Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
 
 ## Spec Input Parameters
 
@@ -133,7 +148,7 @@ Stack with other presets using priority ordering:
 
 ```bash
 specify preset add healthcare-compliance --priority 10
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow --priority 5
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip --priority 5
 ```
 
 ## Troubleshooting
@@ -146,7 +161,7 @@ specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flo
 
 **GitHub issue not resolving:** Ensure `gh` CLI is installed and authenticated (`gh auth status`). The `issue` parameter only supports issues from the current repository (bare number, e.g., `42`). Cross-repo references and full URLs are not supported.
 
-**Commands not appearing:** Reinstall the preset: `specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow`
+**Commands not appearing:** Reinstall the preset: `specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip`
 
 ## License
 

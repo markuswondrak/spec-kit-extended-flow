@@ -6,6 +6,7 @@ set -euo pipefail
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$TEST_DIR")"
+SCRIPT_FILE="$PROJECT_DIR/scripts/resolve-spec.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -36,60 +37,13 @@ exit 1
 EOF
     chmod +x "$TMP_DIR/gh"
 
-    # Write the resolve-spec script to a temp file
-    cat > "$TMP_DIR/resolve-spec.sh" << 'SCRIPT'
-#!/usr/bin/env bash
-set -euo pipefail
-
-SPEC="${SPEC_INPUT:-}"
-FILE="${FILE_INPUT:-}"
-ISSUE="${ISSUE_INPUT:-}"
-OUTPUT=""
-
-# Branch 1: File input
-if [ -n "$FILE" ]; then
-  if [ ! -f "$FILE" ]; then
-    echo "ERROR: Spec file not found: $FILE" >&2
-    exit 1
-  fi
-  OUTPUT="${OUTPUT}$(cat "$FILE")"$'\n'
-fi
-
-# Branch 2: Issue input
-if [ -n "$ISSUE" ]; then
-  if ! command -v gh &> /dev/null; then
-    echo "ERROR: GitHub CLI (gh) is required to fetch issues. Install and authenticate with 'gh auth login'." >&2
-    exit 1
-  fi
-  ISSUE_CONTENT=$(gh issue view "$ISSUE" --json title,body --jq '"# " + .title + "\n\n" + .body' 2>&1)
-  if [ $? -ne 0 ]; then
-    echo "ERROR: Failed to fetch issue #$ISSUE. Ensure the issue exists and gh is authenticated." >&2
-    exit 1
-  fi
-  OUTPUT="${OUTPUT}${ISSUE_CONTENT}"$'\n'
-fi
-
-# Branch 3: Plain text spec
-if [ -n "$SPEC" ]; then
-  OUTPUT="${OUTPUT}${SPEC}"$'\n'
-fi
-
-# Fail if no input provided
-if [ -z "$OUTPUT" ]; then
-  echo "ERROR: No specification provided. Set at least one of: --input spec, --input file, or --input issue." >&2
-  exit 1
-fi
-
-echo "$OUTPUT"
-SCRIPT
-    chmod +x "$TMP_DIR/resolve-spec.sh"
-
-    # Run the script with mocked inputs
+    # Run the real script with mocked inputs
     local actual_output
     local actual_exit=0
-    if ! actual_output=$(PATH="$TMP_DIR:$PATH" SPEC_INPUT="$spec" FILE_INPUT="$file" ISSUE_INPUT="$issue" bash "$TMP_DIR/resolve-spec.sh" 2>&1); then
-        actual_exit=$?
-    fi
+    set +e
+    actual_output=$(PATH="$TMP_DIR:$PATH" bash "$SCRIPT_FILE" "$spec" "$file" "$issue" 2>&1)
+    actual_exit=$?
+    set -e
 
     # Check exit code
     if [ "$actual_exit" -ne "$expected_exit" ]; then

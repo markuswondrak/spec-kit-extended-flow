@@ -10,9 +10,11 @@ This is a **Spec-Kit preset**, not an application. It defines a workflow (`workf
 
 ## Quality Goals
 
-1. **Testability over convenience.** Shell logic lives in external scripts (`scripts/`), not inline in YAML. Every script must be independently executable and testable.
-2. **Fail fast with context.** Missing files, missing CLI tools, failed fetches, and empty inputs must exit non-zero with a descriptive `ERROR:` message to stderr.
-3. **Backward compatibility.** Optional inputs must have sensible defaults (`""`). Removing an input is a breaking change requiring a major version bump.
+1. **Adoptability.** The preset must be easy to start with, easy to understand, and easy to customize. A developer goes from install to first run in minutes. The mental model is simple: spec in, reviewed and documented implementation out. Components compose with other presets and don't impose opinions that conflict with the user's project. When adoptability conflicts with completeness, choose the simpler path.
+
+2. **Verifiable safety.** Every guard rail must be deterministic and inspectable. Verdict extraction, input validation, conflict flagging, and format checks produce reproducible outcomes. When the pipeline passes, fails, or flags a conflict, the user can understand why without reading source code. Human gates are available as a fallback but should not be required for correct results. When safety conflicts with autonomy, safety wins.
+
+3. **Autonomous operation.** The pipeline runs end-to-end without human intervention. Each step produces correct output given correct input, and the system self-corrects through the QA loop. The end goal: spec in, reviewed and documented implementation out, no human in the loop. When autonomy conflicts with adoptability, adoptability wins (a tool nobody uses correctly gains nothing from being fully autonomous).
 
 ## Project Structure
 
