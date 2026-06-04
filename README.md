@@ -65,6 +65,28 @@ specify preset add --dev .
 
 Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
 
+## Releasing
+
+To cut a new release, run the release script from the repository root:
+
+```bash
+scripts/release-version.sh 1.2.3
+```
+
+This will:
+1. Validate the version format (semver: `MAJOR.MINOR.PATCH`)
+2. Update the `version` field in `preset.yml`
+3. Commit the version bump
+4. Create an annotated git tag (`v1.2.3`)
+
+Then push the tag to trigger the GitHub Actions release workflow:
+
+```bash
+git push origin main --tags
+```
+
+The release workflow (`.github/workflows/release-preset.yml`) will build the preset package and publish it as a GitHub Release asset.
+
 ## Spec Input Parameters
 
 The workflow accepts three separate input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
