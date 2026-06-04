@@ -7,40 +7,40 @@ workflow:
   author: "Markus Wondrak"
   description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow."
 
-  requires:
-    speckit_version: ">=0.8.5"
-    integrations:
-      any:
-        - "claude"
-        - "copilot"
-        - "gemini"
-        - "opencode"
+requires:
+  speckit_version: ">=0.8.5"
+  integrations:
+    any:
+      - "claude"
+      - "copilot"
+      - "gemini"
+      - "opencode"
 
-  inputs:
-    spec:
-      type: string
-      required: false
-      default: ""
-      prompt: "What to build. A plain-text description of the feature or change."
-    file:
-      type: string
-      required: false
-      default: ""
-      prompt: "Path to a spec file (e.g., ./specs/feature.md). The file contents will be used as the specification."
-    issue:
-      type: string
-      required: false
-      default: ""
-      prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the specification."
-    integration:
-      type: string
-      default: "auto"
-      prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
+inputs:
+  spec:
+    type: string
+    required: false
+    default: ""
+    prompt: "What to build. A plain-text description of the feature or change."
+  file:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a spec file (e.g., ./specs/feature.md). The file contents will be used as the specification."
+  issue:
+    type: string
+    required: false
+    default: ""
+    prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the specification."
+  integration:
+    type: string
+    default: "auto"
+    prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
 
 steps:
   - id: resolve-spec
     type: shell
-    run: bash scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
 
   - id: specify
     command: speckit.specify

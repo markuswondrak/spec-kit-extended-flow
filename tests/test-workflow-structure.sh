@@ -91,8 +91,8 @@ assert_contains "$SCRIPT_FILE" "ERROR: No specification provided" "Script has no
 echo ""
 echo "--- Checking workflow structure ---"
 
-# The workflow should call the external script
-assert_contains "$WORKFLOW_FILE" "scripts/resolve-spec.sh" "Workflow calls external script"
+# The workflow should call the external script using the preset-relative path
+assert_contains "$WORKFLOW_FILE" ".specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh" "Workflow calls external script with preset-relative path"
 
 # The old inline shell should be gone
 assert_not_contains "$WORKFLOW_FILE" "grep -qE" "No regex-based format detection in workflow"
