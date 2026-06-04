@@ -1,0 +1,51 @@
+schema_version: "1.0"
+
+preset:
+  id: "spec-kit-extended-flow"
+  name: "Spec-Kit Extended Flow"
+  version: "2.1.0"
+  description: "SDD workflow with QA review loop and automated documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — handled outside the workflow."
+  author: "Markus Wondrak"
+  repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.8.5"
+
+provides:
+  templates:
+    - type: "template"
+      name: "review-findings"
+      file: "templates/review-findings.md"
+      description: "Structured template for the Reviewer to log bugs, edge-case failures, or spec deviations"
+
+    - type: "template"
+      name: "documentation"
+      file: "templates/documentation.md"
+      description: "Structured report template for documentation reconciliation (conflicts, layer health, changes by category)"
+
+    - type: "command"
+      name: "speckit.extendedflow.reviewer"
+      file: "commands/speckit.extendedflow.reviewer.md"
+      description: "QA Reviewer agent — analyzes implementation against spec and outputs PASS/FAIL"
+
+    - type: "command"
+      name: "speckit.extendedflow.documentation"
+      file: "commands/speckit.extendedflow.documentation.md"
+      description: "Documentation agent — maintains layered documentation as truth of intent, flags code-vs-docs conflicts"
+
+    - type: "template"
+      name: "documentation-init"
+      file: "templates/documentation-init.md"
+      description: "Structured report template for documentation initialization (files created, inferred content, human input required)"
+
+    - type: "command"
+      name: "speckit.extendedflow.documentation-init"
+      file: "commands/speckit.extendedflow.documentation-init.md"
+      description: "Documentation init agent — bootstraps layered documentation structure for existing projects"
+
+tags:
+  - "qa"
+  - "review"
+  - "documentation"
+  - "workflow"

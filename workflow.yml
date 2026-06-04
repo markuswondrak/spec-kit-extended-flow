@@ -1,0 +1,114 @@
+schema_version: "1.0"
+
+workflow:
+  id: "spec-kit-extended-flow"
+  name: "Spec-Kit Extended Flow — SDD Lifecycle with QA Review and Documentation Reconciliation"
+  version: "1.0.0"
+  author: "Markus Wondrak"
+  description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow."
+
+  requires:
+    speckit_version: ">=0.8.5"
+    integrations:
+      any:
+        - "claude"
+        - "copilot"
+        - "gemini"
+        - "opencode"
+
+  inputs:
+    spec:
+      type: string
+      required: false
+      default: ""
+      prompt: "What to build. A plain-text description of the feature or change."
+    file:
+      type: string
+      required: false
+      default: ""
+      prompt: "Path to a spec file (e.g., ./specs/feature.md). The file contents will be used as the specification."
+    issue:
+      type: string
+      required: false
+      default: ""
+      prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the specification."
+    integration:
+      type: string
+      default: "auto"
+      prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
+
+  steps:
+    - id: resolve-spec
+      type: shell
+      run: bash scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+
+    - id: specify
+      command: speckit.specify
+      integration: "{{ inputs.integration }}"
+      input:
+        args: "{{ steps.resolve-spec.output.stdout }}"
+
+    - id: spec-gate
+      type: gate
+      message: "Review the generated specification. Approve to continue to planning, or reject to stop and edit the spec."
+      options: [approve, reject]
+      on_reject: abort
+
+    - id: plan
+      command: speckit.plan
+      integration: "{{ inputs.integration }}"
+      input:
+        args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
+
+    - id: plan-gate
+      type: gate
+      message: "Review the generated implementation plan. Approve to create tasks, or reject to stop and edit the plan."
+      options: [approve, reject]
+      on_reject: abort
+
+    - id: tasks
+      command: speckit.tasks
+      integration: "{{ inputs.integration }}"
+
+    - id: tasks-gate
+      type: gate
+      message: "Review the generated task breakdown. Approve to implement, or reject to stop and edit tasks."
+      options: [approve, reject]
+      on_reject: abort
+
+    - id: qa-loop
+      type: do-while
+      condition: "{{ steps.review-verdict.output.stdout | contains('FAIL') }}"
+      max_iterations: 5
+      steps:
+        - id: implement
+          command: speckit.implement
+          integration: "{{ inputs.integration }}"
+          input:
+            args: "Execute the current tasks. If review-findings.md exists and its verdict is FAIL, treat it as mandatory re-implementation guidance and resolve every listed finding before reporting completion."
+
+        - id: review
+          command: speckit.extendedflow.reviewer
+          integration: "{{ inputs.integration }}"
+
+        - id: review-verdict
+          type: shell
+          run: "verdict=$(sed -n 's/^> \\*\\*\\(PASS\\|FAIL\\)\\*\\*.*/\\1/p; s/^VERDICT: \\(PASS\\|FAIL\\)$/\\1/p' review-findings.md | tail -n 1); case \"$verdict\" in PASS|FAIL) printf '%s\\n' \"$verdict\" | tee .specify/workflows/runs/{{ context.run_id }}/review-verdict.txt ;; *) echo 'Could not extract PASS/FAIL verdict from review-findings.md' >&2; exit 1 ;; esac"
+
+    - id: stop-on-review-fail
+      type: if
+      condition: "{{ steps.review-verdict.output.stdout | contains('FAIL') }}"
+      then:
+        - id: review-failed
+          type: shell
+          run: "echo 'QA review still failed after the maximum number of iterations. See review-findings.md for details.' >&2; exit 1"
+
+    - id: review-gate
+      type: gate
+      message: "Implementation passed QA review. Approve to proceed with documentation reconciliation, or reject to stop here."
+      options: [approve, reject]
+      on_reject: abort
+
+    - id: doc-reconcile
+      command: speckit.extendedflow.documentation
+      integration: "{{ inputs.integration }}"
