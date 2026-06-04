@@ -1,5 +1,7 @@
 # Spec-Kit Extended Flow
 
+<img width="1672" height="941" alt="extended-flow" src="https://github.com/user-attachments/assets/23828cb1-e05d-4227-a812-3f6254e4be5e" />
+
 A [Spec-Kit](https://github.com/github/spec-kit) preset that adds a strict QA review loop and automated documentation reconciliation to the standard SDD workflow.
 
 ## Idea
