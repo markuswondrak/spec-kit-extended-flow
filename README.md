@@ -1,5 +1,8 @@
 # Spec-Kit Extended Flow
 
+[![GitHub Release](https://img.shields.io/github/v/release/markuswondrak/spec-kit-extended-flow)](https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest)
+[![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/markuswondrak/spec-kit-extended-flow/release-preset.yml)](https://github.com/markuswondrak/spec-kit-extended-flow/actions/workflows/release-preset.yml)
+
 <img width="1672" height="941" alt="extended-flow" src="https://github.com/user-attachments/assets/23828cb1-e05d-4227-a812-3f6254e4be5e" />
 
 A [Spec-Kit](https://github.com/github/spec-kit) preset that adds a strict QA review loop and automated documentation reconciliation to the standard SDD workflow.
