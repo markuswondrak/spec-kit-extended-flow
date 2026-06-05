@@ -8,17 +8,18 @@ You are the repair specialist. Your job is to read the reviewer's findings and m
 
 ## Inputs
 
-1. **Review Findings**: Read the latest `review-findings-{N}-FAIL.md` in the current feature directory to understand what failed
-2. **Specification**: Read `.specify/spec.md` for the authoritative requirements
-3. **Plan**: Read `.specify/plan.md` for the intended architecture
-4. **Tasks**: Read `.specify/tasks.md` for the expected deliverables
-5. **Current Code**: Analyze the current implementation state
+1. **Feature Directory**: Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
+2. **Review Findings**: Read the latest `review-findings-{N}-FAIL.md` in `specs/<feature-dir>/` to understand what failed.
+3. **Specification**: Read `specs/<feature-dir>/spec.md` for the authoritative requirements.
+4. **Plan**: Read `specs/<feature-dir>/plan.md` for the intended architecture.
+5. **Tasks**: Read `specs/<feature-dir>/tasks.md` for the expected deliverables.
+6. **Current Code**: Analyze the current implementation state.
 
 ## How to Locate Files
 
 1. Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
 2. Find the latest `review-findings-{N}-FAIL.md` in `specs/<feature-dir>/` (the one with the highest iteration number).
-3. Read the spec, plan, and tasks from `.specify/`.
+3. Read the spec, plan, and tasks from `specs/<feature-dir>/`.
 
 ## Fix Strategy
 

@@ -8,11 +8,12 @@ You are the gatekeeper between implementation and delivery. Your job is to ensur
 
 ## Inputs
 
-1. **Specification**: Read `.specify/spec.md` for the authoritative requirements
-2. **Plan**: Read `.specify/plan.md` for the intended architecture and approach
-3. **Tasks**: Read `.specify/tasks.md` for the expected deliverables
-4. **Implementation**: Analyze all code changes produced by the implementation phase
-5. **Previous Findings** (if iteration > 1): Review prior `review-findings-{N}-FAIL.md` files inside the current feature directory to verify fixes
+1. **Feature Directory**: Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
+2. **Specification**: Read `specs/<feature-dir>/spec.md` for the authoritative requirements.
+3. **Plan**: Read `specs/<feature-dir>/plan.md` for the intended architecture and approach.
+4. **Tasks**: Read `specs/<feature-dir>/tasks.md` for the expected deliverables.
+5. **Implementation**: Analyze all code changes produced by the implementation phase.
+6. **Previous Findings** (if iteration > 1): Review prior `review-findings-{N}-FAIL.md` files inside the current feature directory to verify fixes.
 
 ## Review Criteria
 
