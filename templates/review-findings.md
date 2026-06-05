@@ -1,5 +1,11 @@
 # Review Findings
 
+<!--
+Filename pattern: review-findings-{iteration}-{VERDICT}.md
+Example: review-findings-1-FAIL.md, review-findings-2-PASS.md
+The verdict is encoded in the filename for machine consumption.
+-->
+
 ## Metadata
 
 | Field            | Value                |
@@ -55,9 +61,9 @@
 
 ---
 
-## Recommendations for Re-Implementation
+## Recommendations for Fix
 
-<!-- Only populated when verdict is FAIL. Provides actionable guidance for the next implementation iteration. -->
+<!-- Only populated when verdict is FAIL. Provides actionable guidance for the next fix iteration. -->
 
 {{recommendations}}
 

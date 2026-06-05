@@ -3,9 +3,9 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — SDD Lifecycle with QA Review and Documentation Reconciliation"
-  version: "0.1.1"
+  version: "0.2.0"
   author: "Markus Wondrak"
-  description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow."
+  description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
 requires:
   speckit_version: ">=0.8.5"
@@ -42,6 +42,14 @@ steps:
     type: shell
     run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
 
+  - id: create-branch
+    type: if
+    condition: "{{ inputs.issue != '' }}"
+    then:
+      - id: branch
+        type: shell
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
@@ -70,38 +78,46 @@ steps:
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
 
-  - id: tasks-gate
-    type: gate
-    message: "Review the generated task breakdown. Approve to implement, or reject to stop and edit tasks."
-    options: [approve, reject]
-    on_reject: abort
+  - id: implement
+    command: speckit.implement
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "Execute the current tasks."
 
-  - id: qa-loop
-    type: do-while
-    condition: "{{ steps.review-verdict.output.stdout | contains('FAIL') }}"
-    max_iterations: 5
-    steps:
-      - id: implement
-        command: speckit.implement
-        integration: "{{ inputs.integration }}"
-        input:
-          args: "Execute the current tasks. If review-findings.md exists and its verdict is FAIL, treat it as mandatory re-implementation guidance and resolve every listed finding before reporting completion."
+  - id: review
+    command: speckit-extendedflow.reviewer
+    integration: "{{ inputs.integration }}"
 
-      - id: review
-        command: speckit.extendedflow.reviewer
-        integration: "{{ inputs.integration }}"
+  - id: review-verdict
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
 
-      - id: review-verdict
-        type: shell
-        run: "verdict=$(sed -n 's/^> \\*\\*\\(PASS\\|FAIL\\)\\*\\*.*/\\1/p; s/^VERDICT: \\(PASS\\|FAIL\\)$/\\1/p' review-findings.md | tail -n 1); case \"$verdict\" in PASS|FAIL) printf '%s\\n' \"$verdict\" | tee .specify/workflows/runs/{{ context.run_id }}/review-verdict.txt ;; *) echo 'Could not extract PASS/FAIL verdict from review-findings.md' >&2; exit 1 ;; esac"
-
-  - id: stop-on-review-fail
+  - id: fix-if-needed
     type: if
     condition: "{{ steps.review-verdict.output.stdout | contains('FAIL') }}"
     then:
+      - id: fix-loop
+        type: do-while
+        condition: "{{ steps.fix-verdict.output.stdout | contains('FAIL') }}"
+        max_iterations: 5
+        steps:
+          - id: fix
+            command: speckit-extendedflow.fix
+            integration: "{{ inputs.integration }}"
+          - id: fix-review
+            command: speckit-extendedflow.reviewer
+            integration: "{{ inputs.integration }}"
+          - id: fix-verdict
+            type: shell
+            run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
+
+  - id: stop-on-review-fail
+    type: if
+    condition: "{{ steps.fix-verdict.output.stdout | contains('FAIL') }}"
+    then:
       - id: review-failed
         type: shell
-        run: "echo 'QA review still failed after the maximum number of iterations. See review-findings.md for details.' >&2; exit 1"
+        run: "echo 'QA review still failed after the maximum number of iterations. See review-findings-{N}-FAIL.md inside the current feature directory for details.' >&2; exit 1"
 
   - id: review-gate
     type: gate
@@ -110,5 +126,16 @@ steps:
     on_reject: abort
 
   - id: documentation
-    command: speckit.extendedflow.documentation
+    command: speckit-extendedflow.documentation
     integration: "{{ inputs.integration }}"
+
+  - id: cleanup-and-pr
+    type: if
+    condition: "{{ inputs.issue != '' }}"
+    then:
+      - id: cleanup
+        type: shell
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/cleanup-feature.sh "{{ context.run_id }}"
+      - id: commit-and-pr
+        type: shell
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/commit-and-pr.sh "{{ inputs.issue }}"

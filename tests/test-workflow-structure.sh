@@ -70,14 +70,21 @@ assert_executable() {
     fi
 }
 
-echo "=== Test Suite: workflow.yml resolve-spec refactoring ==="
+CREATE_BRANCH_SCRIPT="$PROJECT_DIR/scripts/create-branch.sh"
+CLEANUP_SCRIPT="$PROJECT_DIR/scripts/cleanup-feature.sh"
+COMMIT_PR_SCRIPT="$PROJECT_DIR/scripts/commit-and-pr.sh"
+EXTRACT_VERDICT_SCRIPT="$PROJECT_DIR/scripts/extract-verdict.sh"
+REVIEWER_FILE="$PROJECT_DIR/commands/speckit-extendedflow.reviewer.md"
+FIXER_FILE="$PROJECT_DIR/commands/speckit-extendedflow.fix.md"
+
+echo "=== Test Suite: workflow.yml structure ==="
 echo ""
 
 # --- External script checks ---
 
-echo "--- Checking external script ---"
-assert_file_exists "$SCRIPT_FILE" "External script exists"
-assert_executable "$SCRIPT_FILE" "External script is executable"
+echo "--- Checking external scripts ---"
+assert_file_exists "$SCRIPT_FILE" "resolve-spec.sh exists"
+assert_executable "$SCRIPT_FILE" "resolve-spec.sh is executable"
 assert_contains "$SCRIPT_FILE" "resolve_file()" "Script has resolve_file function"
 assert_contains "$SCRIPT_FILE" "resolve_issue()" "Script has resolve_issue function"
 assert_contains "$SCRIPT_FILE" "SPEC=""" "Script handles SPEC input"
@@ -85,6 +92,28 @@ assert_contains "$SCRIPT_FILE" "FILE=""" "Script handles FILE input"
 assert_contains "$SCRIPT_FILE" "ISSUE=""" "Script handles ISSUE input"
 assert_contains "$SCRIPT_FILE" "ERROR: Spec file not found" "Script has file error handling"
 assert_contains "$SCRIPT_FILE" "ERROR: No specification provided" "Script has no-input error handling"
+
+assert_file_exists "$CREATE_BRANCH_SCRIPT" "create-branch.sh exists"
+assert_executable "$CREATE_BRANCH_SCRIPT" "create-branch.sh is executable"
+assert_contains "$CREATE_BRANCH_SCRIPT" "feature/" "create-branch.sh creates feature branches"
+
+assert_file_exists "$CLEANUP_SCRIPT" "cleanup-feature.sh exists"
+assert_executable "$CLEANUP_SCRIPT" "cleanup-feature.sh is executable"
+assert_contains "$CLEANUP_SCRIPT" "specs/" "cleanup-feature.sh removes specs directory"
+assert_contains "$CLEANUP_SCRIPT" ".specify/feature.json" "cleanup-feature.sh removes feature.json"
+
+assert_file_exists "$COMMIT_PR_SCRIPT" "commit-and-pr.sh exists"
+assert_executable "$COMMIT_PR_SCRIPT" "commit-and-pr.sh is executable"
+assert_contains "$COMMIT_PR_SCRIPT" "gh pr create" "commit-and-pr.sh creates PRs"
+
+assert_file_exists "$EXTRACT_VERDICT_SCRIPT" "extract-verdict.sh exists"
+assert_executable "$EXTRACT_VERDICT_SCRIPT" "extract-verdict.sh is executable"
+assert_contains "$EXTRACT_VERDICT_SCRIPT" "review-findings-" "extract-verdict.sh reads review-findings-*-*.md"
+assert_contains "$EXTRACT_VERDICT_SCRIPT" "PASS|FAIL" "extract-verdict.sh validates PASS/FAIL verdict"
+
+assert_file_exists "$FIXER_FILE" "speckit-extendedflow.fix.md exists"
+assert_contains "$FIXER_FILE" "surgical" "Fixer makes surgical fixes"
+assert_contains "$FIXER_FILE" "Do NOT re-implement from scratch" "Fixer does not re-implement"
 
 # --- Workflow checks ---
 
@@ -107,6 +136,34 @@ assert_contains "$WORKFLOW_FILE" "required: false" "Inputs are optional"
 
 # Downstream contract preserved
 assert_contains "$WORKFLOW_FILE" "steps.resolve-spec.output.stdout" "Preserves downstream contract"
+
+# New workflow steps for issue-to-PR flow
+assert_contains "$WORKFLOW_FILE" "create-branch" "Workflow has create-branch step"
+assert_contains "$WORKFLOW_FILE" "cleanup-feature.sh" "Workflow calls cleanup-feature.sh"
+assert_contains "$WORKFLOW_FILE" "commit-and-pr.sh" "Workflow calls commit-and-pr.sh"
+assert_contains "$WORKFLOW_FILE" 'condition: "{{ inputs.issue != '\'''\'' }}"' "Workflow conditionally runs issue steps"
+
+# Reviewer output path updated
+assert_contains "$REVIEWER_FILE" "specs/" "Reviewer writes to specs/<feature>/"
+assert_contains "$REVIEWER_FILE" ".specify/feature.json" "Reviewer reads feature.json for path"
+assert_contains "$REVIEWER_FILE" "review-findings-{iteration}-{VERDICT}.md" "Reviewer writes verdict-encoded filename"
+
+# Verdict extraction uses external script
+assert_contains "$WORKFLOW_FILE" "extract-verdict.sh" "Workflow calls extract-verdict.sh"
+assert_not_contains "$WORKFLOW_FILE" "sed -n 's/^> \\*\\*" "No inline sed verdict parsing in workflow"
+
+# No gate between tasks and implement — implementation runs automatically
+assert_not_contains "$WORKFLOW_FILE" "id: tasks-gate" "No gate between tasks and implement"
+
+# New QA structure: implement outside loop, fix loop gated by if
+assert_contains "$WORKFLOW_FILE" "id: implement" "Workflow has implement step"
+assert_contains "$WORKFLOW_FILE" "id: fix-if-needed" "Workflow has fix-if-needed gate"
+assert_contains "$WORKFLOW_FILE" "id: fix-loop" "Workflow has fix-loop"
+assert_contains "$WORKFLOW_FILE" "type: do-while" "Workflow has do-while loop"
+assert_contains "$WORKFLOW_FILE" "id: fix" "Workflow has fix step"
+assert_contains "$WORKFLOW_FILE" "id: fix-verdict" "Workflow has fix-verdict step"
+assert_contains "$WORKFLOW_FILE" "speckit-extendedflow.fix" "Workflow calls fix command"
+assert_contains "$WORKFLOW_FILE" "steps.fix-verdict.output.stdout" "Fix loop condition references fix-verdict"
 
 # --- Functional tests for the external script ---
 

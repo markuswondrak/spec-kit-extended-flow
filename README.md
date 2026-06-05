@@ -44,6 +44,11 @@ specify workflow run spec-kit-extended-flow \
 
 **What happens:** The workflow generates your spec, plan, and task list (with human approval gates at each stage), implements everything, runs QA review in a loop until PASS, then reconciles documentation.
 
+When started from a GitHub issue (`--input issue="42"`), the workflow also:
+1. Creates a `feature/42-<slug>` branch from the issue title
+2. Cleans up temporary files (specs, feature pointer, workflow run state) after documentation reconciliation
+3. Commits all changes and opens a pull request that closes the issue
+
 ## Prerequisites
 
 Run these BEFORE the workflow — they set up your project's foundation:
@@ -53,7 +58,7 @@ Run these BEFORE the workflow — they set up your project's foundation:
 /speckit.constitution Create principles focused on code quality, testing standards, and performance
 
 # 2. (Optional) Bootstrap documentation for existing projects
-/speckit.extendedflow.documentation-init
+/speckit-extendedflow.documentation-init
 ```
 
 The workflow assumes your project is already initialized (`specify init`) and has a constitution in place. The plan step infers tech stack/architecture from your existing project — no planning constraints input needed at runtime.
@@ -109,33 +114,38 @@ The workflow accepts three separate input parameters. At least one must be provi
 ## Workflow Steps
 
 ```
-resolve-spec  →  specify  →  [gate]  →  plan  →  [gate]  →  tasks  →  [gate]
+resolve-spec  →  [branch*]  →  specify  →  [gate]  →  plan  →  [gate]  →  tasks  →  [gate]
+                                                                                      ↓
+                                                                         ┌── implement ←──┐
+                                                                         ↓                │
+                                                                       review ── FAIL ────┘
+                                                                         │
+                                                                       PASS
                                                                          ↓
-                                                            ┌── implement ←──┐
-                                                            ↓                │
-                                                          review ── FAIL ────┘
-                                                            │
-                                                          PASS
-                                                            ↓
-                                                         [gate]
-                                                            ↓
-                                                      documentation
-                                                            ↓
-                                                          done
+                                                                      [gate]
+                                                                         ↓
+                                                                   documentation
+                                                                         ↓
+                                                                 [cleanup* + PR*]
+                                                                         ↓
+                                                                       done
 ```
+\* Only when started from a GitHub issue (`--input issue="..."`).
 
 | Step | Type | Description |
 |------|------|-------------|
 | `resolve-spec` | shell | Resolves file paths and GitHub issues to spec content |
+| `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch from issue title |
 | `specify` | command | Generates the specification from your input |
 | `spec-gate` | gate | Human approval before planning |
 | `plan` | command | Creates implementation plan (infers from project) |
 | `plan-gate` | gate | Human approval before task generation |
 | `tasks` | command | Generates actionable task breakdown |
-| `tasks-gate` | gate | Human approval before implementation |
 | `qa-loop` | do-while | Implementation + review loop (max 5 iterations) |
 | `review-gate` | gate | Human approval after QA pass |
-| `doc-reconcile` | command | Updates all documentation layers |
+| `documentation` | command | Updates all documentation layers |
+| `cleanup` | shell | *(issue only)* Removes temporary files (specs, feature pointer, run state) |
+| `commit-and-pr` | shell | *(issue only)* Commits changes and opens a PR that closes the issue |
 
 **Safety caps:** Review loop maxes out at 5 iterations. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
 
@@ -145,13 +155,13 @@ Run these standalone outside the workflow:
 
 ```bash
 # QA review only
-/speckit.extendedflow.reviewer
+/speckit-extendedflow.reviewer
 
 # Documentation reconciliation only
-/speckit.extendedflow.documentation
+/speckit-extendedflow.documentation
 
 # Bootstrap documentation for an existing project
-/speckit.extendedflow.documentation-init
+/speckit-extendedflow.documentation-init
 ```
 
 ## Architecture
@@ -160,12 +170,16 @@ Run these standalone outside the workflow:
 |-----------|------|------|
 | Preset manifest | `preset.yml` | Registers commands and templates |
 | Workflow | `workflow.yml` | Orchestrates the lifecycle |
-| Reviewer | `commands/speckit.extendedflow.reviewer.md` | QA agent system prompt |
-| Documentation | `commands/speckit.extendedflow.documentation.md` | Doc agent system prompt |
-| Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent |
+| Reviewer | `commands/speckit-extendedflow.reviewer.md` | QA agent system prompt |
+| Documentation | `commands/speckit-extendedflow.documentation.md` | Doc agent system prompt |
+| Documentation init | `commands/speckit-extendedflow.documentation-init.md` | Doc bootstrap agent |
 | Review template | `templates/review-findings.md` | Structured review output |
 | Doc template | `templates/documentation.md` | Structured doc output |
 | Doc init template | `templates/documentation-init.md` | Init report template |
+| Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
+| Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
+| Cleanup feature | `scripts/cleanup-feature.sh` | Removes temporary run artifacts |
+| Commit and PR | `scripts/commit-and-pr.sh` | Commits changes and opens PR |
 
 ## Customization
 
@@ -180,7 +194,7 @@ specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flo
 
 ## Troubleshooting
 
-**Reviewer always returns FAIL:** Check `.specify/spec.md` is up to date. Review findings in `review-findings.md`. Adjust `max_iterations` in `workflow.yml` if needed.
+**Reviewer always returns FAIL:** Check `.specify/spec.md` is up to date. Review findings are inside the current feature directory (`specs/<NNN>-<feature>/review-findings.md`). Adjust `max_iterations` in `workflow.yml` if needed.
 
 **Workflow stuck in loop:** Check `specify workflow status`. The cap of 5 iterations prevents infinite loops.
 
