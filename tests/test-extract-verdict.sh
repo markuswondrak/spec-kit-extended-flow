@@ -20,7 +20,7 @@ create_test_project() {
     mkdir -p "$test_root/specs/$feature_dir"
     mkdir -p "$test_root/.specify/workflows/runs/test-run"
     cat > "$test_root/.specify/feature.json" << EOF
-{"dir": "$feature_dir"}
+{"feature_directory": "specs/$feature_dir"}
 EOF
 }
 

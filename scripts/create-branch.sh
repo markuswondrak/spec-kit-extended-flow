@@ -49,13 +49,12 @@ fi
 branch_name="feature/${ISSUE}-${slug}"
 
 # ---------------------------------------------------------------------------
-# Create branch
+# Create or checkout branch
 # ---------------------------------------------------------------------------
 if git show-ref --verify --quiet "refs/heads/$branch_name" 2>/dev/null; then
-    echo "ERROR: Branch '$branch_name' already exists." >&2
-    exit 1
+    git checkout "$branch_name"
+else
+    git checkout -b "$branch_name"
 fi
-
-git checkout -b "$branch_name"
 
 echo "$branch_name"

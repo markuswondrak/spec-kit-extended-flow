@@ -5,7 +5,7 @@ set -euo pipefail
 #
 # Usage: extract-verdict.sh <run_id>
 #
-# The reviewer writes review findings as review-findings-{N}-{VERDICT}.md
+# The review command writes review findings as review-findings-{N}-{VERDICT}.md
 # (e.g. review-findings-1-FAIL.md, review-findings-2-PASS.md).
 # This script finds the file with the highest iteration number, extracts
 # the verdict from the filename, and writes it to stdout.
@@ -29,9 +29,9 @@ fi
 # Try jq first, fall back to sed
 feature_dir=""
 if command -v jq &> /dev/null; then
-    feature_dir=$(jq -r '.dir // .name // .path' "$FEATURE_JSON" 2>/dev/null || true)
+    feature_dir=$(jq -r '.feature_directory // .dir // .name // .path' "$FEATURE_JSON" 2>/dev/null || true)
 else
-    feature_dir=$(sed -n 's/.*"dir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p; s/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p; s/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$FEATURE_JSON" | head -n 1 || true)
+    feature_dir=$(sed -n 's/.*"feature_directory"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p; s/.*"dir"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p; s/.*"name"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p; s/.*"path"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$FEATURE_JSON" | head -n 1 || true)
 fi
 
 if [ -z "$feature_dir" ]; then

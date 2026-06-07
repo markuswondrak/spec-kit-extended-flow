@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow"
-  version: "0.2.0"
+  version: "0.5.0"
   description: "SDD workflow with QA review loop, automated documentation reconciliation, and issue-to-PR automation. Constitution, planning constraints, and documentation initialization are prerequisites — handled outside the workflow."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
@@ -25,18 +25,18 @@ provides:
       description: "Structured report template for documentation reconciliation (conflicts, layer health, changes by category)"
 
     - type: "command"
-      name: "speckit-extendedflow.reviewer"
-      file: "commands/speckit-extendedflow.reviewer.md"
-      description: "QA Reviewer agent — analyzes implementation against spec and outputs PASS/FAIL"
+      name: "speckit.extendedflow.review"
+      file: "commands/speckit.extendedflow.review.md"
+      description: "QA Review agent — analyzes implementation against spec and outputs PASS/FAIL"
 
     - type: "command"
-      name: "speckit-extendedflow.fix"
-      file: "commands/speckit-extendedflow.fix.md"
+      name: "speckit.extendedflow.fix"
+      file: "commands/speckit.extendedflow.fix.md"
       description: "Fix agent — makes targeted, surgical fixes for review findings without re-implementing from scratch"
 
     - type: "command"
-      name: "speckit-extendedflow.documentation"
-      file: "commands/speckit-extendedflow.documentation.md"
+      name: "speckit.extendedflow.documentation"
+      file: "commands/speckit.extendedflow.documentation.md"
       description: "Documentation agent — maintains layered documentation as truth of intent, flags code-vs-docs conflicts"
 
     - type: "template"
@@ -45,11 +45,16 @@ provides:
       description: "Structured report template for documentation initialization (files created, inferred content, human input required)"
 
     - type: "command"
-      name: "speckit-extendedflow.documentation-init"
-      file: "commands/speckit-extendedflow.documentation-init.md"
+      name: "speckit.extendedflow.documentation-init"
+      file: "commands/speckit.extendedflow.documentation-init.md"
       description: "Documentation init agent — bootstraps layered documentation structure for existing projects"
 
-tags:
+    - type: "command"
+      name: "speckit.extendedflow.finish"
+      file: "commands/speckit.extendedflow.finish.md"
+      description: "Finish agent — cleans up temporary run artifacts, commits changes, and opens a PR when started from an issue"
+
+  tags:
   - "qa"
   - "review"
   - "documentation"

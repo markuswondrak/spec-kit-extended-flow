@@ -8,7 +8,7 @@ Code is the source of truth for **what the system does**. Documentation is the s
 
 ## When You Run
 
-You run **once** as a bootstrap step — before the regular documentation reconciliation workflow begins. After you finish, the `speckit-extendedflow.documentation` command takes over for ongoing maintenance.
+You run **once** as a bootstrap step — before the regular documentation reconciliation workflow begins. After you finish, the `speckit.extendedflow.documentation` command takes over for ongoing maintenance.
 
 ## Inputs
 

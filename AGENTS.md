@@ -23,7 +23,7 @@ This is a **Spec-Kit preset**, not an application. It defines a workflow (`workf
 | `workflow.yml` | Orchestration: inputs, steps, gates, loops |
 | `preset.yml` | Manifest: version, provides, tags |
 | `scripts/` | Executable shell scripts called by workflow steps |
-| `commands/` | Agent system prompts (reviewer, documentation, documentation-init) |
+| `commands/` | Agent system prompts (review, fix, documentation, documentation-init, finish) |
 | `templates/` | Structured output templates (review-findings, documentation, documentation-init) |
 | `tests/` | Bash test suites for shell scripts and workflow structure |
 
@@ -33,8 +33,7 @@ This is a **Spec-Kit preset**, not an application. It defines a workflow (`workf
 |--------|---------|
 | `scripts/resolve-spec.sh` | Resolves `spec`, `file`, and `issue` inputs into specification content |
 | `scripts/create-branch.sh` | Creates a `feature/<issue>-<slug>` branch from a GitHub issue |
-| `scripts/cleanup-feature.sh` | Removes temporary files after documentation reconciliation |
-| `scripts/commit-and-pr.sh` | Commits changes and opens a pull request from a GitHub issue |
+| `scripts/extract-verdict.sh` | Extracts the QA review verdict from the review findings filename |
 | `scripts/package-preset.sh` | Builds the preset ZIP package |
 | `scripts/release-version.sh` | Bumps version, commits, and tags a release |
 
@@ -93,11 +92,15 @@ Must preserve:
 - **Doc Reconciliation**: The post-implementation step that updates layered documentation and flags code-vs-docs conflicts.
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 
+## Known Issues
+
+- **Spec-Kit < v0.9.5 registration bug**: Preset commands with three-part names (`speckit.extendedflow.*`) are silently dropped during `specify preset add` if `.specify/extensions/extendedflow/` does not exist. Workaround: `mkdir -p .specify/extensions/extendedflow` before installing. Fixed upstream in Spec-Kit v0.9.5+.
+
 ## Pointers to Depth
 
 - **Workflow steps & gates**: See `workflow.yml`
-- **Agent behaviors**: See `commands/speckit-extendedflow.reviewer.md`, `commands/speckit-extendedflow.documentation.md`
+- **Agent behaviors**: See `commands/speckit.extendedflow.review.md`, `commands/speckit.extendedflow.documentation.md`, `commands/speckit.extendedflow.finish.md`
 - **Output templates**: See `templates/review-findings.md`, `templates/documentation.md`
 - **Input resolution logic**: See `scripts/resolve-spec.sh`
-- **Branch creation, cleanup, and PR logic**: See `scripts/create-branch.sh`, `scripts/cleanup-feature.sh`, `scripts/commit-and-pr.sh`
+- **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/extract-verdict.sh`
 - **Architecture & design rationale**: See `README.md`

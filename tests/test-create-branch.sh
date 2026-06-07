@@ -106,14 +106,18 @@ exit 0
 '
 run_test "Successful branch creation" "42" 0 "feature/42-add-user-auth" "$mock_gh" "$mock_git"
 
-# Test 4: Branch already exists
+# Test 4: Branch already exists — should checkout existing branch and continue
 mock_git_exists='#!/bin/bash
 if [[ "$1" == "show-ref" && "$2" == "--verify" && "$3" == "--quiet" ]]; then
     exit 0  # branch exists
 fi
+if [[ "$1" == "checkout" && -z "$2" ]]; then
+    echo "Switched to branch $3"
+    exit 0
+fi
 exit 0
 '
-run_test "Branch already exists" "42" 1 "already exists" "$mock_gh" "$mock_git_exists"
+run_test "Branch already exists" "42" 0 "feature/42-add-user-auth" "$mock_gh" "$mock_git_exists"
 
 # Test 5: Issue fetch failure
 mock_gh_fail='#!/bin/bash

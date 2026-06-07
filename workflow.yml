@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — SDD Lifecycle with QA Review and Documentation Reconciliation"
-  version: "0.2.0"
+  version: "0.5.0"
   author: "Markus Wondrak"
   description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
@@ -56,6 +56,10 @@ steps:
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
+  - id: verify-spec
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/verify-spec.sh
+
   - id: spec-gate
     type: gate
     message: "Review the generated specification. Approve to continue to planning, or reject to stop and edit the spec."
@@ -81,11 +85,9 @@ steps:
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
-    input:
-      args: "Execute the current tasks."
 
   - id: review
-    command: speckit-extendedflow.reviewer
+    command: speckit.extendedflow.review
     integration: "{{ inputs.integration }}"
 
   - id: review-verdict
@@ -102,10 +104,10 @@ steps:
         max_iterations: 5
         steps:
           - id: fix
-            command: speckit-extendedflow.fix
+            command: speckit.extendedflow.fix
             integration: "{{ inputs.integration }}"
           - id: fix-review
-            command: speckit-extendedflow.reviewer
+            command: speckit.extendedflow.review
             integration: "{{ inputs.integration }}"
           - id: fix-verdict
             type: shell
@@ -119,23 +121,12 @@ steps:
         type: shell
         run: "echo 'QA review still failed after the maximum number of iterations. See review-findings-{N}-FAIL.md inside the current feature directory for details.' >&2; exit 1"
 
-  - id: review-gate
-    type: gate
-    message: "Implementation passed QA review. Approve to proceed with documentation reconciliation, or reject to stop here."
-    options: [approve, reject]
-    on_reject: abort
-
   - id: documentation
-    command: speckit-extendedflow.documentation
+    command: speckit.extendedflow.documentation
     integration: "{{ inputs.integration }}"
 
-  - id: cleanup-and-pr
-    type: if
-    condition: "{{ inputs.issue != '' }}"
-    then:
-      - id: cleanup
-        type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/cleanup-feature.sh "{{ context.run_id }}"
-      - id: commit-and-pr
-        type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/commit-and-pr.sh "{{ inputs.issue }}"
+  - id: finish
+    command: speckit.extendedflow.finish
+    integration: "{{ inputs.integration }}"
+    input:
+      args: "{{ context.run_id }} {{ inputs.issue }}"

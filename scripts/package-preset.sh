@@ -17,9 +17,9 @@ command -v zip >/dev/null 2>&1 || error "zip command is required to build the pr
 required_paths=(
     "preset.yml"
     "workflow.yml"
-    "commands/speckit-extendedflow.documentation-init.md"
-    "commands/speckit-extendedflow.documentation.md"
-    "commands/speckit-extendedflow.reviewer.md"
+    "commands/speckit.extendedflow.documentation-init.md"
+    "commands/speckit.extendedflow.documentation.md"
+    "commands/speckit.extendedflow.review.md"
     "templates/documentation-init.md"
     "templates/documentation.md"
     "templates/review-findings.md"
