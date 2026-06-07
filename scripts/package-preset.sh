@@ -19,7 +19,7 @@ required_paths=(
     "workflow.yml"
     "commands/speckit.extendedflow.documentation-init.md"
     "commands/speckit.extendedflow.documentation.md"
-    "commands/speckit.extendedflow.reviewer.md"
+    "commands/speckit.extendedflow.review.md"
     "templates/documentation-init.md"
     "templates/documentation.md"
     "templates/review-findings.md"

@@ -70,14 +70,33 @@ assert_executable() {
     fi
 }
 
-echo "=== Test Suite: workflow.yml resolve-spec refactoring ==="
+assert_file_not_exists() {
+    local file="$1"
+    local msg="$2"
+    if [ ! -f "$file" ]; then
+        echo "PASS: $msg"
+        ((PASSED++)) || true
+    else
+        echo "FAIL: $msg"
+        echo "  File still exists: $file"
+        ((FAILED++)) || true
+    fi
+}
+
+CREATE_BRANCH_SCRIPT="$PROJECT_DIR/scripts/create-branch.sh"
+EXTRACT_VERDICT_SCRIPT="$PROJECT_DIR/scripts/extract-verdict.sh"
+REVIEWER_FILE="$PROJECT_DIR/commands/speckit.extendedflow.review.md"
+FIXER_FILE="$PROJECT_DIR/commands/speckit.extendedflow.fix.md"
+FINISH_FILE="$PROJECT_DIR/commands/speckit.extendedflow.finish.md"
+
+echo "=== Test Suite: workflow.yml structure ==="
 echo ""
 
 # --- External script checks ---
 
-echo "--- Checking external script ---"
-assert_file_exists "$SCRIPT_FILE" "External script exists"
-assert_executable "$SCRIPT_FILE" "External script is executable"
+echo "--- Checking external scripts ---"
+assert_file_exists "$SCRIPT_FILE" "resolve-spec.sh exists"
+assert_executable "$SCRIPT_FILE" "resolve-spec.sh is executable"
 assert_contains "$SCRIPT_FILE" "resolve_file()" "Script has resolve_file function"
 assert_contains "$SCRIPT_FILE" "resolve_issue()" "Script has resolve_issue function"
 assert_contains "$SCRIPT_FILE" "SPEC=""" "Script handles SPEC input"
@@ -86,13 +105,50 @@ assert_contains "$SCRIPT_FILE" "ISSUE=""" "Script handles ISSUE input"
 assert_contains "$SCRIPT_FILE" "ERROR: Spec file not found" "Script has file error handling"
 assert_contains "$SCRIPT_FILE" "ERROR: No specification provided" "Script has no-input error handling"
 
+assert_file_exists "$CREATE_BRANCH_SCRIPT" "create-branch.sh exists"
+assert_executable "$CREATE_BRANCH_SCRIPT" "create-branch.sh is executable"
+assert_contains "$CREATE_BRANCH_SCRIPT" "feature/" "create-branch.sh creates feature branches"
+
+assert_file_exists "$EXTRACT_VERDICT_SCRIPT" "extract-verdict.sh exists"
+assert_executable "$EXTRACT_VERDICT_SCRIPT" "extract-verdict.sh is executable"
+assert_contains "$EXTRACT_VERDICT_SCRIPT" "review-findings-" "extract-verdict.sh reads review-findings-*-*.md"
+assert_contains "$EXTRACT_VERDICT_SCRIPT" "PASS|FAIL" "extract-verdict.sh validates PASS/FAIL verdict"
+
+VERIFY_SPEC_SCRIPT="$PROJECT_DIR/scripts/verify-spec.sh"
+assert_file_exists "$VERIFY_SPEC_SCRIPT" "verify-spec.sh exists"
+assert_executable "$VERIFY_SPEC_SCRIPT" "verify-spec.sh is executable"
+assert_contains "$VERIFY_SPEC_SCRIPT" "feature.json" "verify-spec.sh checks feature.json"
+assert_contains "$VERIFY_SPEC_SCRIPT" "spec.md" "verify-spec.sh checks spec.md"
+
+assert_file_exists "$FIXER_FILE" "speckit.extendedflow.fix.md exists"
+assert_contains "$FIXER_FILE" "surgical" "Fixer makes surgical fixes"
+assert_contains "$FIXER_FILE" "Do NOT re-implement from scratch" "Fixer does not re-implement"
+
+# Verify dotted-namespace command files exist
+DOCUMENTATION_FILE="$PROJECT_DIR/commands/speckit.extendedflow.documentation.md"
+DOCUMENTATION_INIT_FILE="$PROJECT_DIR/commands/speckit.extendedflow.documentation-init.md"
+assert_file_exists "$DOCUMENTATION_FILE" "speckit.extendedflow.documentation.md exists"
+assert_file_exists "$DOCUMENTATION_INIT_FILE" "speckit.extendedflow.documentation-init.md exists"
+assert_file_exists "$FINISH_FILE" "speckit.extendedflow.finish.md exists"
+assert_contains "$FINISH_FILE" "feature_directory" "Finish agent reads feature_directory from feature.json"
+
+# Verify old hyphenated command files no longer exist
+OLD_REVIEWER_FILE="$PROJECT_DIR/commands/speckit-extendedflow.review.md"
+OLD_FIXER_FILE="$PROJECT_DIR/commands/speckit-extendedflow.fix.md"
+OLD_DOCUMENTATION_FILE="$PROJECT_DIR/commands/speckit-extendedflow.documentation.md"
+OLD_DOCUMENTATION_INIT_FILE="$PROJECT_DIR/commands/speckit-extendedflow.documentation-init.md"
+assert_file_not_exists "$OLD_REVIEWER_FILE" "Old hyphenated reviewer file removed"
+assert_file_not_exists "$OLD_FIXER_FILE" "Old hyphenated fixer file removed"
+assert_file_not_exists "$OLD_DOCUMENTATION_FILE" "Old hyphenated documentation file removed"
+assert_file_not_exists "$OLD_DOCUMENTATION_INIT_FILE" "Old hyphenated documentation-init file removed"
+
 # --- Workflow checks ---
 
 echo ""
 echo "--- Checking workflow structure ---"
 
-# The workflow should call the external script
-assert_contains "$WORKFLOW_FILE" "scripts/resolve-spec.sh" "Workflow calls external script"
+# The workflow should call the external script using the preset-relative path
+assert_contains "$WORKFLOW_FILE" ".specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh" "Workflow calls external script with preset-relative path"
 
 # The old inline shell should be gone
 assert_not_contains "$WORKFLOW_FILE" "grep -qE" "No regex-based format detection in workflow"
@@ -107,6 +163,55 @@ assert_contains "$WORKFLOW_FILE" "required: false" "Inputs are optional"
 
 # Downstream contract preserved
 assert_contains "$WORKFLOW_FILE" "steps.resolve-spec.output.stdout" "Preserves downstream contract"
+
+# New workflow steps for issue-to-PR flow
+assert_contains "$WORKFLOW_FILE" "create-branch" "Workflow has create-branch step"
+assert_contains "$WORKFLOW_FILE" "verify-spec" "Workflow has verify-spec step"
+assert_contains "$WORKFLOW_FILE" "verify-spec.sh" "Workflow calls verify-spec.sh"
+assert_contains "$WORKFLOW_FILE" "speckit.extendedflow.finish" "Workflow calls finish command"
+assert_contains "$WORKFLOW_FILE" "finish" "Workflow has finish step"
+assert_not_contains "$WORKFLOW_FILE" "cleanup-feature.sh" "Workflow no longer calls cleanup-feature.sh"
+assert_not_contains "$WORKFLOW_FILE" "commit-and-pr.sh" "Workflow no longer calls commit-and-pr.sh"
+
+# Review output path updated
+assert_contains "$REVIEWER_FILE" "specs/" "Review command writes to specs/<feature>/"
+assert_contains "$REVIEWER_FILE" ".specify/feature.json" "Review command reads feature.json for path"
+assert_contains "$REVIEWER_FILE" "review-findings-{iteration}-{VERDICT}.md" "Review command writes verdict-encoded filename"
+
+# Verdict extraction uses external script
+assert_contains "$WORKFLOW_FILE" "extract-verdict.sh" "Workflow calls extract-verdict.sh"
+assert_not_contains "$WORKFLOW_FILE" "sed -n 's/^> \\*\\*" "No inline sed verdict parsing in workflow"
+
+# No gate between tasks and implement — implementation runs automatically
+assert_not_contains "$WORKFLOW_FILE" "id: tasks-gate" "No gate between tasks and implement"
+
+# No gate after implementation — go straight to documentation
+assert_not_contains "$WORKFLOW_FILE" "id: review-gate" "No gate after implementation"
+
+# New QA structure: implement outside loop, fix loop gated by if
+assert_contains "$WORKFLOW_FILE" "id: implement" "Workflow has implement step"
+assert_contains "$WORKFLOW_FILE" "id: fix-if-needed" "Workflow has fix-if-needed gate"
+assert_contains "$WORKFLOW_FILE" "id: fix-loop" "Workflow has fix-loop"
+assert_contains "$WORKFLOW_FILE" "type: do-while" "Workflow has do-while loop"
+assert_contains "$WORKFLOW_FILE" "id: fix" "Workflow has fix step"
+assert_contains "$WORKFLOW_FILE" "id: fix-verdict" "Workflow has fix-verdict step"
+assert_contains "$WORKFLOW_FILE" "speckit.extendedflow.fix" "Workflow calls fix command"
+assert_contains "$WORKFLOW_FILE" "speckit.extendedflow.review" "Workflow uses dotted namespace for review"
+assert_contains "$WORKFLOW_FILE" "speckit.extendedflow.documentation" "Workflow uses dotted namespace for documentation"
+assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.review" "Workflow does not use hyphenated namespace for review"
+assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.fix" "Workflow does not use hyphenated namespace for fix"
+assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.documentation" "Workflow does not use hyphenated namespace for documentation"
+
+# Verify preset.yml uses dotted namespace
+PRESET_FILE="$PROJECT_DIR/preset.yml"
+assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.review"' "Preset uses dotted namespace for review"
+assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.fix"' "Preset uses dotted namespace for fix"
+assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation"' "Preset uses dotted namespace for documentation"
+assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation-init"' "Preset uses dotted namespace for documentation-init"
+assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.review"' "Preset does not use hyphenated namespace for review"
+assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.fix"' "Preset does not use hyphenated namespace for fix"
+assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.documentation"' "Preset does not use hyphenated namespace for documentation"
+assert_contains "$WORKFLOW_FILE" "steps.fix-verdict.output.stdout" "Fix loop condition references fix-verdict"
 
 # --- Functional tests for the external script ---
 

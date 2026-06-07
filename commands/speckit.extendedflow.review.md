@@ -8,11 +8,12 @@ You are the gatekeeper between implementation and delivery. Your job is to ensur
 
 ## Inputs
 
-1. **Specification**: Read `.specify/spec.md` for the authoritative requirements
-2. **Plan**: Read `.specify/plan.md` for the intended architecture and approach
-3. **Tasks**: Read `.specify/tasks.md` for the expected deliverables
-4. **Implementation**: Analyze all code changes produced by the implementation phase
-5. **Previous Findings** (if iteration > 1): Review prior `review-findings.md` to verify fixes
+1. **Feature Directory**: Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
+2. **Specification**: Read `specs/<feature-dir>/spec.md` for the authoritative requirements.
+3. **Plan**: Read `specs/<feature-dir>/plan.md` for the intended architecture and approach.
+4. **Tasks**: Read `specs/<feature-dir>/tasks.md` for the expected deliverables.
+5. **Implementation**: Analyze all code changes produced by the implementation phase.
+6. **Previous Findings** (if iteration > 1): Review prior `review-findings-{N}-FAIL.md` files inside the current feature directory to verify fixes.
 
 ## Review Criteria
 
@@ -40,7 +41,14 @@ Evaluate the implementation against these dimensions:
 
 ## Output Requirements
 
-You MUST write or overwrite `review-findings.md` at the project root using the `review-findings` template. This file is a workflow control artifact: the workflow reads it after you finish to decide whether to re-run implementation.
+You MUST write `review-findings-{iteration}-{VERDICT}.md` inside the current feature directory using the `review-findings` template. This file is a workflow control artifact: the workflow reads it after you finish to decide whether to continue the fix loop.
+
+To locate the correct directory and determine the iteration number:
+1. Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
+2. Scan `specs/<feature-dir>/` for existing `review-findings-{N}-PASS.md` or `review-findings-{N}-FAIL.md` files.
+3. Set iteration to max(existing N) + 1, or 1 if no files exist.
+4. Write `review-findings-{iteration}-{VERDICT}.md` to `specs/<feature-dir>/` (e.g., `specs/001-my-feature/review-findings-1-FAIL.md`).
+5. Do NOT delete previous iteration files — they are preserved for history.
 
 Specifically:
 
@@ -54,7 +62,7 @@ Specifically:
 
 3. **Document All Findings**: Every issue must be logged with severity, category, location, and a suggested fix.
 
-4. **Provide Re-Implementation Guidance** (on FAIL): Give clear, actionable recommendations that the implementation agent can follow to resolve all issues. The next implementation iteration will read `review-findings.md`.
+4. **Provide Fix Guidance** (on FAIL): Give clear, actionable recommendations that the fix agent can follow to resolve all issues. The next fix iteration will read your `review-findings-{iteration}-FAIL.md`.
 
 ## Verdict Rules
 

@@ -79,7 +79,7 @@ assert_zip_contains "$LISTING_FILE" "workflow.yml" "ZIP contains root workflow.y
 assert_zip_contains "$LISTING_FILE" "README.md" "ZIP contains README"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation-init.md" "ZIP contains documentation-init command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation.md" "ZIP contains documentation command"
-assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.reviewer.md" "ZIP contains reviewer command"
+assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.review.md" "ZIP contains review command"
 assert_zip_contains "$LISTING_FILE" "templates/documentation-init.md" "ZIP contains documentation-init template"
 assert_zip_contains "$LISTING_FILE" "templates/documentation.md" "ZIP contains documentation template"
 assert_zip_contains "$LISTING_FILE" "templates/review-findings.md" "ZIP contains review template"

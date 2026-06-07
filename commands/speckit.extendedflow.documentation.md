@@ -12,10 +12,11 @@ You execute AFTER the implementation has passed QA review. The code changes are 
 
 ## Inputs
 
-1. **Specification**: Read `.specify/spec.md` for context on what was built and why
-2. **Plan**: Read `.specify/plan.md` for architectural decisions made during implementation
-3. **Implementation Diffs**: Analyze all files created or modified during implementation
-4. **Existing Documentation**: Scan the documentation layer across all tiers
+1. **Feature Directory**: Read `.specify/feature.json` to determine the current feature directory name (e.g., `001-my-feature`).
+2. **Specification**: Read `specs/<feature-dir>/spec.md` for context on what was built and why.
+3. **Plan**: Read `specs/<feature-dir>/plan.md` for architectural decisions made during implementation.
+4. **Implementation Diffs**: Analyze all files created or modified during implementation.
+5. **Existing Documentation**: Scan the documentation layer across all tiers.
 
 ---
 
