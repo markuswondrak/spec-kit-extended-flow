@@ -2,58 +2,228 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/markuswondrak/spec-kit-extended-flow)](https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/markuswondrak/spec-kit-extended-flow/release-preset.yml)](https://github.com/markuswondrak/spec-kit-extended-flow/actions/workflows/release-preset.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 <img width="1672" height="941" alt="extended-flow" src="https://github.com/user-attachments/assets/23828cb1-e05d-4227-a812-3f6254e4be5e" />
 
-A [Spec-Kit](https://github.com/github/spec-kit) preset that adds a strict QA review loop and automated documentation reconciliation to the standard SDD workflow.
+**A sustainable agentic pipeline for turning intent into shippable software.** Built on [Spec-Kit](https://github.com/github/spec-kit), it extends the standard SDD workflow with deterministic quality gates and living documentation — so every feature that ships is reviewed for correctness *and* documented in sync with the code.
 
-## Idea
+---
 
-The standard Spec-Kit workflow (`specify → plan → tasks → implement`) is a great start, but it stops at implementation. **Spec-Kit Extended Flow** adds two critical layers:
+- [Why Extended Flow](#why-extended-flow)
+- [Quickstart](#quickstart)
+- [How It Works](#how-it-works)
+- [Spec Input Parameters](#spec-input-parameters)
+- [Individual Commands](#individual-commands)
+- [Architecture](#architecture)
+- [Customization](#customization)
+- [Prerequisites](#prerequisites)
+- [Git Extension Compatibility](#git-extension-compatibility)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
 
-1. **QA Review Loop** — After implementation, a Review agent analyzes the code against your spec. If it finds critical issues, implementation is re-triggered automatically with the findings as context. This loops until the review signs off with `PASS` (or a max of 5 iterations).
+---
 
-2. **Documentation Reconciliation** — After a successful review, a Documentation agent scans all implementation diffs and updates every documentation layer (global constraints, architecture decisions, interface contracts, AI debt register). Code-vs-docs conflicts are flagged for human resolution — never auto-resolved.
+## Why Extended Flow
 
-The result: every feature that ships through this workflow has been reviewed for correctness AND its documentation stays in sync with the code.
+The standard Spec-Kit workflow is `specify → plan → tasks → implement`. That's a great start — but it treats implementation as the finish line. For a codebase that grows over time, that's a trap: every cycle adds code without systematic review, documentation drifts silently, and the project gets harder to reason about.
+
+Extended Flow closes the loop. Three principles drive the design:
+
+- **Sustainable.** Every cycle leaves the project healthier. Specs are reviewed against implementation, documentation is reconciled with code, and conflicts are flagged for human resolution — never silently ignored.
+- **Agentic.** The pipeline runs end-to-end with AI agents, but with deterministic guard rails and human gates at the right moments. When autonomy conflicts with safety, safety wins.
+- **Pipeline.** Each stage feeds cleanly into the next. The output of `resolve-spec` becomes the input of `specify`. The output of `review` drives `fix`. The output of `documentation` feeds into `finish`. No guessing, no regex-based format detection, no silent failures.
+
+| | Standard SDD | Extended Flow |
+|---|---|---|
+| After implementation | ✅ Done | 🔄 QA Review Loop |
+| Documentation | Manual, drifts | Auto-reconciled per layer |
+| Code-vs-docs conflicts | Silent | Flagged for human resolution |
+| Issue → PR | Manual | Automated branch, commit, PR |
+
+### QA Review Loop
+
+A Review agent analyzes the implementation against the spec. If it finds critical issues, a Fix agent makes targeted corrections and the review runs again. This loops until the reviewer signs off with `PASS` — up to 5 iterations max.
+
+### Documentation Reconciliation
+
+After a passing review, a Documentation agent scans all implementation diffs and updates every documentation layer (global constraints, architecture decisions, interface contracts, AI debt register). **Code-vs-docs conflicts are flagged for human resolution — never auto-resolved.** This is a core invariant.
+
+### Issue → PR Automation
+
+When started from a GitHub issue, the workflow automatically creates a feature branch, cleans up temporary files, commits all changes, and opens a pull request that closes the issue.
 
 ## Quickstart
 
 ```bash
-# 1. Install the preset (templates + scripts)
+# 1. Install preset (templates + scripts)
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
-# 2. Install the extension (commands)
+# 2. Install extension (commands)
 specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
-
-# Or pin a specific release
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
-specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
 
 # 3. Install the workflow
 specify workflow add .specify/presets/spec-kit-extended-flow/workflow.yml
 
-# 4. Run it — plain text spec
+# 4. Run it
 specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
-
-# Or from a file
-specify workflow run spec-kit-extended-flow \
-  --input file="./specs/todo-api.md"
-
-# Or from a GitHub issue in this repository
-specify workflow run spec-kit-extended-flow \
-  --input issue="42"
 ```
 
 **What happens:** The workflow generates your spec, plan, and task list (with human approval gates at each stage), implements everything, runs QA review in a loop until PASS, then reconciles documentation.
 
-When started from a GitHub issue (`--input issue="42"`), the workflow also:
+<details>
+<summary><strong>Other input modes</strong></summary>
+
+```bash
+# From a spec file
+specify workflow run spec-kit-extended-flow \
+  --input file="./specs/todo-api.md"
+
+# From a GitHub issue
+specify workflow run spec-kit-extended-flow \
+  --input issue="42"
+```
+
+When started from a GitHub issue, the workflow also:
 1. Creates a `feature/42-<slug>` branch from the issue title
-2. Cleans up temporary files (specs, feature pointer, workflow run state) after documentation reconciliation
+2. Cleans up temporary files after documentation reconciliation
 3. Commits all changes and opens a pull request that closes the issue
+</details>
+
+<details>
+<summary><strong>Pin a specific release</strong></summary>
+
+```bash
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
+specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
+```
+</details>
+
+<details>
+<summary><strong>Local development</strong></summary>
+
+For development on a checkout of this repository:
+
+```bash
+specify preset add --dev .
+specify extension add --dev .
+```
+</details>
+
+## How It Works
+
+```mermaid
+flowchart TD
+    A[resolve-spec] --> B{issue?}
+    B -->|yes| C[create-branch]
+    B -->|no| D[specify]
+    C --> D
+    D --> E[🛑 spec-gate]
+    E -->|approve| F[plan]
+    F --> G[🛑 plan-gate]
+    G -->|approve| H[tasks]
+    H --> I[implement]
+    I --> J[review]
+    J --> K{PASS?}
+    K -->|yes| L[documentation]
+    K -->|no| M[fix]
+    M --> J
+    L --> N[finish]
+    N --> O[✅ done]
+```
+
+| Step | Type | Description |
+|------|------|-------------|
+| `resolve-spec` | shell | Resolves file paths and GitHub issues to spec content |
+| `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
+| `specify` | command | Generates the specification from your input |
+| `spec-gate` | gate | 🛑 Human approval before planning |
+| `plan` | command | Creates implementation plan (infers from project) |
+| `plan-gate` | gate | 🛑 Human approval before task generation |
+| `tasks` | command | Generates actionable task breakdown |
+| `implement` | command | Implements the tasks |
+| `review` | command | QA review against the spec → PASS or FAIL |
+| `fix` | command | Targeted fixes for review findings |
+| `documentation` | command | Updates all documentation layers |
+| `finish` | command | Cleans up, commits, opens PR when issue provided |
+
+**Safety caps:** Review loop maxes out at 5 iterations. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
+
+## Spec Input Parameters
+
+The workflow accepts three input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
+
+| Parameter | Type | Example | How it works |
+|-----------|------|---------|--------------|
+| `spec` | Plain text | `--input spec="Build a user auth system with OAuth"` | Passed directly to `speckit.specify` |
+| `file` | File path | `--input file="./specs/feature.md"` | File content is read and passed as the spec |
+| `issue` | Issue number | `--input issue="42"` | Issue title + body fetched via `gh` CLI |
+
+**GitHub issues** require `gh` CLI installed and authenticated. **File input** must exist relative to your working directory.
+
+## Individual Commands
+
+Run these standalone outside the workflow:
+
+| Command | Purpose |
+|---------|---------|
+| `/speckit.extendedflow.review` | QA review only |
+| `/speckit.extendedflow.documentation` | Documentation reconciliation only |
+| `/speckit.extendedflow.documentation-init` | Bootstrap documentation for an existing project |
+| `/speckit.extendedflow.finish` | Cleanup, commit, and PR (post-implementation) |
+
+## Architecture
+
+Extended Flow is delivered as **two packages** — a preset (templates + scripts) and an extension (commands) — following the Spec-Kit separation of concerns:
+
+| Package | Manifest | Delivers | Installed via |
+|---------|----------|----------|---------------|
+| Preset | `preset.yml` | Templates, scripts | `specify preset add` |
+| Extension | `extension.yml` | Commands (agent prompts) | `specify extension add` |
+| Workflow | `workflow.yml` | Step orchestration | `specify workflow add` |
+
+This split exists because Spec-Kit's architecture reserves commands for extensions. Presets provide output formats; extensions provide agent behaviors. The two-package design ensures commands are properly deployed across all integration targets (Claude, Copilot, Gemini, opencode).
+
+### Key Design Principles
+
+- **Deterministic safety.** Verdict extraction, input validation, conflict flagging, and format checks produce reproducible outcomes. When the pipeline passes, fails, or flags a conflict, you can understand why without reading source code.
+- **Human gates as fallback, not requirement.** Every guard rail is deterministic and inspectable. Human gates are available but not required for correct results.
+- **Never auto-resolve code-vs-docs conflicts.** The documentation reconciler flags contradictions for human resolution. This is a core invariant.
+- **Single-responsibility inputs.** Each input parameter (`spec`, `file`, `issue`) has exactly one resolution strategy. No regex-based format detection, no guessing.
+
+### Component Map
+
+| Component | File | Role |
+|-----------|------|------|
+| Review agent | `commands/speckit.extendedflow.review.md` | QA agent system prompt |
+| Fix agent | `commands/speckit.extendedflow.fix.md` | Targeted fix agent system prompt |
+| Documentation agent | `commands/speckit.extendedflow.documentation.md` | Doc reconciliation agent prompt |
+| Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent prompt |
+| Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis agent prompt |
+| Finish agent | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, PR agent prompt |
+| Review template | `templates/review-findings.md` | Structured review output format |
+| Doc template | `templates/documentation.md` | Structured doc reconciliation format |
+| Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
+| Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
+| Verify spec | `scripts/verify-spec.sh` | Validates spec file was created |
+| Extract verdict | `scripts/extract-verdict.sh` | Extracts PASS/FAIL from review filename |
+
+## Customization
+
+Override templates and adjust review strictness by copying files to `.specify/templates/overrides/`. See [`preset.yml`](./preset.yml) for the full list of overridable templates.
+
+Stack with other presets using priority ordering:
+
+```bash
+specify preset add healthcare-compliance --priority 10
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip --priority 5
+```
 
 ## Prerequisites
+
+<details>
+<summary><strong>Before running the workflow</strong></summary>
 
 Run these BEFORE the workflow — they set up your project's foundation:
 
@@ -67,11 +237,16 @@ Run these BEFORE the workflow — they set up your project's foundation:
 
 The workflow assumes your project is already initialized (`specify init`) and has a constitution in place. The plan step infers tech stack/architecture from your existing project — no planning constraints input needed at runtime.
 
-### Git Extension Compatibility
+</details>
+
+## Git Extension Compatibility
+
+<details>
+<summary><strong>⚠️ Important: Disable the git extension before running this workflow</strong></summary>
 
 This workflow manages its own branch creation (issue-based naming: `feature/<issue>-<slug>`) and conflicts with spec-kit's built-in git extension, which uses sequential numbering (`001-<slug>`) via a `before_specify` hook.
 
-**Before running this workflow, disable the git extension:**
+**Disable the git extension before running:**
 
 ```bash
 specify extension disable git
@@ -84,7 +259,7 @@ specify extension disable git
 - Disabling the git extension eliminates the conflict and allows the workflow to manage branching consistently
 
 **What you lose:**
-- Auto-commits after each SDD step (these are optional and disabled by default anyway)
+- Auto-commits after each SDD step (optional and disabled by default anyway)
 - `speckit.git.feature` command (our workflow handles branch creation instead)
 
 **What you keep:**
@@ -97,144 +272,14 @@ To re-enable the git extension later:
 specify extension enable git
 ```
 
-## Installation notes
-
-`specify preset add --from` expects a ZIP package URL. The same applies to `specify extension add --from`. Do not pass the GitHub repository landing page URL; that downloads HTML, not a preset package.
-
-For local development of a checkout of this repository, use:
-
-```bash
-specify preset add --dev .
-specify extension add --dev .
-```
-
-Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
-
-## Releasing
-
-To cut a new release, run the release script from the repository root:
-
-```bash
-scripts/release-version.sh 1.2.3
-```
-
-This will:
-1. Validate the version format (semver: `MAJOR.MINOR.PATCH`)
-2. Update the `version` field in `preset.yml` and `extension.yml`
-3. Commit the version bump
-4. Create an annotated git tag (`v1.2.3`)
-
-Then push the tag to trigger the GitHub Actions release workflow:
-
-```bash
-git push origin main --tags
-```
-
-The release workflow (`.github/workflows/release-preset.yml`) will build the preset package and publish it as a GitHub Release asset.
-
-## Spec Input Parameters
-
-The workflow accepts three separate input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
-
-| Parameter | Type | Example | How it works |
-|-----------|------|---------|--------------|
-| `spec` | Plain text | `--input spec="Build a user auth system with OAuth"` | Passed directly to `speckit.specify` |
-| `file` | File path | `--input file="./specs/feature.md"` | File content is read and passed as the spec |
-| `issue` | Issue number | `--input issue="42"` | Issue title + body are fetched from the current repository via `gh` CLI and passed as the spec |
-
-**Requirements for GitHub issues:** The `gh` CLI must be installed and authenticated (`gh auth login`). Only issues from the repository the workflow is running in are supported.
-
-**Requirements for file input:** The file must exist relative to your current working directory.
-
-## Workflow Steps
-
-```
-resolve-spec  →  [branch*]  →  specify  →  [gate]  →  plan  →  [gate]  →  tasks  →  [gate]
-                                                                                      ↓
-                                                                         ┌── implement ←──┐
-                                                                         ↓                │
-                                                                       review ── FAIL ────┘
-                                                                         │
-                                                                       PASS
-                                                                         ↓
-                                                                      [gate]
-                                                                         ↓
-                                                                   documentation
-                                                                         ↓
-                                                                        finish
-                                                                          ↓
-                                                                        done
-```
-\* `create-branch` only when started from a GitHub issue (`--input issue="..."`).
-\* `finish` always runs: cleans up temporary files, commits changes, and opens a PR when an issue was provided.
-
-| Step | Type | Description |
-|------|------|-------------|
-| `resolve-spec` | shell | Resolves file paths and GitHub issues to spec content |
-| `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch from issue title |
-| `specify` | command | Generates the specification from your input |
-| `spec-gate` | gate | Human approval before planning |
-| `plan` | command | Creates implementation plan (infers from project) |
-| `plan-gate` | gate | Human approval before task generation |
-| `tasks` | command | Generates actionable task breakdown |
-| `qa-loop` | do-while | Implementation + review loop (max 5 iterations) |
-| `documentation` | command | Updates all documentation layers |
-| `finish` | command | Cleans up temporary files, commits changes, opens PR when issue provided |
-
-**Safety caps:** Review loop maxes out at 5 iterations. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
-
-## Individual Commands
-
-Run these standalone outside the workflow:
-
-```bash
-# QA review only
-/speckit.extendedflow.review
-
-# Documentation reconciliation only
-/speckit.extendedflow.documentation
-
-# Bootstrap documentation for an existing project
-/speckit.extendedflow.documentation-init
-
-# Cleanup, commit, and PR (post-implementation finish)
-/speckit.extendedflow.finish
-```
-
-## Architecture
-
-| Component | File | Role |
-|-----------|------|------|
-| Preset manifest | `preset.yml` | Registers templates and scripts |
-| Extension manifest | `extension.yml` | Registers commands (agent system prompts) |
-| Workflow | `workflow.yml` | Orchestrates the lifecycle |
-| Review | `commands/speckit.extendedflow.review.md` | QA agent system prompt |
-| Fix | `commands/speckit.extendedflow.fix.md` | Fix agent system prompt |
-| Documentation | `commands/speckit.extendedflow.documentation.md` | Doc agent system prompt |
-| Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent |
-| Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis agent |
-| Finish | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, and PR agent |
-| Review template | `templates/review-findings.md` | Structured review output |
-| Doc template | `templates/documentation.md` | Structured doc output |
-| Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
-| Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
-| Verify spec | `scripts/verify-spec.sh` | Validates that speckit.specify created a spec file |
-| Extract verdict | `scripts/extract-verdict.sh` | Extracts QA review verdict from findings filename |
-
-## Customization
-
-Override templates and adjust review strictness by copying files to `.specify/templates/overrides/`. See the [preset.yml](./preset.yml) for the full list of overridable templates.
-
-Stack with other presets using priority ordering:
-
-```bash
-specify preset add healthcare-compliance --priority 10
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip --priority 5
-```
+</details>
 
 ## Troubleshooting
 
-**Reviewer always returns FAIL:** Check `.specify/spec.md` is up to date. Review findings are inside the current feature directory (`specs/<NNN>-<feature>/review-findings.md`). Adjust `max_iterations` in `workflow.yml` if needed.
+<details>
+<summary><strong>Common issues and fixes</strong></summary>
+
+**Reviewer always returns FAIL:** Check that `.specify/spec.md` is up to date. Review findings are inside the current feature directory (`specs/<NNN>-<feature>/review-findings.md`). Adjust `max_iterations` in `workflow.yml` if needed.
 
 **Workflow stuck in loop:** Check `specify workflow status`. The cap of 5 iterations prevents infinite loops.
 
@@ -248,7 +293,26 @@ specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flo
 specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 ```
 
-**No spec created after specify step (specs/ is empty):** This happens when the git extension's `before_specify` hook tries to execute via `EXECUTE_COMMAND`, but the integration does not support it (e.g., opencode). The agent hangs waiting for the hook result, and the spec is never written. The workflow includes a `verify-spec` safety net that catches this and aborts with a clear error. To fix: disable the git extension before running the workflow: `specify extension disable git`. See [Git Extension Compatibility](#git-extension-compatibility) above.
+**No spec created after specify step (specs/ is empty):** This happens when the git extension's `before_specify` hook tries to execute via `EXECUTE_COMMAND`, but the integration does not support it (e.g., opencode). The workflow includes a `verify-spec` safety net that catches this and aborts with a clear error. To fix: disable the git extension before running the workflow: `specify extension disable git`. See [Git Extension Compatibility](#git-extension-compatibility) above.
+
+</details>
+
+## Installation Notes
+
+`specify preset add --from` expects a ZIP package URL. The same applies to `specify extension add --from`. Do not pass the GitHub repository landing page URL — that downloads HTML, not a preset package.
+
+Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
+
+## Releasing
+
+To cut a new release:
+
+```bash
+scripts/release-version.sh 1.2.3
+git push origin main --tags
+```
+
+This validates the version format (semver), updates `preset.yml` and `extension.yml`, commits the bump, creates an annotated tag, and triggers the GitHub Actions release workflow.
 
 ## License
 
