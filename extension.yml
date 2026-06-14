@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: extendedflow
   name: "Spec-Kit Extended Flow"
-  version: "0.6.0"
+  version: "0.7.0"
   description: "QA review loop, automated documentation reconciliation, and issue-to-PR automation"
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
