@@ -20,16 +20,20 @@ The result: every feature that ships through this workflow has been reviewed for
 ## Quickstart
 
 ```bash
-# 1. Install the latest published preset ZIP
+# 1. Install the preset (templates + scripts)
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+
+# 2. Install the extension (commands)
+specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
 # Or pin a specific release
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
+specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
 
-# 2. Install the workflow
+# 3. Install the workflow
 specify workflow add .specify/presets/spec-kit-extended-flow/workflow.yml
 
-# 3. Run it — plain text spec
+# 4. Run it — plain text spec
 specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
 
@@ -93,33 +97,15 @@ To re-enable the git extension later:
 specify extension enable git
 ```
 
-### Known issue: Spec-Kit < v0.9.5
-
-Spec-Kit versions before v0.9.5 have a bug ([github/spec-kit#2862](https://github.com/github/spec-kit/issues/2862)) that silently drops preset commands with three-part names (`speckit.<domain>.<cmd>`) during installation if the corresponding extension directory doesn't exist.
-
-**Workaround:** Create an empty extension directory before installing the preset:
-
-```bash
-mkdir -p .specify/extensions/extendedflow
-```
-
-Then reinstall:
-
-```bash
-specify preset remove spec-kit-extended-flow
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
-```
-
-This is not needed once Spec-Kit v0.9.5+ is installed (the bug is fixed in that version).
-
 ## Installation notes
 
-`specify preset add --from` expects a ZIP package URL. Do not pass the GitHub repository landing page URL; that downloads HTML, not a preset package.
+`specify preset add --from` expects a ZIP package URL. The same applies to `specify extension add --from`. Do not pass the GitHub repository landing page URL; that downloads HTML, not a preset package.
 
-For local development from a checkout of this repository, use:
+For local development of a checkout of this repository, use:
 
 ```bash
 specify preset add --dev .
+specify extension add --dev .
 ```
 
 Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
@@ -134,7 +120,7 @@ scripts/release-version.sh 1.2.3
 
 This will:
 1. Validate the version format (semver: `MAJOR.MINOR.PATCH`)
-2. Update the `version` field in `preset.yml`
+2. Update the `version` field in `preset.yml` and `extension.yml`
 3. Commit the version bump
 4. Create an annotated git tag (`v1.2.3`)
 
@@ -219,19 +205,21 @@ Run these standalone outside the workflow:
 
 | Component | File | Role |
 |-----------|------|------|
-| Preset manifest | `preset.yml` | Registers commands and templates |
+| Preset manifest | `preset.yml` | Registers templates and scripts |
+| Extension manifest | `extension.yml` | Registers commands (agent system prompts) |
 | Workflow | `workflow.yml` | Orchestrates the lifecycle |
 | Review | `commands/speckit.extendedflow.review.md` | QA agent system prompt |
+| Fix | `commands/speckit.extendedflow.fix.md` | Fix agent system prompt |
 | Documentation | `commands/speckit.extendedflow.documentation.md` | Doc agent system prompt |
 | Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent |
+| Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis agent |
+| Finish | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, and PR agent |
 | Review template | `templates/review-findings.md` | Structured review output |
 | Doc template | `templates/documentation.md` | Structured doc output |
-| Doc init template | `templates/documentation-init.md` | Init report template |
 | Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
 | Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
 | Verify spec | `scripts/verify-spec.sh` | Validates that speckit.specify created a spec file |
 | Extract verdict | `scripts/extract-verdict.sh` | Extracts QA review verdict from findings filename |
-| Finish | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, and PR agent |
 
 ## Customization
 
@@ -254,7 +242,11 @@ specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flo
 
 **GitHub issue not resolving:** Ensure `gh` CLI is installed and authenticated (`gh auth status`). The `issue` parameter only supports issues from the current repository (bare number, e.g., `42`). Cross-repo references and full URLs are not supported.
 
-**Commands not appearing:** Reinstall the preset: `specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip`
+**Commands not appearing:** Ensure both the preset and extension are installed:
+```bash
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+specify extension add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+```
 
 **No spec created after specify step (specs/ is empty):** This happens when the git extension's `before_specify` hook tries to execute via `EXECUTE_COMMAND`, but the integration does not support it (e.g., opencode). The agent hangs waiting for the hook result, and the spec is never written. The workflow includes a `verify-spec` safety net that catches this and aborts with a clear error. To fix: disable the git extension before running the workflow: `specify extension disable git`. See [Git Extension Compatibility](#git-extension-compatibility) above.
 

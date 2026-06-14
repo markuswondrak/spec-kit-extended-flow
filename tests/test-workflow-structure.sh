@@ -202,15 +202,22 @@ assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.review" "Workflow doe
 assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.fix" "Workflow does not use hyphenated namespace for fix"
 assert_not_contains "$WORKFLOW_FILE" "speckit-extendedflow.documentation" "Workflow does not use hyphenated namespace for documentation"
 
-# Verify preset.yml uses dotted namespace
+# Verify extension.yml uses dotted namespace for commands
+EXTENSION_FILE="$PROJECT_DIR/extension.yml"
 PRESET_FILE="$PROJECT_DIR/preset.yml"
-assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.review"' "Preset uses dotted namespace for review"
-assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.fix"' "Preset uses dotted namespace for fix"
-assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation"' "Preset uses dotted namespace for documentation"
-assert_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation-init"' "Preset uses dotted namespace for documentation-init"
-assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.review"' "Preset does not use hyphenated namespace for review"
-assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.fix"' "Preset does not use hyphenated namespace for fix"
-assert_not_contains "$PRESET_FILE" 'name: "speckit-extendedflow.documentation"' "Preset does not use hyphenated namespace for documentation"
+assert_contains "$EXTENSION_FILE" 'name: speckit.extendedflow.review' "Extension registers review command with dotted namespace"
+assert_contains "$EXTENSION_FILE" 'name: speckit.extendedflow.fix' "Extension registers fix command with dotted namespace"
+assert_contains "$EXTENSION_FILE" 'name: speckit.extendedflow.documentation' "Extension registers documentation command with dotted namespace"
+assert_contains "$EXTENSION_FILE" 'name: speckit.extendedflow.documentation-init' "Extension registers documentation-init command with dotted namespace"
+assert_not_contains "$EXTENSION_FILE" 'name: speckit-extendedflow.review' "Extension does not use hyphenated namespace for review"
+assert_not_contains "$EXTENSION_FILE" 'name: speckit-extendedflow.fix' "Extension does not use hyphenated namespace for fix"
+assert_not_contains "$EXTENSION_FILE" 'name: speckit-extendedflow.documentation' "Extension does not use hyphenated namespace for documentation"
+
+# Verify preset.yml does NOT contain command registrations (commands moved to extension)
+assert_not_contains "$PRESET_FILE" 'type: "command"' "Preset does not register commands (moved to extension)"
+assert_not_contains "$PRESET_FILE" 'name: "speckit.extendedflow.review"' "Preset does not register review command"
+assert_not_contains "$PRESET_FILE" 'name: "speckit.extendedflow.fix"' "Preset does not register fix command"
+assert_not_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation"' "Preset does not register documentation command"
 assert_contains "$WORKFLOW_FILE" "steps.fix-verdict.output.stdout" "Fix loop condition references fix-verdict"
 
 # --- Functional tests for the external script ---
