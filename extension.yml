@@ -1,0 +1,45 @@
+schema_version: "1.0"
+
+extension:
+  id: extendedflow
+  name: "Spec-Kit Extended Flow"
+  version: "0.5.0"
+  description: "QA review loop, automated documentation reconciliation, and issue-to-PR automation"
+  author: "Markus Wondrak"
+  repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.8.5"
+
+provides:
+  commands:
+    - name: speckit.extendedflow.review
+      file: commands/speckit.extendedflow.review.md
+      description: "QA Review agent — analyzes implementation against spec and outputs PASS/FAIL"
+
+    - name: speckit.extendedflow.fix
+      file: commands/speckit.extendedflow.fix.md
+      description: "Fix agent — makes targeted, surgical fixes for review findings without re-implementing from scratch"
+
+    - name: speckit.extendedflow.documentation
+      file: commands/speckit.extendedflow.documentation.md
+      description: "Documentation agent — maintains layered documentation as truth of intent, flags code-vs-docs conflicts"
+
+    - name: speckit.extendedflow.documentation-init
+      file: commands/speckit.extendedflow.documentation-init.md
+      description: "Documentation init agent — bootstraps layered documentation structure for existing projects"
+
+    - name: speckit.extendedflow.finish
+      file: commands/speckit.extendedflow.finish.md
+      description: "Finish agent — cleans up temporary run artifacts, commits changes, and opens a PR when started from an issue"
+
+    - name: speckit.extendedflow.project-init
+      file: commands/speckit.extendedflow.project-init.md
+      description: "Project init agent — analyzes project and contextualizes Spec-Kit templates for its domain, tech stack, and architecture"
+
+tags:
+  - "qa"
+  - "review"
+  - "documentation"
+  - "workflow"

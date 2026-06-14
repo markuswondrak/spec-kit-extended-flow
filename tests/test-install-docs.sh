@@ -46,6 +46,7 @@ assert_contains "releases/latest/download/spec-kit-extended-flow.zip" "Quickstar
 assert_contains "releases/download/v2.1.0/spec-kit-extended-flow.zip" "Docs show version-pinned release ZIP asset"
 assert_contains "specify preset add --dev ." "Docs include local development install"
 assert_contains '--from` expects a ZIP package URL' "Docs explain --from ZIP requirement"
+assert_contains "specify extension add" "Docs include extension installation step"
 
 assert_not_matches "specify preset add --from https://github\\.com/markuswondrak/spec-kit-extended-flow([[:space:]]|$)" "Docs do not use bare repository URL with --from"
 assert_not_matches "/archive/refs/" "Docs do not rely on generated source archives"

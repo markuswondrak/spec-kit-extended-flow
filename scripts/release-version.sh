@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# release-version.sh — Bumps the version in preset.yml and creates a git tag.
+# release-version.sh — Bumps the version in preset.yml and extension.yml and creates a git tag.
 #
 # Usage: release-version.sh <version>
 #
@@ -11,7 +11,7 @@ set -euo pipefail
 # The script:
 #   1. Validates the version format (semver: MAJOR.MINOR.PATCH)
 #   2. Checks the working tree is clean
-#   3. Updates the version field in preset.yml
+#   3. Updates the version field in preset.yml and extension.yml
 #   4. Commits the version bump
 #   5. Creates an annotated git tag (v<version>)
 #
@@ -50,6 +50,7 @@ fi
 [ -d "$PROJECT_DIR/.git" ] || error "Not a git repository. Run from inside a git repository."
 
 PRESET_FILE="$PROJECT_DIR/preset.yml"
+EXTENSION_FILE="$PROJECT_DIR/extension.yml"
 
 # ---------------------------------------------------------------------------
 # Git repository checks
@@ -62,6 +63,7 @@ fi
 # Preset file checks
 # ---------------------------------------------------------------------------
 [ -f "$PRESET_FILE" ] || error "preset.yml not found at $PRESET_FILE"
+[ -f "$EXTENSION_FILE" ] || error "extension.yml not found at $EXTENSION_FILE"
 
 CURRENT_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ -n "$CURRENT_VERSION" ] || error "Could not extract current version from preset.yml"
@@ -79,17 +81,21 @@ if git -C "$PROJECT_DIR" rev-parse "$TAG" >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Update preset.yml
+# Update preset.yml and extension.yml
 # ---------------------------------------------------------------------------
 sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$PRESET_FILE"
+sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$EXTENSION_FILE"
 
 UPDATED_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ "$UPDATED_VERSION" = "$VERSION" ] || error "Failed to update version in preset.yml"
 
+UPDATED_EXT_VERSION=$(grep -E '^  version:' "$EXTENSION_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
+[ "$UPDATED_EXT_VERSION" = "$VERSION" ] || error "Failed to update version in extension.yml"
+
 # ---------------------------------------------------------------------------
 # Commit and tag
 # ---------------------------------------------------------------------------
-git -C "$PROJECT_DIR" add "$PRESET_FILE"
+git -C "$PROJECT_DIR" add "$PRESET_FILE" "$EXTENSION_FILE"
 git -C "$PROJECT_DIR" commit -m "chore(release): bump version to $VERSION"
 git -C "$PROJECT_DIR" tag -a "$TAG" -m "Release $TAG"
 

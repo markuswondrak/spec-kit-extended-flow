@@ -203,7 +203,7 @@ If run a second time:
 
 ## Output Requirements
 
-Produce output following the `documentation-init` template:
+Report your actions in a structured summary:
 
 1. **Initialization Summary**: Project analyzed, tech stack identified, structure created
 2. **Files Created**: Every file created, its layer, purpose, and confidence level

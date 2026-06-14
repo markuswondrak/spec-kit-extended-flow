@@ -26,7 +26,7 @@ fail() {
     ((FAILED++)) || true
 }
 
-# Helper: create a temporary git repo with a preset.yml
+# Helper: create a temporary git repo with a preset.yml and extension.yml
 setup_git_repo() {
     local repo_dir="$1"
     local version="${2:-0.1.0}"
@@ -47,7 +47,17 @@ preset:
   description: "A test preset."
 EOF
 
-    git add preset.yml
+    cat > extension.yml << EOF
+schema_version: "1.0"
+
+extension:
+  id: test-extension
+  name: "Test Extension"
+  version: "$version"
+  description: "A test extension."
+EOF
+
+    git add preset.yml extension.yml
     git commit -m "Initial commit"
     cd - >/dev/null
 }
@@ -173,6 +183,21 @@ if [ "$updated_version" = "1.0.0" ]; then
     pass "Version updated in preset.yml"
 else
     fail "Version updated in preset.yml" "Expected 1.0.0, got $updated_version"
+fi
+
+# Verify extension.yml was also updated
+updated_ext_version=$(grep -E '^  version:' "$REPO/extension.yml" | sed -E 's/.*"([^"]+)".*/\1/')
+if [ "$updated_ext_version" = "1.0.0" ]; then
+    pass "Version updated in extension.yml"
+else
+    fail "Version updated in extension.yml" "Expected 1.0.0, got $updated_ext_version"
+fi
+
+# Verify both files have the same version
+if [ "$updated_version" = "$updated_ext_version" ]; then
+    pass "preset.yml and extension.yml versions are synchronized"
+else
+    fail "preset.yml and extension.yml versions are synchronized" "preset=$updated_version, extension=$updated_ext_version"
 fi
 
 # Verify commit was created

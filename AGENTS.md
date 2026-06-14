@@ -1,6 +1,6 @@
 # Spec-Kit Extended Flow — Global Constraints
 
-This is a **Spec-Kit preset**, not an application. It defines a workflow (`workflow.yml`), a manifest (`preset.yml`), agent commands (`commands/`), templates (`templates/`), and shell scripts (`scripts/`). All changes must preserve the Spec-Kit contract.
+This is a **Spec-Kit preset and extension**, not an application. It defines a workflow (`workflow.yml`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), agent commands (`commands/`), templates (`templates/`), and shell scripts (`scripts/`). All changes must preserve the Spec-Kit contract.
 
 ## Hard Prohibitions
 
@@ -21,10 +21,11 @@ This is a **Spec-Kit preset**, not an application. It defines a workflow (`workf
 | Path | Role |
 |------|------|
 | `workflow.yml` | Orchestration: inputs, steps, gates, loops |
-| `preset.yml` | Manifest: version, provides, tags |
+| `preset.yml` | Preset manifest: templates, scripts, version, tags |
+| `extension.yml` | Extension manifest: commands, version, tags |
 | `scripts/` | Executable shell scripts called by workflow steps |
 | `commands/` | Agent system prompts (review, fix, documentation, documentation-init, finish) |
-| `templates/` | Structured output templates (review-findings, documentation, documentation-init) |
+| `templates/` | Structured output templates (review-findings, documentation) |
 | `tests/` | Bash test suites for shell scripts and workflow structure |
 
 ### Scripts
@@ -39,7 +40,7 @@ This is a **Spec-Kit preset**, not an application. It defines a workflow (`workf
 
 ## Downstream Project Layout
 
-This repo is a **preset**. The agents in `commands/` and the workflow in `workflow.yml` execute in **downstream projects** that install this preset via `specify preset add`. The downstream file layout is completely different from this repo.
+This repo is a **preset and extension**. The agents in `commands/` and the workflow in `workflow.yml` execute in **downstream projects** that install this preset via `specify preset add` and the extension via `specify extension add`. The downstream file layout is completely different from this repo.
 
 ### Downstream root
 
@@ -94,7 +95,7 @@ Must preserve:
 
 ## Known Issues
 
-- **Spec-Kit < v0.9.5 registration bug**: Preset commands with three-part names (`speckit.extendedflow.*`) are silently dropped during `specify preset add` if `.specify/extensions/extendedflow/` does not exist. Workaround: `mkdir -p .specify/extensions/extendedflow` before installing. Fixed upstream in Spec-Kit v0.9.5+.
+- **Spec-Kit < v0.9.5 registration bug**: Previously, preset commands with three-part names (`speckit.extendedflow.*`) were silently dropped during `specify preset add`. This is no longer an issue — commands are now delivered via the extension (`extension.yml`), which is the correct Spec-Kit architecture. The preset now only delivers templates and scripts.
 
 ## Pointers to Depth
 
