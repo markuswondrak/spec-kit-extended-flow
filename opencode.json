@@ -1,0 +1,9 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "release": {
+      "description": "Full release automation: commits current changes, merges to main, bumps minor version in preset.yml and extension.yml, creates git tag, and pushes.",
+      "prompt": "Execute the shell script `scripts/release.sh` from the project root to perform a full release.\n\nSteps the script performs:\n1. Commits any uncommitted changes with message 'chore: prepare release'\n2. Switches to the main branch (creates it if missing)\n3. Merges the current feature branch into main (if not already on main)\n4. Reads the current version from preset.yml\n5. Computes the next minor version (MAJOR.MINOR+1.0)\n6. Updates the version in both preset.yml and extension.yml\n7. Commits the version bump with message 'chore(release): bump version to X.Y.Z'\n8. Creates an annotated git tag (vX.Y.Z)\n9. Pushes main and tags to origin\n\nRun the script using the bash tool, capture its stdout and stderr, and present the results to the user. If the script exits with an error, analyze the output, explain what went wrong, and suggest the next steps to fix it."
+    }
+  }
+}
