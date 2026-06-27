@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow"
-  version: "0.7.0"
+  version: "0.8.0"
   description: "SDD workflow with QA review loop, automated documentation reconciliation, and issue-to-PR automation. Constitution, planning constraints, and documentation initialization are prerequisites — handled outside the workflow."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
