@@ -36,6 +36,7 @@ This is a **Spec-Kit preset and extension**, not an application. It defines work
 | `scripts/resolve-spec.sh` | Resolves `spec`, `file`, and `issue` inputs into specification/bug-report content |
 | `scripts/create-branch.sh` | Creates a `<prefix>/<issue>-<slug>` branch from a GitHub issue (default prefix: `feature`, bugfix prefix: `fix`) |
 | `scripts/extract-verdict.sh` | Extracts the QA review verdict from the review findings filename |
+| `scripts/resolve-pr-template.sh` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
 | `scripts/package-preset.sh` | Builds the preset ZIP package |
 | `scripts/release-version.sh` | Bumps version, commits, and tags a release |
 
@@ -111,4 +112,5 @@ Must preserve:
 - **Output templates**: See `templates/review-findings.md`, `templates/documentation.md`, `templates/bug-analysis.md`
 - **Input resolution logic**: See `scripts/resolve-spec.sh`
 - **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/extract-verdict.sh`
+- **PR template resolution**: See `scripts/resolve-pr-template.sh`
 - **Architecture & design rationale**: See `README.md`
