@@ -17,6 +17,52 @@ Generic templates produce generic output. Project-specific templates produce out
 
 This command is interactive and operates in a dialogue with the user.
 
+## Template Generation Contract
+
+Generated overrides MUST respect the layered documentation model (see `speckit.extendedflow.documentation-init.md`). The layering collapses if templates re-state Layer-1 content.
+
+### Layer awareness
+
+| Layer | File | Loading | Template rule |
+|-------|------|---------|---------------|
+| Layer 1 | Root `AGENTS.md`, `constitution.md` | **Always / command-loaded** | NEVER re-state. Point by anchor only (e.g., `AGENTS.md §2`). NEVER list in a "Pre-Reading" table. |
+| Layer 2 | `docs/architecture/*`, nested `AGENTS.md`, `patterns.md`, `glossary.md` | Task-scoped | Link by anchor when relevant to a section. Do NOT pre-declare as mandatory reading. |
+| Layer 3 | `strategy.md`, `quality.md`, `risks.md` | Rarely | Link only when the template section is strategic. |
+
+### What to EMBED (project-specific, NOT in AGENTS.md)
+
+- Actual file paths from the code graph (e.g., `lib/features/<feature>/domain/entities/`)
+- Domain entities and ubiquitous language (e.g., `AnalysisResult`, `QuotaStatus`)
+- Tech stack versions (e.g., `Dart ^3.10.4`, `Flutter 3.10.4+`)
+- Naming conventions derived from the codebase
+- Test directory structure mirroring the source tree
+
+### What to REFERENCE (already in AGENTS.md / constitution.md)
+
+- BANNED patterns (e.g., `Text()`, `AlertDialog`, `isPremiumProvider`)
+- MANDATORY patterns (e.g., `AppLogger`, feature-oriented architecture, accessibility standards)
+- Quality goals, core principles
+- Test runner rules
+
+Reference pattern: `See AGENTS.md §2` — one line, no re-statement.
+
+### Pre-Reading Section Rule
+
+Generated templates MUST NOT contain a "Pre-Reading (Mandatory)" table that lists `AGENTS.md` or `constitution.md`. These are always-loaded or command-loaded by the SDD workflow itself.
+
+If on-demand Layer-2 docs are relevant to a template section, link them inline at that section — not in a top-of-file mandatory-reading block.
+
+### Checklist Exception
+
+Checklists MAY contain `[ ]` items that *name* a rule-family as a single consolidated line, e.g.:
+- `[ ] AGENTS.md §2 BANNED patterns verified (no Text(), no AlertDialog, no isPremiumProvider in UI)`
+
+But checklists MUST NOT re-enumerate each rule with its full rationale in separate items.
+
+### Degradation when Layer-1 is absent
+
+If `AGENTS.md` does not yet exist, templates MUST emit `<!-- HUMAN INPUT REQUIRED: run speckit.extendedflow.documentation-init first -->` in place of anchor references. They MUST NOT re-state Layer-1 rules as a fallback.
+
 ## When You Run
 
 You run **once** per project — after `specify init` but before the first `speckit.specify` command. After you finish, the core Spec-Kit commands (`speckit.specify`, `speckit.plan`, `speckit.tasks`, `speckit.constitution`, `speckit.checklist`) will use your overrides automatically.
@@ -129,40 +175,45 @@ Based on the confirmed context from Phase 1, generate project-specific overrides
 ### 2.1 `spec-template.md` (Focus: The "What" and Domain)
 
 Rewrite the template to:
-- **Force ubiquitous language**: Replace generic placeholders with domain-specific terms. Instead of "[Entity 1]", use the actual domain entities identified in Phase 1
+- **Force ubiquitous language**: Replace generic placeholders with the actual domain entities identified in Phase 1 (e.g., `AnalysisResult`, not "[Entity 1]")
 - **Add domain impact sections**: Require specification of how new features impact core domain entities
-- **Embed business rules**: Add sections that require explicit documentation of business invariants
-- **Add acceptance criteria patterns**: Use the project's actual testing conventions (e.g., if the project uses BDD, structure scenarios accordingly)
+- **Reference business invariants**: Point to AGENTS.md/constitution.md for invariants — do NOT re-state them (See Template Generation Contract)
+- **Add acceptance criteria patterns**: Use the project's actual testing conventions (e.g., BDD scenarios if the project uses BDD)
+- **Reference Layer-1 rules**: Accessibility/quota rules are referenced as `See AGENTS.md §2`, never re-enumerated
 
 ### 2.2 `plan-template.md` (Focus: The "How" and Architecture)
 
 Rewrite the template to:
-- **Enforce architectural patterns**: Add strict guidelines on where specific files must be placed according to the current code graph
-- **Embed tech stack rules**: Require explicit justification for introducing new dependencies or deviating from the current stack
-- **Add structure enforcement**: Replace generic directory trees with the actual project structure
-- **Add convention checks**: Include reminders about naming conventions, file placement, and architectural boundaries
+- **Embed actual file placement**: Replace generic directory trees with the real project structure from the code graph
+- **Embed tech stack table**: Concrete versions and primary dependencies (NOT in AGENTS.md)
+- **Reference conventions**: Naming, file placement, and architectural boundaries are pointed to (`See AGENTS.md §2`, `See docs/architecture/building-blocks.md`) — NOT re-stated
+- **Add dependency justification gate**: Require explicit justification for new dependencies (project-specific decision, not a Layer-1 rule)
 
 ### 2.3 `tasks-template.md` (Focus: Execution and Conventions)
 
 Rewrite the template to:
-- **Use actual file paths**: Replace generic `src/models/` with the project's actual directory structure
-- **Embed testing conventions**: Require tests to follow the project's existing test patterns and locations
-- **Add parallel execution rules**: Define what can run in parallel based on the project's module boundaries
-- **Enforce code style**: Remind implementers of linting, formatting, and naming rules
+- **Use actual file paths**: Replace generic `src/models/` with the project's real directory structure
+- **Embed testing conventions**: Actual test paths and runner command (project-specific)
+- **Add parallel execution rules**: Based on the project's module boundaries
+- **Reference code style**: Linting/formatting rules are pointed to (`See AGENTS.md §2`, `See constitution.md`) — NOT re-enumerated per phase
+- **Single convention checkpoint**: One consolidated `[ ] AGENTS.md §2 compliance verified` item per phase, not a re-listing of every rule
 
 ### 2.4 `constitution-template.md` (Focus: Project Principles)
 
 Rewrite the template to:
 - **Infer principles from code**: Identify existing quality goals from code patterns (e.g., extensive error handling → reliability)
-- **Add tech-specific constraints**: Include rules about the tech stack, testing standards, and architectural invariants
-- **Embed conventions**: Document naming, file placement, and code style as constitutional rules
+- **Add tech-specific constraints**: Tech stack, testing standards, architectural invariants NOT already in AGENTS.md
+- **Reference existing conventions**: Naming, file placement, code style already in AGENTS.md are pointed to, not duplicated
+- **Amendment-only**: If a constitution exists, the template is for amendments only — reference the base, do not re-state it
 
 ### 2.5 `checklist-template.md` (Focus: Quality Gates)
 
 Rewrite the template to:
-- **Add architecture compliance checks**: Verify that implementations follow the identified architectural patterns
-- **Add domain language checks**: Verify that new features use the correct ubiquitous language
-- **Add file placement checks**: Verify that files are placed according to the project's conventions
+- **Add architecture compliance checks**: Verify implementations follow the identified architectural patterns
+- **Add domain language checks**: Verify new features use the correct ubiquitous language
+- **Add file placement checks**: Verify files are placed per project conventions
+- **Consolidated rule-family items**: Each AGENTS.md §2 rule-family is ONE checkbox naming the family (e.g., `[ ] AGENTS.md §2 BANNED patterns verified`), NOT a separate item per rule with rationale (See Checklist Exception)
+- **No Pre-Reading table**: The checklist assumes AGENTS.md is already loaded; reference it by anchor in items
 
 ### Phase 2 Output
 
@@ -223,6 +274,8 @@ Each generated template MUST:
 - Reference actual directory paths from the codebase, not generic examples
 - Preserve the structural contract of the original template (same sections, same purpose)
 - Be concise but specific — generic placeholders are replaced with project-specific guidance
+- **No Layer-1 re-statement**: Templates MUST NOT re-state rules from AGENTS.md or constitution.md. Reference by anchor only (`AGENTS.md §2`). See Template Generation Contract.
+- **No mandatory-reading tables for always-loaded files**: Templates MUST NOT include a "Pre-Reading (Mandatory)" table listing AGENTS.md or constitution.md. Link Layer-2 docs inline at the relevant section instead.
 
 ---
 
@@ -241,6 +294,7 @@ Report your actions in a structured summary:
 - **Do NOT generate task templates** — task templates are for execution, not for project setup
 - **Do NOT generate constitution content** — only the template that guides constitution creation
 - **Do NOT fabricate information** — if you cannot infer something, mark it as needing human input
+- **Do NOT re-state Layer-1 rules** — reference AGENTS.md/constitution.md by anchor only (`See AGENTS.md §2`). See Template Generation Contract.
 - **Do NOT overwrite existing files without confirmation** — always check first
 - **Do NOT modify source code** — this command only generates template overrides
 - **Do NOT modify installed config** — `.specify/presets/`, `.specify/extensions/`, `.specify/scripts/` must remain untouched
@@ -256,6 +310,9 @@ After completing all phases, confirm:
 - [ ] Templates use the project's ubiquitous language
 - [ ] Templates reference actual directory paths from the codebase
 - [ ] Templates preserve the structural contract of the original Spec-Kit templates
+- [ ] No override contains a "Pre-Reading (Mandatory)" table listing AGENTS.md or constitution.md
+- [ ] No override re-states Layer-1 rules verbatim (banned/mandatory patterns referenced as "See AGENTS.md §2", not re-enumerated)
+- [ ] checklist-template.md uses one consolidated checkbox per rule-family, not one item per rule
 - [ ] User has confirmed the accuracy of the generated templates
 - [ ] No source code was modified
 - [ ] No installed config was modified

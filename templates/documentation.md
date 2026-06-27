@@ -25,13 +25,13 @@
 
 ## Conflicts (Human Resolution Required)
 
-> These items represent contradictions between documented intent/constraints and current code behavior. The agent has NOT resolved them — a human must decide which side is correct.
+> These items represent contradictions between a **marked guideline** and current code behavior. The agent has NOT resolved them — a human must classify each conflict.
 
-| # | Document | Constraint/Intent Stated | Code Behavior Observed | Layer | Category |
-|---|----------|--------------------------|------------------------|-------|----------|
+| # | Document | Guideline Stated | Code Behavior Observed | Layer | Category |
+|---|---|----------|--------------------------|------------------------|-------|----------|
 | 1 | {{document_path}} | {{what_docs_say}} | {{what_code_does}} | {{layer}} | {{category}} |
 
-**Action required**: For each conflict, determine whether the code has a bug (fix the code) or the documentation is stale (update the documentation). Then commit the resolution.
+**Action required**: For each conflict, classify it: (a) **bug** — fix the code; (b) **stale guideline** — update the documentation; (c) **tech debt** — keep the guideline and add an entry to the AI Debt Register below referencing it. Then commit the resolution.
 
 ---
 
@@ -67,9 +67,9 @@
 
 #### AI Debt Register
 
-| Pattern | Location | Why It Must Not Be Replicated |
-|---------|----------|-------------------------------|
-| {{pattern}} | {{file_path}} | {{rationale}} |
+| Pattern | Location | Guideline Ref | Why It Must Not Be Replicated |
+|---------|----------|---------------|-------------------------------|
+| {{pattern}} | {{file_path}} | {{guideline_reference}} | {{rationale}} |
 
 ---
 
@@ -93,5 +93,5 @@
 - [ ] Interface contracts category verified
 - [ ] Architecture boundaries category verified
 - [ ] All documentation updates are in the same commit as the code
-- [ ] No conflicts were auto-resolved (all flagged for human review)
+- [ ] No conflicts were auto-resolved (all flagged for human classification as bug / stale guideline / tech debt)
 - [ ] Progressive disclosure maintained (summaries ≤ 200 tokens, pointers to depth)
