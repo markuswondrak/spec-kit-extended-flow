@@ -46,7 +46,12 @@ if [ "${#slug}" -gt 50 ]; then
     slug=$(echo "$slug" | sed 's/-*$//')
 fi
 
-branch_name="feature/${ISSUE}-${slug}"
+BRANCH_PREFIX="${2:-feature}"
+
+# Normalize prefix (remove trailing slash if present, then add it back)
+BRANCH_PREFIX="${BRANCH_PREFIX%/}"
+
+branch_name="${BRANCH_PREFIX}/${ISSUE}-${slug}"
 
 # ---------------------------------------------------------------------------
 # Create or checkout branch

@@ -4,7 +4,7 @@ preset:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow"
   version: "0.9.0"
-  description: "SDD workflow with QA review loop, automated documentation reconciliation, and issue-to-PR automation. Constitution, planning constraints, and documentation initialization are prerequisites — handled outside the workflow."
+  description: "A complete agentic engineering pipeline that turns intent into working, reviewed, documented software. Extends Spec-Kit's SDD workflow with a QA review loop, living documentation reconciliation, and issue-to-PR automation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -14,6 +14,11 @@ requires:
 
 provides:
   templates:
+    - type: "template"
+      name: "bug-analysis"
+      file: "templates/bug-analysis.md"
+      description: "Structured template for bug root-cause analysis, fix strategy, and test plan"
+
     - type: "template"
       name: "review-findings"
       file: "templates/review-findings.md"

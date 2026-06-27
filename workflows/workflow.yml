@@ -2,10 +2,10 @@ schema_version: "1.0"
 
 workflow:
   id: "spec-kit-extended-flow"
-  name: "Spec-Kit Extended Flow — SDD Lifecycle with QA Review and Documentation Reconciliation"
+  name: "Spec-Kit Extended Flow — Feature Flow"
   version: "0.9.0"
   author: "Markus Wondrak"
-  description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
+  description: "The Feature Flow: SDD lifecycle with QA review and documentation reconciliation. Runs specification, planning, tasks, implementation, a QA review loop, and documentation reconciliation. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
 requires:
   speckit_version: ">=0.8.5"

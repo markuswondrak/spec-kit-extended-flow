@@ -8,7 +8,7 @@ set -euo pipefail
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$TEST_DIR")"
-WORKFLOW_FILE="$PROJECT_DIR/workflow.yml"
+WORKFLOW_FILE="$PROJECT_DIR/workflows/workflow.yml"
 SCRIPT_FILE="$PROJECT_DIR/scripts/resolve-spec.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -91,6 +91,9 @@ FINISH_FILE="$PROJECT_DIR/commands/speckit.extendedflow.finish.md"
 
 echo "=== Test Suite: workflow.yml structure ==="
 echo ""
+
+assert_file_exists "$PROJECT_DIR/workflows/workflow.yml" "workflow.yml is in workflows/ directory"
+assert_not_contains "$PROJECT_DIR/workflow.yml" "schema_version" "No workflow.yml at root"
 
 # --- External script checks ---
 

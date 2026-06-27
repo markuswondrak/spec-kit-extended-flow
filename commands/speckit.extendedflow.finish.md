@@ -27,13 +27,15 @@ You receive two arguments separated by a space:
 
 ### 1. Read `.specify/feature.json`
 
-Read `.specify/feature.json` to determine the current feature directory. The file contains a JSON object with a `feature_directory` key:
+Read `.specify/feature.json` to determine the current feature directory and type. The file contains a JSON object with a `feature_directory` key and optionally a `type` key:
 
 ```json
-{"feature_directory": "specs/001-my-feature"}
+{"feature_directory": "specs/001-my-feature", "type": "bug"}
 ```
 
 Extract the value of `feature_directory`. This is the path to the feature directory relative to the project root.
+
+Also extract `type` if present. If `type` is `"bug"`, use commit/PR prefix `fix:`. Otherwise use `feat:`.
 
 ### 2. Clean Up Temporary Files
 
@@ -66,22 +68,25 @@ If there are staged changes (`git diff --cached --quiet` returns non-zero), crea
 
 **When an issue number was provided:**
 1. Fetch the issue title using: `gh issue view <issue> --json title --jq '.title'`
-2. Commit message: `feat: <issue_title> (#<issue>)`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+3. Commit message: `<prefix> <issue_title> (#<issue>)`
 
 **When no issue number was provided:**
 1. Derive a concise feature name from the feature directory path (e.g., `001-my-feature` → `my feature`)
-2. Commit message: `feat: <feature_name>`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+3. Commit message: `<prefix> <feature_name>`
 
 ### 5. Open Pull Request (issue-only)
 
 If an issue number was provided:
 
 1. Ensure `gh` CLI is available. If not, report an error.
-2. Create a PR with:
-   - Title: `feat: <issue_title>`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+3. Create a PR with:
+   - Title: `<prefix> <issue_title>`
    - Body: `Closes #<issue>`
    - Base branch: `main`
-   - Command: `gh pr create --title "feat: <issue_title>" --body "Closes #<issue>" --base main`
+   - Command: `gh pr create --title "<prefix> <issue_title>" --body "Closes #<issue>" --base main`
 
 If no issue number was provided, skip PR creation.
 

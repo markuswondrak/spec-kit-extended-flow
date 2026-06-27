@@ -78,7 +78,7 @@ Beide verwenden dreiteilige Namen (`speckit.<domain>.<cmd>`), daher werden alle 
 |------------|-------|----------|----------------|---------|
 | **Preset** | Templates & Output-Formate | `preset.yml` | `.specify/presets/` | Templates, Scripts |
 | **Extension** | Commands & Hooks | `extension.yml` | `.specify/extensions/` | Commands, Config, Hooks |
-| **Workflow** | Orchestrierung & Steps | `workflow.yml` | `.specify/workflows/` | Step-Definitionen |
+| **Workflow** | Orchestrierung & Steps | `workflows/workflow.yml` | `.specify/workflows/` | Step-Definitionen |
 
 ### Beispiel: Git Extension (korrekt)
 
@@ -140,7 +140,8 @@ provides:
 spec-kit-extended-flow/
 ├── preset.yml              # Nur Templates
 ├── extension.yml           # Nur Commands (NEU)
-├── workflow.yml            # Workflow (bleibt)
+├── workflows/
+│   └── workflow.yml        # Workflow (bleibt)
 ├── commands/               # Commands (bleiben)
 │   ├── speckit.extendedflow.review.md
 │   ├── speckit.extendedflow.fix.md

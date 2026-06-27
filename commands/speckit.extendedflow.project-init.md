@@ -76,6 +76,26 @@ You run **once** per project — after `specify init` but before the first `spec
 
 ---
 
+## Pre-flight: Extension Compatibility
+
+Before any analysis, resolve a hard incompatibility with spec-kit's built-in git extension.
+
+**Why this is required:** The git extension registers a mandatory `before_specify` hook (`speckit.git.feature`) that creates branches with sequential numbering. This workflow manages its own branch creation (issue-based naming: `feature/<issue>-<slug>` via `create-branch.sh`). On integrations that do not support the `EXECUTE_COMMAND` protocol (e.g., opencode), the mandatory hook causes the agent to hang waiting for a result that never arrives. Disabling the git extension eliminates the conflict.
+
+**Action:** Run the following command and include the result in your final report:
+
+```bash
+specify extension disable git
+```
+
+- If the command succeeds, record "git extension disabled" in your summary.
+- If the git extension is already disabled (or not installed), record "git extension already disabled — no action needed" and continue.
+- If the `specify` CLI is unavailable in this environment, record `<!-- HUMAN INPUT REQUIRED: run \`specify extension disable git\` before starting a workflow -->` and continue.
+
+This is the **only** installed-config modification this command performs. See the carve-out in [Important Constraints](#important-constraints).
+
+---
+
 ## Interactive Dialogue Model
 
 This command operates as a **structured conversation** with the user. You do NOT generate all files in one shot. Instead, you proceed through phases, presenting findings and asking for confirmation or clarification at each step.
@@ -284,10 +304,11 @@ Each generated template MUST:
 Report your actions in a structured summary:
 
 1. **Initialization Summary**: Project analyzed, context discovered, templates tailored
-2. **Context Discovery**: Confirmed domain, tech stack, architecture, and conventions
-3. **Templates Generated**: Every file created, its purpose, and what was customized
-4. **Human Input Required**: Specific questions/items that need human knowledge — prioritized
-5. **Next Steps**: What the user should do next (e.g., run `speckit.constitution`, start first feature)
+2. **Extension Compatibility**: Outcome of the Pre-flight git-extension check (disabled / already disabled / human input required)
+3. **Context Discovery**: Confirmed domain, tech stack, architecture, and conventions
+4. **Templates Generated**: Every file created, its purpose, and what was customized
+5. **Human Input Required**: Specific questions/items that need human knowledge — prioritized
+6. **Next Steps**: What the user should do next (e.g., run `speckit.constitution`, start first feature)
 
 ## Important Constraints
 
@@ -298,6 +319,7 @@ Report your actions in a structured summary:
 - **Do NOT overwrite existing files without confirmation** — always check first
 - **Do NOT modify source code** — this command only generates template overrides
 - **Do NOT modify installed config** — `.specify/presets/`, `.specify/extensions/`, `.specify/scripts/` must remain untouched
+- **Exception — git extension**: You MAY disable the git extension via `specify extension disable git` as part of the [Pre-flight](#pre-flight-extension-compatibility). This is the only permitted installed-config modification; it prevents a hard incompatibility that hangs the workflow on integrations without `EXECUTE_COMMAND` support.
 - **Do NOT modify the core templates** — only write overrides to `.specify/templates/overrides/`
 
 ## Verification Checklist
@@ -315,4 +337,5 @@ After completing all phases, confirm:
 - [ ] checklist-template.md uses one consolidated checkbox per rule-family, not one item per rule
 - [ ] User has confirmed the accuracy of the generated templates
 - [ ] No source code was modified
-- [ ] No installed config was modified
+- [ ] No installed config was modified (except the git-extension disable from Pre-flight, if applicable)
+- [ ] Pre-flight git-extension check completed and recorded in the summary

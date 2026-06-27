@@ -35,6 +35,17 @@ for cmd_file in "$COMMANDS_DIR"/*.md; do
             ((PASSED++)) || true
         fi
     done
+
+    # Verify bug-analysis commands reference correct paths
+    if [[ "$filename" == *"bug-analyze"* || "$filename" == *"bug-test"* || "$filename" == *"bug-fix"* || "$filename" == *"bug-review"* ]]; then
+        if grep -q "specs/" "$cmd_file"; then
+            echo "PASS: $filename references specs/ directory"
+            ((PASSED++)) || true
+        else
+            echo "FAIL: $filename should reference specs/ directory"
+            ((FAILED++)) || true
+        fi
+    fi
 done
 
 echo ""

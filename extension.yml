@@ -4,7 +4,7 @@ extension:
   id: extendedflow
   name: "Spec-Kit Extended Flow"
   version: "0.9.0"
-  description: "QA review loop, automated documentation reconciliation, and issue-to-PR automation"
+  description: "A complete agentic engineering pipeline that turns intent into working, reviewed, documented software. Extends Spec-Kit's SDD workflow with a QA review loop, living documentation reconciliation, and issue-to-PR automation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -14,6 +14,22 @@ requires:
 
 provides:
   commands:
+    - name: speckit.extendedflow.bug-analyze
+      file: commands/speckit.extendedflow.bug-analyze.md
+      description: "Bug analyze agent — root-cause analysis, test plan, and risk assessment"
+
+    - name: speckit.extendedflow.bug-test
+      file: commands/speckit.extendedflow.bug-test.md
+      description: "Bug test agent — writes a failing test that reproduces the bug (RED phase)"
+
+    - name: speckit.extendedflow.bug-fix
+      file: commands/speckit.extendedflow.bug-fix.md
+      description: "Bug fix agent — applies surgical fix until the test passes (GREEN phase)"
+
+    - name: speckit.extendedflow.bug-review
+      file: commands/speckit.extendedflow.bug-review.md
+      description: "Bug review agent — verifies fix against bug-analysis.md and outputs PASS/FAIL"
+
     - name: speckit.extendedflow.review
       file: commands/speckit.extendedflow.review.md
       description: "QA Review agent — analyzes implementation against spec and outputs PASS/FAIL"

@@ -17,7 +17,8 @@ command -v zip >/dev/null 2>&1 || error "zip command is required to build the pr
 required_paths=(
     "preset.yml"
     "extension.yml"
-    "workflow.yml"
+    "workflows/workflow.yml"
+    "workflows/bugfix-workflow.yml"
     "commands/speckit.extendedflow.documentation-init.md"
     "commands/speckit.extendedflow.documentation.md"
     "commands/speckit.extendedflow.review.md"
@@ -38,17 +39,18 @@ tmp_zip="$tmp_dir/$PACKAGE_NAME"
 stage_dir="$tmp_dir/package"
 trap 'rm -rf "$tmp_dir"' EXIT
 
-mkdir -p "$stage_dir/commands" "$stage_dir/templates" "$stage_dir/scripts"
+mkdir -p "$stage_dir/commands" "$stage_dir/templates" "$stage_dir/scripts" "$stage_dir/workflows"
 
 cp -p "$PROJECT_DIR/preset.yml" "$stage_dir/preset.yml"
 cp -p "$PROJECT_DIR/extension.yml" "$stage_dir/extension.yml"
-cp -p "$PROJECT_DIR/workflow.yml" "$stage_dir/workflow.yml"
+cp -p "$PROJECT_DIR/workflows/workflow.yml" "$stage_dir/workflows/workflow.yml"
+cp -p "$PROJECT_DIR/workflows/bugfix-workflow.yml" "$stage_dir/workflows/bugfix-workflow.yml"
 cp -p "$PROJECT_DIR/README.md" "$stage_dir/README.md"
 cp -p "$PROJECT_DIR"/commands/*.md "$stage_dir/commands/"
 cp -p "$PROJECT_DIR"/templates/*.md "$stage_dir/templates/"
 cp -p "$PROJECT_DIR/scripts/resolve-spec.sh" "$stage_dir/scripts/"
 
-package_entries=(preset.yml extension.yml workflow.yml README.md commands templates scripts)
+package_entries=(preset.yml extension.yml workflows README.md commands templates scripts)
 for license_file in LICENSE LICENSE.md; do
     if [ -f "$PROJECT_DIR/$license_file" ]; then
         cp -p "$PROJECT_DIR/$license_file" "$stage_dir/$license_file"
