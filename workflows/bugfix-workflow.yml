@@ -32,6 +32,11 @@ inputs:
     required: false
     default: ""
     prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the bug description."
+  integration:
+    type: string
+    required: false
+    default: "auto"
+    prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
 
 steps:
   - id: resolve-spec
@@ -48,7 +53,7 @@ steps:
 
   - id: bug-analyze
     command: speckit.extendedflow.bug-analyze
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
@@ -61,17 +66,17 @@ steps:
 
   - id: bug-test
     command: speckit.extendedflow.bug-test
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: bug-fix
     command: speckit.extendedflow.bug-fix
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: bug-review
     command: speckit.extendedflow.bug-review
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: bug-review-verdict
@@ -89,11 +94,11 @@ steps:
         steps:
           - id: fix
             command: speckit.extendedflow.bug-fix
-            integration: "auto"
+            integration: "{{ inputs.integration }}"
             model: ""
           - id: fix-review
             command: speckit.extendedflow.bug-review
-            integration: "auto"
+            integration: "{{ inputs.integration }}"
             model: ""
           - id: fix-verdict
             type: shell
@@ -109,7 +114,7 @@ steps:
 
   - id: finish
     command: speckit.extendedflow.finish
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
     input:
       args: "{{ context.run_id }} {{ inputs.issue }}"

@@ -32,6 +32,11 @@ inputs:
     required: false
     default: ""
     prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the specification."
+  integration:
+    type: string
+    required: false
+    default: "auto"
+    prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
 steps:
   - id: resolve-spec
     type: shell
@@ -47,7 +52,7 @@ steps:
 
   - id: specify
     command: speckit.specify
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
@@ -64,7 +69,7 @@ steps:
 
   - id: plan
     command: speckit.plan
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
     input:
       args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
@@ -77,17 +82,17 @@ steps:
 
   - id: tasks
     command: speckit.tasks
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: implement
     command: speckit.implement
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: review
     command: speckit.extendedflow.review
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: review-verdict
@@ -105,11 +110,11 @@ steps:
         steps:
           - id: fix
             command: speckit.extendedflow.fix
-            integration: "auto"
+            integration: "{{ inputs.integration }}"
             model: ""
           - id: fix-review
             command: speckit.extendedflow.review
-            integration: "auto"
+            integration: "{{ inputs.integration }}"
             model: ""
           - id: fix-verdict
             type: shell
@@ -125,12 +130,12 @@ steps:
 
   - id: documentation
     command: speckit.extendedflow.documentation
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
 
   - id: finish
     command: speckit.extendedflow.finish
-    integration: "auto"
+    integration: "{{ inputs.integration }}"
     model: ""
     input:
       args: "{{ context.run_id }} {{ inputs.issue }}"

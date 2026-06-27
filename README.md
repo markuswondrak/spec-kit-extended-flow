@@ -274,9 +274,15 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 
 #### Model and integration configuration
 
-Every command step in a workflow has dedicated `integration` and `model` attributes. By default all steps use `integration: "auto"` and `model: ""` (agent default).
+Every command step references the `integration` workflow input, which defaults to `"auto"`. Spec-Kit resolves `"auto"` automatically from `.specify/integration.json` (created by `specify init`), so the workflow dispatches to the AI the project was initialized with — no manual configuration needed. Each step also has a `model` attribute that defaults to `""` (agent default).
 
-**To customize, edit the installed workflow directly.** After installing, open `.specify/workflows/<id>/workflow.yml` and change the literals on the steps you want to configure:
+**To override per-run**, pass `--input integration=<key>`:
+
+```bash
+specify workflow run spec-kit-extended-flow --input integration=claude
+```
+
+**To customize permanently**, edit the installed workflow directly. Open `.specify/workflows/<id>/workflow.yml` and replace `{{ inputs.integration }}` with a literal integration key on the steps you want to configure:
 
 ```yaml
   - id: plan

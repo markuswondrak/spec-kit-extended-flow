@@ -69,6 +69,9 @@ echo "--- Checking inputs ---"
 assert_contains "$BUGFIX_WORKFLOW" "spec:" "Has spec input"
 assert_contains "$BUGFIX_WORKFLOW" "file:" "Has file input"
 assert_contains "$BUGFIX_WORKFLOW" "issue:" "Has issue input"
+assert_contains "$BUGFIX_WORKFLOW" 'default: "auto"' "Integration input uses auto default for spec-kit resolution"
+assert_contains "$BUGFIX_WORKFLOW" 'integration: "{{ inputs.integration }}"' "Steps reference integration input"
+assert_not_contains "$BUGFIX_WORKFLOW" 'integration: "auto"' "No literal integration: auto on steps (resolved via input)"
 
 # --- Steps: resolve + branch ---
 echo "--- Checking resolve and branch steps ---"

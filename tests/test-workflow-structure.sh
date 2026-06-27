@@ -228,24 +228,30 @@ assert_contains "$WORKFLOW_FILE" "steps.fix-verdict.output.stdout" "Fix loop con
 echo ""
 echo "--- Checking per-step integration and model literals ---"
 
-assert_not_contains "$WORKFLOW_FILE" "inputs.integration" "No references to old monolithic integration input"
+# Old monolithic per-step integration variables are gone
 assert_not_contains "$WORKFLOW_FILE" "plan_integration:" "No plan_integration input variable"
 assert_not_contains "$WORKFLOW_FILE" "implement_integration:" "No implement_integration input variable"
 assert_not_contains "$WORKFLOW_FILE" "plan_model:" "No plan_model input variable"
 assert_not_contains "$WORKFLOW_FILE" "implement_model:" "No implement_model input variable"
 
-assert_contains "$WORKFLOW_FILE" 'integration: "auto"' "Steps use literal integration auto"
+# The workflow defines an `integration` input with default "auto" so spec-kit
+# can resolve it from .specify/integration.json at run time (engine.py
+# _resolve_default). Steps reference that input via a template expression
+# instead of a literal "auto" that spec-kit cannot dispatch.
+assert_contains "$WORKFLOW_FILE" 'default: "auto"' "Integration input uses auto default for spec-kit resolution"
+assert_contains "$WORKFLOW_FILE" 'integration: "{{ inputs.integration }}"' "Steps reference integration input"
+assert_not_contains "$WORKFLOW_FILE" 'integration: "auto"' "No literal integration: auto on steps (resolved via input)"
 assert_contains "$WORKFLOW_FILE" 'model: ""' "Steps use literal empty model"
 
-# Count occurrences: 9 command steps should have integration + model
-INTEGRATION_COUNT=$(grep -c 'integration: "auto"' "$WORKFLOW_FILE" || true)
+# Count occurrences: 9 command steps should reference the integration input + model
+INTEGRATION_COUNT=$(grep -c 'integration: "{{ inputs.integration }}"' "$WORKFLOW_FILE" || true)
 MODEL_COUNT=$(grep -c 'model: ""' "$WORKFLOW_FILE" || true)
 
 if [ "$INTEGRATION_COUNT" -eq 9 ]; then
-    echo "PASS: Exactly 9 command steps have integration: auto"
+    echo "PASS: Exactly 9 command steps reference inputs.integration"
     ((PASSED++)) || true
 else
-    echo "FAIL: Expected 9 integration: auto occurrences, found $INTEGRATION_COUNT"
+    echo "FAIL: Expected 9 inputs.integration references, found $INTEGRATION_COUNT"
     ((FAILED++)) || true
 fi
 
