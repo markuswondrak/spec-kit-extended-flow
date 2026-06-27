@@ -1,0 +1,92 @@
+schema_version: "1.0"
+
+workflow:
+  id: "spec-kit-quick-flow"
+  name: "Spec-Kit Extended Flow — Quick Flow"
+  version: "0.1.0"
+  author: "Markus Wondrak"
+  description: "The Quick Flow: lightweight pipeline for trivial, well-defined changes (label renames, message additions, small tweaks). Implements directly from the instruction, runs a self-fixing review in a single pass, checks documentation impact, and ships a PR. No spec/plan/tasks generation."
+
+requires:
+  speckit_version: ">=0.8.5"
+  integrations:
+    any:
+      - "claude"
+      - "copilot"
+      - "gemini"
+      - "opencode"
+
+inputs:
+  spec:
+    type: string
+    required: false
+    default: ""
+    prompt: "What to change. A plain-text description of the trivial change (e.g., 'Rename login button label to Sign In')."
+  file:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a change description file (e.g., ./changes/label-fix.md). The file contents will be used as the instruction."
+  issue:
+    type: string
+    required: false
+    default: ""
+    prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the change instruction."
+  integration:
+    type: string
+    required: false
+    default: "auto"
+    prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
+
+steps:
+  - id: resolve-spec
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+
+  - id: create-branch
+    type: if
+    condition: "{{ inputs.issue != '' }}"
+    then:
+      - id: branch
+        type: shell
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+
+  - id: init-quick
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/init-quick.sh "{{ inputs.issue }}" "{{ steps.resolve-spec.output.stdout }}"
+
+  - id: quick-implement
+    command: speckit.extendedflow.quick-implement
+    integration: "{{ inputs.integration }}"
+    model: ""
+    input:
+      args: "{{ steps.resolve-spec.output.stdout }}"
+
+  - id: quick-review
+    command: speckit.extendedflow.quick-review
+    integration: "{{ inputs.integration }}"
+    model: ""
+
+  - id: quick-review-verdict
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
+
+  - id: stop-on-review-fail
+    type: if
+    condition: "{{ steps.quick-review-verdict.output.stdout | contains('FAIL') }}"
+    then:
+      - id: review-failed
+        type: shell
+        run: "echo 'Quick review could not self-correct all issues. This change is too complex for the Quick Flow — use the Feature Flow instead. See review-findings-1-FAIL.md inside the current feature directory for details.' >&2; exit 1"
+
+  - id: doc-check
+    command: speckit.extendedflow.doc-check
+    integration: "{{ inputs.integration }}"
+    model: ""
+
+  - id: finish
+    command: speckit.extendedflow.finish
+    integration: "{{ inputs.integration }}"
+    model: ""
+    input:
+      args: "{{ context.run_id }} {{ inputs.issue }}"

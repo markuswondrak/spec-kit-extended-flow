@@ -19,6 +19,7 @@ required_paths=(
     "extension.yml"
     "workflows/workflow.yml"
     "workflows/bugfix-workflow.yml"
+    "workflows/quick-flow.yml"
     "commands/speckit.extendedflow.documentation-init.md"
     "commands/speckit.extendedflow.documentation.md"
     "commands/speckit.extendedflow.review.md"
@@ -26,13 +27,20 @@ required_paths=(
     "templates/documentation.md"
     "templates/review-findings.md"
     "scripts/resolve-spec.sh"
+    "scripts/create-branch.sh"
+    "scripts/extract-verdict.sh"
+    "scripts/verify-spec.sh"
+    "scripts/init-quick.sh"
+    "scripts/resolve-pr-template.sh"
 )
 
 for path in "${required_paths[@]}"; do
     [ -e "$PROJECT_DIR/$path" ] || error "Required package path missing: $path"
 done
 
-[ -x "$PROJECT_DIR/scripts/resolve-spec.sh" ] || error "Required script is not executable: scripts/resolve-spec.sh"
+for script in scripts/resolve-spec.sh scripts/create-branch.sh scripts/extract-verdict.sh scripts/verify-spec.sh scripts/init-quick.sh scripts/resolve-pr-template.sh; do
+    [ -x "$PROJECT_DIR/$script" ] || error "Required script is not executable: $script"
+done
 
 tmp_dir="$(mktemp -d)"
 tmp_zip="$tmp_dir/$PACKAGE_NAME"
@@ -45,10 +53,16 @@ cp -p "$PROJECT_DIR/preset.yml" "$stage_dir/preset.yml"
 cp -p "$PROJECT_DIR/extension.yml" "$stage_dir/extension.yml"
 cp -p "$PROJECT_DIR/workflows/workflow.yml" "$stage_dir/workflows/workflow.yml"
 cp -p "$PROJECT_DIR/workflows/bugfix-workflow.yml" "$stage_dir/workflows/bugfix-workflow.yml"
+cp -p "$PROJECT_DIR/workflows/quick-flow.yml" "$stage_dir/workflows/quick-flow.yml"
 cp -p "$PROJECT_DIR/README.md" "$stage_dir/README.md"
 cp -p "$PROJECT_DIR"/commands/*.md "$stage_dir/commands/"
 cp -p "$PROJECT_DIR"/templates/*.md "$stage_dir/templates/"
 cp -p "$PROJECT_DIR/scripts/resolve-spec.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/create-branch.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/extract-verdict.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/verify-spec.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/init-quick.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/resolve-pr-template.sh" "$stage_dir/scripts/"
 
 package_entries=(preset.yml extension.yml workflows README.md commands templates scripts)
 for license_file in LICENSE LICENSE.md; do

@@ -44,10 +44,11 @@ Extended Flow closes the loop. **Intent in, working software out — reviewed ag
 
 ### A family of flows
 
-Extended Flow ships a **family of composable flows** that share the same guard rails (QA review loop, safety caps, human gates) and the same documentation model. Today the family has two members:
+Extended Flow ships a **family of composable flows** that share the same guard rails (QA review loop, safety caps, human gates) and the same documentation model. Today the family has three members:
 
 - **Feature Flow** — the SDD lifecycle for new features (`specify → plan → tasks → implement → review → documentation → finish`).
 - **Bugfix Flow** — a TDD lifecycle for surgical bugfixes (`analyze → test → fix → review → finish`), skipping spec/plan/tasks generation.
+- **Quick Flow** — a lightweight pipeline for trivial, well-defined changes (`implement → review-fix → doc-check → finish`), no spec/plan/tasks, no human gates, self-fixing review in a single pass.
 
 See [Flows](#flows) for the full diagrams. The family is designed to grow — future flows slot in as peers.
 
@@ -85,6 +86,23 @@ specify workflow run spec-kit-bugfix-flow \
 
 **What happens:** The workflow analyzes the bug, writes a failing test (RED), applies a surgical fix (GREEN), runs independent QA review in a loop until PASS, then commits and opens a PR.
 
+### Quick Flow Quickstart
+
+```bash
+# Install the Quick Flow (same preset + extension as Feature Flow)
+specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
+
+# Run with a plain-text instruction
+specify workflow run spec-kit-quick-flow \
+  --input spec="Rename the login button label to Sign In"
+
+# Or from a GitHub issue
+specify workflow run spec-kit-quick-flow \
+  --input issue="42"
+```
+
+**What happens:** The workflow implements the change directly from your instruction, runs a self-fixing review in a single pass, checks documentation impact, then commits and opens a PR. No spec/plan/tasks generation — ideal for label changes, message additions, and other trivial tweaks.
+
 <details>
 <summary><strong>Other input modes</strong></summary>
 
@@ -100,12 +118,18 @@ specify workflow run spec-kit-extended-flow \
 # Bugfix from plain text
 specify workflow run spec-kit-bugfix-flow \
   --input spec="The login endpoint returns 500 when password is empty"
+
+# Quick Flow from plain text
+specify workflow run spec-kit-quick-flow \
+  --input spec="Rename the login button label to Sign In"
 ```
 
 When started from a GitHub issue, the workflow also:
 1. Creates a `feature/42-<slug>` or `fix/42-<slug>` branch from the issue title
 2. Cleans up temporary files after completion
 3. Commits all changes and opens a pull request that closes the issue
+
+Quick Flow creates the same branch naming and uses `chore:` as the commit prefix.
 </details>
 
 <details>
@@ -206,6 +230,43 @@ When started from a GitHub issue, the Bugfix Flow creates a `fix/<issue>-<slug>`
 
 **Safety caps:** Same as Feature Flow — review loop maxes out at 5 iterations, with a human gate after analysis.
 
+### Quick Flow
+
+A lightweight pipeline for trivial, well-defined changes. It skips spec/plan/tasks generation entirely and uses a **self-fixing review** in a single pass — the reviewer finds issues and fixes them in one step.
+
+```mermaid
+flowchart TD
+    A[resolve-spec] --> B{issue?}
+    B -->|yes| C[create-branch]
+    B -->|no| D[init-quick]
+    C --> D
+    D --> E[quick-implement]
+    E --> F[quick-review]
+    F --> G{PASS?}
+    G -->|yes| H[doc-check]
+    G -->|no| I[❌ abort]
+    H --> J[finish]
+    J --> K[✅ done]
+```
+
+1. **Init** — Create feature directory and `feature.json` pointer
+2. **Implement** — Direct implementation from the instruction (no tasks.md)
+3. **Review + Fix** — Self-fixing review in a single pass
+4. **Doc Check** — Lightweight documentation impact check
+5. **Finish** — Cleanup, commit, PR
+
+| Step | Type | Description |
+|------|------|-------------|
+| `resolve-spec` | shell | Resolves file paths and GitHub issues to instruction content |
+| `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
+| `init-quick` | shell | Creates feature directory and `feature.json` with `type: "quick"` |
+| `quick-implement` | command | Implements the change directly from the instruction |
+| `quick-review` | command | Self-fixing review: reviews and corrects in one pass → PASS or FAIL |
+| `doc-check` | command | Lightweight documentation impact check, flags conflicts |
+| `finish` | command | Cleans up, commits (`chore:` prefix), opens PR when issue provided |
+
+**When to use Quick Flow:** Label renames, message additions, small tweaks — changes that are unambiguous, localized, and need no design decisions. If the self-fixing review returns FAIL, the change is too complex for Quick Flow and belongs in the Feature Flow.
+
 ---
 
 ## Reference
@@ -232,6 +293,9 @@ Run these standalone outside the workflows:
 | `/speckit.extendedflow.documentation` | Documentation reconciliation only |
 | `/speckit.extendedflow.documentation-init` | Bootstrap documentation for an existing project |
 | `/speckit.extendedflow.finish` | Cleanup, commit, and PR (post-implementation) |
+| `/speckit.extendedflow.quick-implement` | Direct implementation for trivial changes |
+| `/speckit.extendedflow.quick-review` | Self-fixing review (review + fix in one pass) |
+| `/speckit.extendedflow.doc-check` | Lightweight documentation impact check |
 
 ### Architecture
 
@@ -262,11 +326,15 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent prompt |
 | Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis + template tailoring agent prompt |
 | Finish agent | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, PR agent prompt |
+| Quick implement | `commands/speckit.extendedflow.quick-implement.md` | Direct implementation agent for trivial changes |
+| Quick review | `commands/speckit.extendedflow.quick-review.md` | Self-fixing review agent (review + fix in one pass) |
+| Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
 | Bug analysis template | `templates/bug-analysis.md` | Structured bug analysis output format |
 | Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
 | Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
+| Init quick | `scripts/init-quick.sh` | Initializes Quick Flow feature directory |
 | Verify spec | `scripts/verify-spec.sh` | Validates spec file was created |
 | Extract verdict | `scripts/extract-verdict.sh` | Extracts PASS/FAIL from review filename |
 

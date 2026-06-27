@@ -36,7 +36,10 @@ Read `.specify/feature.json` to determine the current feature directory and type
 
 Extract the value of `feature_directory`. This is the path to the feature directory relative to the project root.
 
-Also extract `type` if present. If `type` is `"bug"`, use commit/PR prefix `fix:`. Otherwise use `feat:`.
+Also extract `type` if present. Determine the commit/PR prefix:
+- If `type` is `"bug"`, use prefix `fix:`.
+- If `type` is `"quick"`, use prefix `chore:`.
+- Otherwise (feature or unset), use prefix `feat:`.
 
 ### 2. Gather PR Context (before cleanup)
 
@@ -54,13 +57,17 @@ If no issue number was provided, skip this sub-step.
 
 Read the following files from the feature directory (use `feature_directory` from Step 1):
 
-**For feature flows (`type` is NOT `"bug"`):**
+**For feature flows (`type` is NOT `"bug"` and NOT `"quick"`):**
 - `spec.md` — Extract a 2-3 sentence summary of what the feature does and why.
 - `plan.md` — Extract the key architectural decisions (1-2 sentences) and the main files/modules touched.
 
 **For bugfix flows (`type` IS `"bug"`):**
 - `bug-analysis.md` — Extract the root cause (1-2 sentences) and the fix strategy (1-2 sentences).
 - `bug-test-red.md` — Extract the test case description that reproduces the bug.
+
+**For quick flows (`type` IS `"quick"`):**
+- `instruction.md` — Extract the original change instruction (1-2 sentences).
+- `doc-check.md` — Extract the documentation check summary (1 sentence).
 
 If any of these files do not exist, skip them silently.
 
@@ -122,12 +129,12 @@ If there are staged changes (`git diff --cached --quiet` returns non-zero), crea
 
 **When an issue number was provided:**
 1. Use the issue title you fetched in Step 2a.
-2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, `chore:` if `"quick"`, otherwise `feat:`
 3. Commit message: `<prefix> <issue_title> (#<issue>)`
 
 **When no issue number was provided:**
 1. Derive a concise feature name from the feature directory path (e.g., `001-my-feature` → `my feature`)
-2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, `chore:` if `"quick"`, otherwise `feat:`
 3. Commit message: `<prefix> <feature_name>`
 
 ### 6. Open Pull Request (issue-only)
@@ -135,7 +142,7 @@ If there are staged changes (`git diff --cached --quiet` returns non-zero), crea
 If an issue number was provided:
 
 1. Ensure `gh` CLI is available. If not, report an error.
-2. Determine prefix from `type` field: `fix:` if `"bug"`, otherwise `feat:`
+2. Determine prefix from `type` field: `fix:` if `"bug"`, `chore:` if `"quick"`, otherwise `feat:`
 3. Build the PR body using the context gathered in Step 2.
 
 #### PR Body Construction
@@ -145,7 +152,7 @@ If an issue number was provided:
 Use the template content as the starting point. Fill the following known sections by replacing their placeholder or empty content with concise, factual summaries derived from Step 2. Do NOT invent information; use only what you gathered. Keep each filled section to 1-4 sentences.
 
 Known section headings (case-insensitive, match `# ` or `## ` prefixes):
-- `Summary` / `Description` / `Overview` → Fill with the spec summary (feature) or root-cause + fix strategy (bugfix).
+- `Summary` / `Description` / `Overview` → Fill with the spec summary (feature), root-cause + fix strategy (bugfix), or original instruction (quick).
 - `Changes` / `What Changed` / `What does this PR do?` → Fill with the main implementation changes (files/modules touched).
 - `Testing` / `Test Plan` / `How to test` → Fill with the QA review verdict (PASS) and a brief note on test coverage (e.g., "Full test suite passes; bug reproduction test was RED then GREEN").
 - `Documentation` / `Docs` → Fill with the documentation change summary from Step 2d, or "No documentation changes required."
@@ -159,7 +166,7 @@ Generate a structured body with these sections:
 
 ```markdown
 ## Summary
-<2-3 sentences from spec summary (feature) or root cause + fix (bugfix)>
+<2-3 sentences from spec summary (feature), root cause + fix (bugfix), or original instruction (quick)>
 
 ## Changes
 <Brief list of main implementation changes and files touched>

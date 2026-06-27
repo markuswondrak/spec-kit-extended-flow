@@ -78,14 +78,23 @@ assert_zip_contains "$LISTING_FILE" "preset.yml" "ZIP contains root preset.yml"
 assert_zip_contains "$LISTING_FILE" "extension.yml" "ZIP contains root extension.yml"
 assert_zip_contains "$LISTING_FILE" "workflows/workflow.yml" "ZIP contains workflows/workflow.yml"
 assert_zip_contains "$LISTING_FILE" "workflows/bugfix-workflow.yml" "ZIP contains workflows/bugfix-workflow.yml"
+assert_zip_contains "$LISTING_FILE" "workflows/quick-flow.yml" "ZIP contains workflows/quick-flow.yml"
 assert_zip_contains "$LISTING_FILE" "README.md" "ZIP contains README"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation-init.md" "ZIP contains documentation-init command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation.md" "ZIP contains documentation command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.review.md" "ZIP contains review command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.project-init.md" "ZIP contains project-init command"
+assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.quick-implement.md" "ZIP contains quick-implement command"
+assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.quick-review.md" "ZIP contains quick-review command"
+assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.doc-check.md" "ZIP contains doc-check command"
 assert_zip_contains "$LISTING_FILE" "templates/documentation.md" "ZIP contains documentation template"
 assert_zip_contains "$LISTING_FILE" "templates/review-findings.md" "ZIP contains review template"
 assert_zip_contains "$LISTING_FILE" "scripts/resolve-spec.sh" "ZIP contains resolve-spec script"
+assert_zip_contains "$LISTING_FILE" "scripts/create-branch.sh" "ZIP contains create-branch script"
+assert_zip_contains "$LISTING_FILE" "scripts/extract-verdict.sh" "ZIP contains extract-verdict script"
+assert_zip_contains "$LISTING_FILE" "scripts/verify-spec.sh" "ZIP contains verify-spec script"
+assert_zip_contains "$LISTING_FILE" "scripts/init-quick.sh" "ZIP contains init-quick script"
+assert_zip_contains "$LISTING_FILE" "scripts/resolve-pr-template.sh" "ZIP contains resolve-pr-template script"
 
 assert_zip_not_contains_prefix "$LISTING_FILE" "tests/" "ZIP excludes tests"
 assert_zip_not_contains_prefix "$LISTING_FILE" ".git/" "ZIP excludes git metadata"
@@ -93,6 +102,7 @@ assert_zip_not_contains_prefix "$LISTING_FILE" "dist/" "ZIP excludes dist output
 assert_zip_not_contains_prefix "$LISTING_FILE" "scripts/package-preset.sh" "ZIP excludes package builder"
 assert_zip_not_contains_prefix "$LISTING_FILE" "^workflow\.yml$" "ZIP excludes root workflow.yml"
 assert_zip_not_contains_prefix "$LISTING_FILE" "^bugfix-workflow\.yml$" "ZIP excludes root bugfix-workflow.yml"
+assert_zip_not_contains_prefix "$LISTING_FILE" "^quick-flow\.yml$" "ZIP excludes root quick-flow.yml"
 
 mkdir -p "$EXTRACT_DIR"
 unzip -q "$PACKAGE_PATH" -d "$EXTRACT_DIR"
@@ -100,6 +110,11 @@ if [ -x "$EXTRACT_DIR/scripts/resolve-spec.sh" ]; then
     pass "resolve-spec remains executable after extraction"
 else
     fail "resolve-spec remains executable after extraction"
+fi
+if [ -x "$EXTRACT_DIR/scripts/init-quick.sh" ]; then
+    pass "init-quick remains executable after extraction"
+else
+    fail "init-quick remains executable after extraction"
 fi
 
 echo ""
