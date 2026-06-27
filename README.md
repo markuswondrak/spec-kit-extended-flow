@@ -162,6 +162,30 @@ The workflow accepts three input parameters. At least one must be provided. If m
 
 **GitHub issues** require `gh` CLI installed and authenticated. **File input** must exist relative to your working directory.
 
+## Integration and Model Configuration
+
+Every command step in the workflow has dedicated `integration` and `model` attributes. By default all steps use `integration: "auto"` and `model: ""` (agent default).
+
+**To customize, edit the installed workflow directly.** After installing, open `.specify/workflows/<id>/workflow.yml` and change the literals on the steps you want to configure:
+
+```yaml
+  - id: plan
+    command: speckit.plan
+    integration: "opencode"
+    model: "glm"
+    # ...
+
+  - id: implement
+    command: speckit.implement
+    integration: "opencode"
+    model: "kimi"
+    # ...
+```
+
+This lets you pair agents and models to their strengths — for example, a reasoning-focused model for planning and a coding-focused model for implementation — without passing inputs on every run.
+
+> **Note:** Model overrides are passed through to the agent CLI (e.g. `opencode run -m <model>`). Support depends on the integration. The opencode integration forwards `-m` automatically; other integrations may ignore the model field.
+
 ## Individual Commands
 
 Run these standalone outside the workflow:

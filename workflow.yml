@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — SDD Lifecycle with QA Review and Documentation Reconciliation"
-  version: "0.5.0"
+  version: "0.9.0"
   author: "Markus Wondrak"
   description: "Runs specification, planning, tasks, implementation, QA review loop, and documentation reconciliation. Constitution, planning constraints, and documentation initialization are prerequisites — run them before this workflow. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
@@ -32,11 +32,6 @@ inputs:
     required: false
     default: ""
     prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the specification."
-  integration:
-    type: string
-    default: "auto"
-    prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
-
 steps:
   - id: resolve-spec
     type: shell
@@ -52,7 +47,8 @@ steps:
 
   - id: specify
     command: speckit.specify
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
@@ -68,7 +64,8 @@ steps:
 
   - id: plan
     command: speckit.plan
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
     input:
       args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
 
@@ -80,15 +77,18 @@ steps:
 
   - id: tasks
     command: speckit.tasks
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
 
   - id: implement
     command: speckit.implement
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
 
   - id: review
     command: speckit.extendedflow.review
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
 
   - id: review-verdict
     type: shell
@@ -105,10 +105,12 @@ steps:
         steps:
           - id: fix
             command: speckit.extendedflow.fix
-            integration: "{{ inputs.integration }}"
+            integration: "auto"
+            model: ""
           - id: fix-review
             command: speckit.extendedflow.review
-            integration: "{{ inputs.integration }}"
+            integration: "auto"
+            model: ""
           - id: fix-verdict
             type: shell
             run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
@@ -123,10 +125,12 @@ steps:
 
   - id: documentation
     command: speckit.extendedflow.documentation
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
 
   - id: finish
     command: speckit.extendedflow.finish
-    integration: "{{ inputs.integration }}"
+    integration: "auto"
+    model: ""
     input:
       args: "{{ context.run_id }} {{ inputs.issue }}"

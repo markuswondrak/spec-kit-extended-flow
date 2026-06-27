@@ -220,6 +220,40 @@ assert_not_contains "$PRESET_FILE" 'name: "speckit.extendedflow.fix"' "Preset do
 assert_not_contains "$PRESET_FILE" 'name: "speckit.extendedflow.documentation"' "Preset does not register documentation command"
 assert_contains "$WORKFLOW_FILE" "steps.fix-verdict.output.stdout" "Fix loop condition references fix-verdict"
 
+# --- Per-step integration and model literals ---
+
+echo ""
+echo "--- Checking per-step integration and model literals ---"
+
+assert_not_contains "$WORKFLOW_FILE" "inputs.integration" "No references to old monolithic integration input"
+assert_not_contains "$WORKFLOW_FILE" "plan_integration:" "No plan_integration input variable"
+assert_not_contains "$WORKFLOW_FILE" "implement_integration:" "No implement_integration input variable"
+assert_not_contains "$WORKFLOW_FILE" "plan_model:" "No plan_model input variable"
+assert_not_contains "$WORKFLOW_FILE" "implement_model:" "No implement_model input variable"
+
+assert_contains "$WORKFLOW_FILE" 'integration: "auto"' "Steps use literal integration auto"
+assert_contains "$WORKFLOW_FILE" 'model: ""' "Steps use literal empty model"
+
+# Count occurrences: 9 command steps should have integration + model
+INTEGRATION_COUNT=$(grep -c 'integration: "auto"' "$WORKFLOW_FILE" || true)
+MODEL_COUNT=$(grep -c 'model: ""' "$WORKFLOW_FILE" || true)
+
+if [ "$INTEGRATION_COUNT" -eq 9 ]; then
+    echo "PASS: Exactly 9 command steps have integration: auto"
+    ((PASSED++)) || true
+else
+    echo "FAIL: Expected 9 integration: auto occurrences, found $INTEGRATION_COUNT"
+    ((FAILED++)) || true
+fi
+
+if [ "$MODEL_COUNT" -eq 9 ]; then
+    echo "PASS: Exactly 9 command steps have model: \"\""
+    ((PASSED++)) || true
+else
+    echo "FAIL: Expected 9 model: \"\" occurrences, found $MODEL_COUNT"
+    ((FAILED++)) || true
+fi
+
 # --- Functional tests for the external script ---
 
 echo ""
