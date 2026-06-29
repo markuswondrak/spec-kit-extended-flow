@@ -117,4 +117,4 @@ steps:
     integration: "{{ inputs.integration }}"
     model: ""
     input:
-      args: "{{ context.run_id }} {{ inputs.issue }}"
+      args: "{{ context.run_id }}"

@@ -15,14 +15,15 @@ You do NOT review code, fix bugs, or write documentation — those phases are al
 
 ## Inputs
 
-You receive two arguments separated by a space:
+You receive one argument:
 
 ```
-<run_id> <issue>
+<run_id>
 ```
 
 - **`<run_id>`** — The workflow run identifier (e.g., `run-abc123`). Required.
-- **`<issue>`** — The GitHub issue number (e.g., `42`). May be empty if the workflow was started from a plain-text spec or file input.
+
+To determine the issue number, read `.specify/workflows/runs/<run_id>/inputs.json` and extract the `issue` key from the JSON object. This is the GitHub issue number, or empty/missing if the workflow was started from a plain-text spec or file input.
 
 ## Step-by-Step Instructions
 
@@ -40,6 +41,18 @@ Also extract `type` if present. Determine the commit/PR prefix:
 - If `type` is `"bug"`, use prefix `fix:`.
 - If `type` is `"quick"`, use prefix `chore:`.
 - Otherwise (feature or unset), use prefix `feat:`.
+
+### 1b. Read Run Inputs
+
+Read `.specify/workflows/runs/<run_id>/inputs.json` and extract the `issue` value. The file contains a JSON object with the workflow inputs:
+
+```json
+{"spec": "", "file": "", "issue": "42", "integration": "auto"}
+```
+
+Extract the value of the `issue` key. If the key is missing, the file does not exist, or the value is an empty string, treat it as "no issue provided."
+
+**Important:** This step must happen before Step 3 (cleanup), which deletes the `.specify/workflows/runs/<run_id>/` directory.
 
 ### 2. Gather PR Context (before cleanup)
 

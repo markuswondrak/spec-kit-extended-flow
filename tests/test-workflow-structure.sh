@@ -256,12 +256,22 @@ else
 fi
 
 if [ "$MODEL_COUNT" -eq 9 ]; then
-    echo "PASS: Exactly 9 command steps have model: \"\""
+    echo "PASS: Exactly 9 model: \"\" occurrences"
     ((PASSED++)) || true
 else
     echo "FAIL: Expected 9 model: \"\" occurrences, found $MODEL_COUNT"
     ((FAILED++)) || true
 fi
+
+# --- Finish step: single-expression args (regression: expression engine bug) ---
+
+echo ""
+echo "--- Checking finish step args ---"
+
+assert_not_contains "$WORKFLOW_FILE" 'context.run_id }} {{ inputs.issue' "Finish step does not use two-expression template (regression guard)"
+assert_contains "$WORKFLOW_FILE" 'args: "{{ context.run_id }}"$' "Finish step uses single-expression args"
+
+assert_contains "$FINISH_FILE" "inputs.json" "Finish agent reads issue from run inputs.json"
 
 # --- Functional tests for the external script ---
 

@@ -118,6 +118,12 @@ echo "--- Checking finish step ---"
 assert_contains "$BUGFIX_WORKFLOW" "finish" "Workflow has finish step"
 assert_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.finish" "Workflow calls finish command"
 
+# --- Finish step: single-expression args (regression: expression engine bug) ---
+echo ""
+echo "--- Checking finish step args ---"
+assert_not_contains "$BUGFIX_WORKFLOW" 'context.run_id }} {{ inputs.issue' "Finish step does not use two-expression template (regression guard)"
+assert_contains "$BUGFIX_WORKFLOW" 'args: "{{ context.run_id }}"$' "Finish step uses single-expression args"
+
 # --- Absence checks: no spec/plan/tasks ---
 echo "--- Checking absence of feature-flow steps ---"
 assert_not_contains "$BUGFIX_WORKFLOW" "speckit.specify" "No specify command"
