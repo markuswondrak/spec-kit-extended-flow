@@ -29,6 +29,11 @@ jobs:
           unzip -p dist/spec-kit-extended-flow.zip extension.yml > /dev/null
           echo "extension.yml found in package"
 
+      - name: Verify bundle manifest
+        run: |
+          unzip -p dist/spec-kit-extended-flow.zip bundle.yml > /dev/null
+          echo "bundle.yml found in package"
+
       - name: Publish GitHub release asset
         env:
           GH_TOKEN: ${{ github.token }}

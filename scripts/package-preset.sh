@@ -17,6 +17,7 @@ command -v zip >/dev/null 2>&1 || error "zip command is required to build the pr
 required_paths=(
     "preset.yml"
     "extension.yml"
+    "bundle.yml"
     "workflows/workflow.yml"
     "workflows/bugfix-workflow.yml"
     "workflows/quick-flow.yml"
@@ -51,6 +52,7 @@ mkdir -p "$stage_dir/commands" "$stage_dir/templates" "$stage_dir/scripts" "$sta
 
 cp -p "$PROJECT_DIR/preset.yml" "$stage_dir/preset.yml"
 cp -p "$PROJECT_DIR/extension.yml" "$stage_dir/extension.yml"
+cp -p "$PROJECT_DIR/bundle.yml" "$stage_dir/bundle.yml"
 cp -p "$PROJECT_DIR/workflows/workflow.yml" "$stage_dir/workflows/workflow.yml"
 cp -p "$PROJECT_DIR/workflows/bugfix-workflow.yml" "$stage_dir/workflows/bugfix-workflow.yml"
 cp -p "$PROJECT_DIR/workflows/quick-flow.yml" "$stage_dir/workflows/quick-flow.yml"
@@ -64,7 +66,7 @@ cp -p "$PROJECT_DIR/scripts/verify-spec.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/init-quick.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/resolve-pr-template.sh" "$stage_dir/scripts/"
 
-package_entries=(preset.yml extension.yml workflows README.md commands templates scripts)
+package_entries=(preset.yml extension.yml bundle.yml workflows README.md commands templates scripts)
 for license_file in LICENSE LICENSE.md; do
     if [ -f "$PROJECT_DIR/$license_file" ]; then
         cp -p "$PROJECT_DIR/$license_file" "$stage_dir/$license_file"

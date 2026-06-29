@@ -57,16 +57,10 @@ See [Flows](#flows) for the full diagrams. The family is designed to grow — fu
 ## Quickstart
 
 ```bash
-# 1. Install preset (templates + scripts)
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+# 1. Install the complete bundle (preset + extension + 3 workflows in one operation)
+specify bundle install spec-kit-extended-flow
 
-# 2. Install extension (commands)
-specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
-
-# 3. Install the Feature Flow
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml
-
-# 4. Run it
+# 2. Run the Feature Flow
 specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
 ```
@@ -75,11 +69,9 @@ specify workflow run spec-kit-extended-flow \
 
 ### Bugfix Quickstart
 
-```bash
-# Install the Bugfix Flow (same preset + extension as Feature Flow)
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/bugfix-workflow.yml
+The bundle installs all three workflows. Run the Bugfix Flow directly:
 
-# Run from a GitHub issue
+```bash
 specify workflow run spec-kit-bugfix-flow \
   --input issue="42"
 ```
@@ -88,10 +80,9 @@ specify workflow run spec-kit-bugfix-flow \
 
 ### Quick Flow Quickstart
 
-```bash
-# Install the Quick Flow (same preset + extension as Feature Flow)
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
+The bundle installs all three workflows. Run the Quick Flow directly:
 
+```bash
 # Run with a plain-text instruction
 specify workflow run spec-kit-quick-flow \
   --input spec="Rename the login button label to Sign In"
@@ -136,8 +127,26 @@ Quick Flow creates the same branch naming and uses `chore:` as the commit prefix
 <summary><strong>Pin a specific release</strong></summary>
 
 ```bash
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
-specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v2.1.0/spec-kit-extended-flow.zip
+specify bundle install spec-kit-extended-flow --version 2.1.0
+```
+</details>
+
+<details>
+<summary><strong>Manual installation (granular control)</strong></summary>
+
+If you prefer to install preset, extension, and workflows separately:
+
+```bash
+# 1. Install preset (templates + scripts)
+specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+
+# 2. Install extension (commands)
+specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+
+# 3. Install workflows
+specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml
+specify workflow add .specify/presets/spec-kit-extended-flow/workflows/bugfix-workflow.yml
+specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
 ```
 </details>
 
@@ -147,6 +156,10 @@ specify extension add extendedflow --from https://github.com/markuswondrak/spec-
 For development on a checkout of this repository:
 
 ```bash
+# Bundle way (installs everything)
+specify bundle install ./spec-kit-extended-flow.zip
+
+# Or granular:
 specify preset add --dev .
 specify extension add --dev .
 ```
@@ -299,15 +312,16 @@ Run these standalone outside the workflows:
 
 ### Architecture
 
-Extended Flow is delivered as **two packages** — a preset (templates + scripts) and an extension (commands) — following the Spec-Kit separation of concerns:
+Extended Flow is delivered as **three artifacts bundled together** — a preset (templates + scripts), an extension (commands), and three workflows — following the Spec-Kit separation of concerns:
 
 | Package | Manifest | Delivers | Installed via |
 |---------|----------|----------|---------------|
+| **Bundle** | `bundle.yml` | Preset + Extension + Workflows (meta-manifest) | `specify bundle install` |
 | Preset | `preset.yml` | Templates, scripts | `specify preset add` |
 | Extension | `extension.yml` | Commands (agent prompts) | `specify extension add` |
-| Workflow | `workflows/workflow.yml` | Step orchestration | `specify workflow add` |
+| Workflow | `workflows/*.yml` | Step orchestration | `specify workflow add` |
 
-This split exists because Spec-Kit's architecture reserves commands for extensions. Presets provide output formats; extensions provide agent behaviors. The two-package design ensures commands are properly deployed across all integration targets (Claude, Copilot, Gemini, opencode).
+This split exists because Spec-Kit's architecture reserves commands for extensions. Presets provide output formats; extensions provide agent behaviors. The bundle acts as a **facade** that composes all three into a single install operation while preserving the ability to install them individually for granular control.
 
 #### Key Design Principles
 

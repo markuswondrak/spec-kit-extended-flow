@@ -1,6 +1,6 @@
 # Spec-Kit Extended Flow — Global Constraints
 
-This is a **Spec-Kit preset and extension**, not an application. It defines workflows (`workflows/`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), agent commands (`commands/`), templates (`templates/`), and shell scripts (`scripts/`). All changes must preserve the Spec-Kit contract.
+This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and shell scripts (`scripts/`). All changes must preserve the Spec-Kit contract.
 
 ## Hard Prohibitions
 
@@ -25,6 +25,7 @@ This is a **Spec-Kit preset and extension**, not an application. It defines work
 | `workflows/quick-flow.yml` | Orchestration: lightweight pipeline for trivial changes (no spec/plan/tasks) |
 | `preset.yml` | Preset manifest: templates, scripts, version, tags |
 | `extension.yml` | Extension manifest: commands, version, tags |
+| `bundle.yml` | Bundle manifest: composes preset + extension + workflows into a single install unit |
 | `scripts/` | Executable shell scripts called by workflow steps |
 | `commands/` | Agent system prompts (review, fix, documentation, documentation-init, finish, bug-analyze, bug-test, bug-fix, bug-review, quick-implement, quick-review, doc-check) |
 | `templates/` | Structured output templates (review-findings, documentation, bug-analysis) |
@@ -44,7 +45,7 @@ This is a **Spec-Kit preset and extension**, not an application. It defines work
 
 ## Downstream Project Layout
 
-This repo is a **preset and extension**. The agents in `commands/` and the workflows in `workflows/` execute in **downstream projects** that install this preset via `specify preset add` and the extension via `specify extension add`. The downstream file layout is completely different from this repo.
+This repo is a **preset, extension, and bundle**. The agents in `commands/` and the workflows in `workflows/` execute in **downstream projects** that install this bundle via `specify bundle install` (or the preset/extension individually via `specify preset add` / `specify extension add`). The downstream file layout is completely different from this repo.
 
 ### Downstream root
 
@@ -103,6 +104,7 @@ Must preserve:
 ## Glossary
 
 - **SDD**: Specification-Driven Development — the core methodology this preset extends.
+- **Bundle**: A Spec-Kit meta-manifest (`bundle.yml`) that composes presets, extensions, steps, and workflows into a single, versioned, role-oriented install unit.
 - **QA Loop**: The `do-while` iteration of `implement → review → verdict` (feature flow) or `bug-fix → bug-review → verdict` (bugfix flow) that runs until PASS or max 5 iterations.
 - **Doc Reconciliation**: The post-implementation step that updates layered documentation and flags code-vs-docs conflicts.
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
@@ -121,4 +123,5 @@ Must preserve:
 - **Input resolution logic**: See `scripts/resolve-spec.sh`
 - **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/extract-verdict.sh`
 - **PR template resolution**: See `scripts/resolve-pr-template.sh`
+- **Bundle composition**: See `bundle.yml`
 - **Architecture & design rationale**: See `README.md`

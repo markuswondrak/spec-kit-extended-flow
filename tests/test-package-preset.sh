@@ -76,6 +76,7 @@ unzip -Z1 "$PACKAGE_PATH" > "$LISTING_FILE"
 
 assert_zip_contains "$LISTING_FILE" "preset.yml" "ZIP contains root preset.yml"
 assert_zip_contains "$LISTING_FILE" "extension.yml" "ZIP contains root extension.yml"
+assert_zip_contains "$LISTING_FILE" "bundle.yml" "ZIP contains root bundle.yml"
 assert_zip_contains "$LISTING_FILE" "workflows/workflow.yml" "ZIP contains workflows/workflow.yml"
 assert_zip_contains "$LISTING_FILE" "workflows/bugfix-workflow.yml" "ZIP contains workflows/bugfix-workflow.yml"
 assert_zip_contains "$LISTING_FILE" "workflows/quick-flow.yml" "ZIP contains workflows/quick-flow.yml"

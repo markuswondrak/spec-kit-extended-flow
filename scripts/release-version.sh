@@ -51,6 +51,7 @@ fi
 
 PRESET_FILE="$PROJECT_DIR/preset.yml"
 EXTENSION_FILE="$PROJECT_DIR/extension.yml"
+BUNDLE_FILE="$PROJECT_DIR/bundle.yml"
 
 # ---------------------------------------------------------------------------
 # Git repository checks
@@ -64,6 +65,7 @@ fi
 # ---------------------------------------------------------------------------
 [ -f "$PRESET_FILE" ] || error "preset.yml not found at $PRESET_FILE"
 [ -f "$EXTENSION_FILE" ] || error "extension.yml not found at $EXTENSION_FILE"
+[ -f "$BUNDLE_FILE" ] || error "bundle.yml not found at $BUNDLE_FILE"
 
 CURRENT_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ -n "$CURRENT_VERSION" ] || error "Could not extract current version from preset.yml"
@@ -85,6 +87,7 @@ fi
 # ---------------------------------------------------------------------------
 sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$PRESET_FILE"
 sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$EXTENSION_FILE"
+sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$BUNDLE_FILE"
 
 UPDATED_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ "$UPDATED_VERSION" = "$VERSION" ] || error "Failed to update version in preset.yml"
@@ -92,10 +95,13 @@ UPDATED_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*
 UPDATED_EXT_VERSION=$(grep -E '^  version:' "$EXTENSION_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ "$UPDATED_EXT_VERSION" = "$VERSION" ] || error "Failed to update version in extension.yml"
 
+UPDATED_BUNDLE_VERSION=$(grep -E '^  version:' "$BUNDLE_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
+[ "$UPDATED_BUNDLE_VERSION" = "$VERSION" ] || error "Failed to update version in bundle.yml"
+
 # ---------------------------------------------------------------------------
 # Commit and tag
 # ---------------------------------------------------------------------------
-git -C "$PROJECT_DIR" add "$PRESET_FILE" "$EXTENSION_FILE"
+git -C "$PROJECT_DIR" add "$PRESET_FILE" "$EXTENSION_FILE" "$BUNDLE_FILE"
 git -C "$PROJECT_DIR" commit -m "chore(release): bump version to $VERSION"
 git -C "$PROJECT_DIR" tag -a "$TAG" -m "Release $TAG"
 

@@ -57,7 +57,18 @@ extension:
   description: "A test extension."
 EOF
 
-    git add preset.yml extension.yml
+    cat > bundle.yml << EOF
+schema_version: "1.0"
+
+bundle:
+  id: "test-bundle"
+  name: "Test Bundle"
+  version: "$version"
+  role: "developer"
+  description: "A test bundle."
+EOF
+
+    git add preset.yml extension.yml bundle.yml
     git commit -m "Initial commit"
     cd - >/dev/null
 }
@@ -193,11 +204,19 @@ else
     fail "Version updated in extension.yml" "Expected 1.0.0, got $updated_ext_version"
 fi
 
-# Verify both files have the same version
-if [ "$updated_version" = "$updated_ext_version" ]; then
-    pass "preset.yml and extension.yml versions are synchronized"
+# Verify bundle.yml was also updated
+updated_bundle_version=$(grep -E '^  version:' "$REPO/bundle.yml" | sed -E 's/.*"([^"]+)".*/\1/')
+if [ "$updated_bundle_version" = "1.0.0" ]; then
+    pass "Version updated in bundle.yml"
 else
-    fail "preset.yml and extension.yml versions are synchronized" "preset=$updated_version, extension=$updated_ext_version"
+    fail "Version updated in bundle.yml" "Expected 1.0.0, got $updated_bundle_version"
+fi
+
+# Verify all three files have the same version
+if [ "$updated_version" = "$updated_ext_version" ] && [ "$updated_version" = "$updated_bundle_version" ]; then
+    pass "preset.yml, extension.yml, and bundle.yml versions are synchronized"
+else
+    fail "preset.yml, extension.yml, and bundle.yml versions are synchronized" "preset=$updated_version, extension=$updated_ext_version, bundle=$updated_bundle_version"
 fi
 
 # Verify commit was created
