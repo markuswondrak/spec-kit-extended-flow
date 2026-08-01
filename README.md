@@ -153,16 +153,17 @@ specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flo
 <details>
 <summary><strong>Local development</strong></summary>
 
-For development on a checkout of this repository:
+For development on a checkout of this repository, use the two-step process:
 
 ```bash
-# Bundle way (installs everything)
-specify bundle install ./spec-kit-extended-flow.zip
-
-# Or granular:
-specify preset add --dev .
+# 1. Install the extension locally (dev mode)
 specify extension add --dev .
+
+# 2. Install the bundle (extension is skipped as already installed)
+specify bundle install .
 ```
+
+**Why two steps?** Spec-Kit's bundle installer resolves extensions through the extension catalog only (not from the bundle directory). Until this bundle is published to the community catalog, the extension must be installed separately first. The bundle installer then detects it as already present and skips it. See [Spec-Kit #3058](https://github.com/github/spec-kit/issues/3058) for the design rationale.
 </details>
 
 ---
