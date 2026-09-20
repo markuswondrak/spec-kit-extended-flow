@@ -34,18 +34,29 @@ jobs:
           unzip -p dist/spec-kit-extended-flow.zip bundle.yml > /dev/null
           echo "bundle.yml found in package"
 
-      - name: Publish GitHub release asset
+      - name: Build catalog artifacts
+        run: |
+          scripts/build-catalog.sh
+          for artifact in catalog/artifacts/*.zip; do
+            unzip -t "$artifact"
+          done
+
+      - name: Publish GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           tag="$GITHUB_REF_NAME"
-          asset="dist/spec-kit-extended-flow.zip"
+
+          assets=("dist/spec-kit-extended-flow.zip")
+          for artifact in catalog/artifacts/*.zip; do
+            assets+=("$artifact")
+          done
 
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$asset" --clobber
+            gh release upload "$tag" "${assets[@]}" --clobber
           else
-            gh release create "$tag" "$asset" \
+            gh release create "$tag" "${assets[@]}" \
               --title "$tag" \
-              --notes "Spec-Kit Extended Flow preset package."
+              --notes "Spec-Kit Extended Flow preset package and catalog artifacts."
           fi

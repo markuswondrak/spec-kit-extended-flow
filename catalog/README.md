@@ -26,7 +26,10 @@ Regenerate `artifacts/` and sync the catalog version pins after changing a compo
 scripts/build-catalog.sh
 ```
 
-Commit the rebuilt archives so the raw URLs resolve.
+The archives are build outputs and are **not committed** (see `.gitignore`). They are
+published as GitHub release assets on `v<version>`; the catalog `download_url` fields
+point at those release assets, so the catalogs in `main` stay resolvable without
+carrying binaries in git.
 
 ## Register
 

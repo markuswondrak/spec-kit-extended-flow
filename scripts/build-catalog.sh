@@ -129,8 +129,8 @@ if not isinstance(entries, dict) or component_id not in entries:
 entry = entries[component_id]
 entry["version"] = version
 entry["download_url"] = (
-    "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/"
-    f"catalog/artifacts/{artifact}"
+    "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/"
+    f"v{version}/{artifact}"
 )
 
 with open(catalog_path, "w", encoding="utf-8") as fh:
