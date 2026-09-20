@@ -23,13 +23,16 @@ required_paths=(
     "workflows/quick-flow.yml"
     "commands/speckit.extendedflow.documentation-init.md"
     "commands/speckit.extendedflow.documentation.md"
-    "commands/speckit.extendedflow.review.md"
     "commands/speckit.extendedflow.project-init.md"
+    "commands/workflow-runtime.md"
     "templates/documentation.md"
     "templates/review-findings.md"
     "scripts/resolve-spec.sh"
     "scripts/create-branch.sh"
+    "scripts/check-converge.sh"
     "scripts/extract-verdict.sh"
+    "scripts/resolve-bug-context.sh"
+    "scripts/check-bug-verdict.sh"
     "scripts/verify-spec.sh"
     "scripts/init-quick.sh"
     "scripts/resolve-pr-template.sh"
@@ -39,7 +42,7 @@ for path in "${required_paths[@]}"; do
     [ -e "$PROJECT_DIR/$path" ] || error "Required package path missing: $path"
 done
 
-for script in scripts/resolve-spec.sh scripts/create-branch.sh scripts/extract-verdict.sh scripts/verify-spec.sh scripts/init-quick.sh scripts/resolve-pr-template.sh; do
+for script in scripts/resolve-spec.sh scripts/create-branch.sh scripts/check-converge.sh scripts/extract-verdict.sh scripts/resolve-bug-context.sh scripts/check-bug-verdict.sh scripts/verify-spec.sh scripts/init-quick.sh scripts/resolve-pr-template.sh; do
     [ -x "$PROJECT_DIR/$script" ] || error "Required script is not executable: $script"
 done
 
@@ -61,7 +64,10 @@ cp -p "$PROJECT_DIR"/commands/*.md "$stage_dir/commands/"
 cp -p "$PROJECT_DIR"/templates/*.md "$stage_dir/templates/"
 cp -p "$PROJECT_DIR/scripts/resolve-spec.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/create-branch.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/check-converge.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/extract-verdict.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/resolve-bug-context.sh" "$stage_dir/scripts/"
+cp -p "$PROJECT_DIR/scripts/check-bug-verdict.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/verify-spec.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/init-quick.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/resolve-pr-template.sh" "$stage_dir/scripts/"

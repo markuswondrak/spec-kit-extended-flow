@@ -83,8 +83,8 @@ assert_zip_contains "$LISTING_FILE" "workflows/quick-flow.yml" "ZIP contains wor
 assert_zip_contains "$LISTING_FILE" "README.md" "ZIP contains README"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation-init.md" "ZIP contains documentation-init command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.documentation.md" "ZIP contains documentation command"
-assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.review.md" "ZIP contains review command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.project-init.md" "ZIP contains project-init command"
+assert_zip_contains "$LISTING_FILE" "commands/workflow-runtime.md" "ZIP contains workflow-runtime preamble"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.quick-implement.md" "ZIP contains quick-implement command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.quick-review.md" "ZIP contains quick-review command"
 assert_zip_contains "$LISTING_FILE" "commands/speckit.extendedflow.doc-check.md" "ZIP contains doc-check command"
@@ -92,7 +92,11 @@ assert_zip_contains "$LISTING_FILE" "templates/documentation.md" "ZIP contains d
 assert_zip_contains "$LISTING_FILE" "templates/review-findings.md" "ZIP contains review template"
 assert_zip_contains "$LISTING_FILE" "scripts/resolve-spec.sh" "ZIP contains resolve-spec script"
 assert_zip_contains "$LISTING_FILE" "scripts/create-branch.sh" "ZIP contains create-branch script"
+assert_zip_contains "$LISTING_FILE" "scripts/check-converge.sh" "ZIP contains check-converge script"
 assert_zip_contains "$LISTING_FILE" "scripts/extract-verdict.sh" "ZIP contains extract-verdict script"
+assert_zip_contains "$LISTING_FILE" "scripts/resolve-bug-context.sh" "ZIP contains resolve-bug-context script"
+assert_zip_contains "$LISTING_FILE" "scripts/check-bug-verdict.sh" "ZIP contains check-bug-verdict script"
+assert_zip_not_contains_prefix "$LISTING_FILE" "commands/speckit.extendedflow.bug-" "ZIP excludes duplicate bug commands"
 assert_zip_contains "$LISTING_FILE" "scripts/verify-spec.sh" "ZIP contains verify-spec script"
 assert_zip_contains "$LISTING_FILE" "scripts/init-quick.sh" "ZIP contains init-quick script"
 assert_zip_contains "$LISTING_FILE" "scripts/resolve-pr-template.sh" "ZIP contains resolve-pr-template script"
@@ -116,6 +120,11 @@ if [ -x "$EXTRACT_DIR/scripts/init-quick.sh" ]; then
     pass "init-quick remains executable after extraction"
 else
     fail "init-quick remains executable after extraction"
+fi
+if [ -x "$EXTRACT_DIR/scripts/resolve-bug-context.sh" ] && [ -x "$EXTRACT_DIR/scripts/check-bug-verdict.sh" ]; then
+    pass "bug bridge scripts remain executable after extraction"
+else
+    fail "bug bridge scripts remain executable after extraction"
 fi
 
 echo ""

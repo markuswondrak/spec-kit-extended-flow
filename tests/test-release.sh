@@ -57,7 +57,17 @@ extension:
   description: "A test extension."
 EOF
 
-    git add preset.yml extension.yml
+    cat > bundle.yml << EOF
+schema_version: "1.0"
+
+bundle:
+  id: "test-bundle"
+  name: "Test Bundle"
+  version: "$version"
+  description: "A test bundle."
+EOF
+
+    git add preset.yml extension.yml bundle.yml
     git commit -m "Initial commit"
     git checkout -b main
     cd - >/dev/null
@@ -141,6 +151,14 @@ if [ "$updated_ext_version" = "0.2.0" ]; then
     pass "Version auto-bumped to next minor in extension.yml"
 else
     fail "Version auto-bumped to next minor in extension.yml" "Expected 0.2.0, got $updated_ext_version"
+fi
+
+# Verify bundle.yml was also updated
+updated_bundle_version=$(grep -E '^  version:' "$REPO/bundle.yml" | sed -E 's/.*"([^"]+)".*/\1/')
+if [ "$updated_bundle_version" = "0.2.0" ]; then
+    pass "Version auto-bumped to next minor in bundle.yml"
+else
+    fail "Version auto-bumped to next minor in bundle.yml" "Expected 0.2.0, got $updated_bundle_version"
 fi
 
 # Verify commit was created

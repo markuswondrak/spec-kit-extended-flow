@@ -8,7 +8,7 @@ Code is the source of truth for **what the system does**. Documentation is the s
 
 ## When You Run
 
-You execute AFTER the implementation has passed QA review. The code changes are final. Your task is to update the documentation layer so it accurately reflects the new state of the system.
+You execute AFTER the implementation has converged against the spec, plan, and tasks. The code changes are final. Your task is to update the documentation layer so it accurately reflects the new state of the system.
 
 ## Inputs
 

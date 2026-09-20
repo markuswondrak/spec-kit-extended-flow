@@ -2,14 +2,16 @@
 
 ## Architecture
 
-Extended Flow is delivered as **three artifacts bundled together** — a preset (templates + scripts), an extension (commands), and three workflows — following the Spec-Kit separation of concerns:
+Extended Flow is delivered as **three artifacts bundled together** — a preset (templates + scripts + unattended runtime preamble), an extension (commands), and four workflows — following the Spec-Kit separation of concerns. The bundle also declares Spec-Kit's built-in `bug` extension (`bug` v1.0.0) as a dependency, so the standard bug commands install with it.
 
 | Package | Manifest | Delivers | Installed via |
 |---------|----------|----------|---------------|
-| **Bundle** | `bundle.yml` | Preset + Extension + Workflows (meta-manifest) | `specify bundle install` |
-| Preset | `preset.yml` | Templates, scripts | `specify preset add` |
+| **Bundle** | `bundle.yml` | Preset + Extension + `bug` extension + Workflows (meta-manifest) | `specify bundle install` |
+| Preset | `preset.yml` | Templates, scripts, unattended runtime preamble | `specify preset add` |
 | Extension | `extension.yml` | Commands (agent prompts) | `specify extension add` |
 | Workflow | `workflows/*.yml` | Step orchestration | `specify workflow add` |
+
+The bundle installs the `bug` dependency automatically. For a standalone workflow install, add it first with `specify extension add bug`.
 
 This split exists because Spec-Kit's architecture reserves commands for extensions. Presets provide output formats; extensions provide agent behaviors. The bundle acts as a **facade** that composes all three into a single install operation while preserving the ability to install them individually for granular control.
 
@@ -24,8 +26,6 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 
 | Component | File | Role |
 |-----------|------|------|
-| Review agent | `commands/speckit.extendedflow.review.md` | QA agent system prompt |
-| Fix agent | `commands/speckit.extendedflow.fix.md` | Targeted fix agent system prompt |
 | Documentation agent | `commands/speckit.extendedflow.documentation.md` | Doc reconciliation agent prompt |
 | Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent prompt |
 | Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis + template tailoring agent prompt |
@@ -35,12 +35,14 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
-| Bug analysis template | `templates/bug-analysis.md` | Structured bug analysis output format |
 | Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
 | Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
 | Init quick | `scripts/init-quick.sh` | Initializes Quick Flow feature directory |
 | Verify spec | `scripts/verify-spec.sh` | Validates spec file was created |
-| Extract verdict | `scripts/extract-verdict.sh` | Extracts PASS/FAIL from review filename |
+| Check converge | `scripts/check-converge.sh` | Detects whether `speckit.converge` appended new tasks |
+| Extract verdict | `scripts/extract-verdict.sh` | Extracts the Quick Flow PASS/FAIL from the review filename |
+| Resolve bug context | `scripts/resolve-bug-context.sh` | Records the standard bug extension's active directory in `feature.json` |
+| Check bug verdict | `scripts/check-bug-verdict.sh` | Requires a `verified` result in the standard bug test report |
 
 ## Customization
 

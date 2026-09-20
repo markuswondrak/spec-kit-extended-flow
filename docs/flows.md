@@ -1,10 +1,10 @@
 # Flows
 
-Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps, gates, and review loop — but all flows share the same guard rails, documentation model, and issue-to-PR automation.
+Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps and gates, while issue-to-PR automation and safety boundaries are shared across the family.
 
 ## Feature Flow
 
-The SDD lifecycle for new features. Generates spec, plan, and tasks, implements them, runs a QA review loop, reconciles documentation, and ships a PR.
+The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
 
 ```mermaid
 flowchart TD
@@ -12,18 +12,20 @@ flowchart TD
     B -->|yes| C[create-branch]
     B -->|no| D[specify]
     C --> D
-    D --> E[🛑 spec-gate]
-    E -->|approve| F[plan]
-    F --> G[🛑 plan-gate]
-    G -->|approve| H[tasks]
-    H --> I[implement]
-    I --> J[review]
-    J --> K{PASS?}
-    K -->|yes| L[documentation]
-    K -->|no| M[fix]
-    M --> J
-    L --> N[finish]
-    N --> O[✅ done]
+    D --> E[verify-spec]
+    E --> F[🛑 spec-gate]
+    F -->|approve| G[plan]
+    G --> H[🛑 plan-gate]
+    H -->|approve| I[tasks]
+    I --> J[analyze]
+    J --> K[implement]
+    K --> L[converge]
+    L --> M{converged?}
+    M -->|no: tasks appended| N[implement]
+    N --> L
+    M -->|yes| O[documentation]
+    O --> P[finish]
+    P --> Q[✅ done]
 ```
 
 | Step | Type | Description |
@@ -31,48 +33,48 @@ flowchart TD
 | `resolve-spec` | shell | Resolves file paths and GitHub issues to spec content |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `specify` | command | Generates the specification from your input |
+| `verify-spec` | shell | Confirms the specification was actually written |
 | `spec-gate` | gate | 🛑 Human approval before planning |
 | `plan` | command | Creates implementation plan (infers from project) |
 | `plan-gate` | gate | 🛑 Human approval before task generation |
 | `tasks` | command | Generates actionable task breakdown |
+| `analyze` | command | Cross-artifact consistency & coverage analysis (standard) |
 | `implement` | command | Implements the tasks |
-| `review` | command | QA review against the spec → PASS or FAIL |
-| `fix` | command | Targeted fixes for review findings |
+| `converge` | command | Assesses code against spec/plan/tasks; appends remaining work (standard) |
 | `documentation` | command | Updates all documentation layers |
 | `finish` | command | Cleans up, commits, opens PR when issue provided |
 
-**Safety caps:** Review loop maxes out at 5 iterations. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
+**Safety caps:** The implement/converge loop maxes out at 5 iterations — if converge still appends tasks after the cap, the workflow fails with a clear error. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
 
 ## Bugfix Flow
 
-A TDD lifecycle for surgical bugfixes. It skips spec/plan/tasks generation and instead follows a **RED-GREEN-REVIEW** cycle, then ships a PR.
+A standard Spec-Kit bug lifecycle for surgical bugfixes. It skips spec/plan/tasks generation and uses the upstream `bug` extension's assessment, fix, and verification commands.
 
 ```mermaid
 flowchart TD
     A[resolve-spec] --> B{issue?}
     B -->|yes| C[create-branch fix/]
-    B -->|no| D[bug-analyze]
+    B -->|no| D[bug-assess]
     C --> D
-    D --> E[🛑 analysis-gate]
-    E -->|approve| F[bug-test RED]
-    F --> G[bug-fix GREEN]
-    G --> H[bug-review]
-    H --> I{PASS?}
-    I -->|yes| K[finish]
-    I -->|no| J[bug-fix]
-    J --> H
-    K --> L[✅ done]
+    D --> E[resolve-bug-context]
+    E --> F[assessment-gate]
+    F -->|approve| G[bug-fix]
+    G --> H[bug-test]
+    H --> I{verified?}
+    I -->|yes| J[finish]
+    I -->|no| K[stop]
+    J --> L[✅ done]
 ```
 
-1. **Analyze** — Root-cause diagnosis with test plan
-2. **Test (RED)** — Write a failing test that reproduces the bug
-3. **Fix (GREEN)** — Surgical fix until the test passes
-4. **Review** — Independent QA review against the analysis
-5. **Loop** — Review loops until PASS or max 5 iterations
+1. **Assess** — Standard bug assessment writes `.specify/bugs/<slug>/assessment.md`
+2. **Approve** — Human gate reviews the assessment before source changes
+3. **Fix** — Standard bug fix applies remediation and records `fix.md`
+4. **Test** — Standard bug test verifies the fix and records `test.md`
+5. **Finish** — Extended Flow cleans up, commits, and opens a PR when an issue was provided
 
 When started from a GitHub issue, the Bugfix Flow creates a `fix/<issue>-<slug>` branch and opens a PR with a `fix:` conventional commit prefix.
 
-**Safety caps:** Same as Feature Flow — review loop maxes out at 5 iterations, with a human gate after analysis.
+**Safety:** The upstream bug commands refuse ambiguous or invalid bug reports and do not overwrite existing reports automatically. Extended Flow adds a human assessment gate and fails unless verification is `verified`.
 
 ## Quick Flow
 

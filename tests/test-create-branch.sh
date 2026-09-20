@@ -8,6 +8,7 @@ PROJECT_DIR="$(dirname "$TEST_DIR")"
 SCRIPT_FILE="$PROJECT_DIR/scripts/create-branch.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
+BASH_BIN="$(command -v bash)"
 
 PASSED=0
 FAILED=0
@@ -68,9 +69,11 @@ echo ""
 # Test 1: Missing issue number
 run_test "Missing issue number" "" 1 "ERROR: Issue number is required" "" ""
 
-# Test 2: Missing gh CLI — strip /snap/bin from PATH so real gh is not found
+# Test 2: Missing gh CLI — use an empty bin dir so no gh is found on any runner
+empty_bin="$TMP_DIR/empty-bin-create-branch"
+mkdir -p "$empty_bin"
 set +e
-actual_output=$(PATH="/usr/bin:/bin" bash "$SCRIPT_FILE" "42" 2>&1)
+actual_output=$(PATH="$empty_bin" "$BASH_BIN" "$SCRIPT_FILE" "42" 2>&1)
 actual_exit=$?
 set -e
 if [ "$actual_exit" -ne 1 ]; then

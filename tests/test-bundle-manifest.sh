@@ -92,10 +92,12 @@ assert_equals "$BUNDLE_VERSION" "$PRESET_VERSION" "bundle.version matches preset
 assert_equals "$BUNDLE_VERSION" "$EXTENSION_VERSION" "bundle.version matches extension.version"
 
 # --- Requirements ---
-assert_contains "$BUNDLE_FILE" 'speckit_version: ">=0.9.0"' "bundle requires speckit >= 0.9.0"
+assert_contains "$BUNDLE_FILE" 'speckit_version: ">=0.11.2"' "bundle requires speckit >= 0.11.2"
 
-# --- Component references: extension ---
+# --- Component references: extensions ---
 assert_contains "$BUNDLE_FILE" 'id: "extendedflow"' "bundle references extendedflow extension"
+assert_contains "$BUNDLE_FILE" 'id: "bug"' "bundle references core bug extension"
+assert_contains "$BUNDLE_FILE" 'version: "1.0.0"' "bundle pins bug extension version 1.0.0"
 assert_contains "$BUNDLE_FILE" 'extensions:' "bundle has extensions section"
 
 # --- Component references: preset ---

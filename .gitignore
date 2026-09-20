@@ -1,0 +1,4 @@
+# Build outputs — generated locally and published as GitHub release assets.
+# Never commit these.
+dist/
+catalog/artifacts/

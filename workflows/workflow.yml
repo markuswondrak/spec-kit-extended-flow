@@ -3,12 +3,12 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — Feature Flow"
-  version: "0.9.0"
+  version: "0.10.0"
   author: "Markus Wondrak"
-  description: "The Feature Flow: SDD lifecycle with QA review and documentation reconciliation. Runs specification, planning, tasks, implementation, a QA review loop, and documentation reconciliation. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
+  description: "The Feature Flow: SDD lifecycle with a Spec-Kit convergence loop and documentation reconciliation. Runs specification, planning, tasks, a consistency analysis, implementation, implement/converge iterations until converged, and documentation reconciliation. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
 requires:
-  speckit_version: ">=0.8.5"
+  speckit_version: ">=0.11.2"
   integrations:
     any:
       - "claude"
@@ -85,48 +85,47 @@ steps:
     integration: "{{ inputs.integration }}"
     model: ""
 
+  - id: analyze
+    command: speckit.analyze
+    integration: "{{ inputs.integration }}"
+    model: ""
+
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
     model: ""
 
-  - id: review
-    command: speckit.extendedflow.review
-    integration: "{{ inputs.integration }}"
-    model: ""
-
-  - id: review-verdict
-    type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
-
-  - id: fix-if-needed
-    type: if
-    condition: "{{ steps.review-verdict.output.stdout | contains('FAIL') }}"
-    then:
-      - id: fix-loop
-        type: do-while
-        condition: "{{ steps.fix-verdict.output.stdout | contains('FAIL') }}"
-        max_iterations: 5
-        steps:
-          - id: fix
-            command: speckit.extendedflow.fix
-            integration: "{{ inputs.integration }}"
-            model: ""
-          - id: fix-review
-            command: speckit.extendedflow.review
-            integration: "{{ inputs.integration }}"
-            model: ""
-          - id: fix-verdict
-            type: shell
-            run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
-
-  - id: stop-on-review-fail
-    type: if
-    condition: "{{ steps.fix-verdict.output.stdout | contains('FAIL') }}"
-    then:
-      - id: review-failed
+  - id: converge-loop
+    type: do-while
+    condition: "{{ steps.converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+    max_iterations: 5
+    steps:
+      - id: converge-snapshot
         type: shell
-        run: "echo 'QA review still failed after the maximum number of iterations. See review-findings-{N}-FAIL.md inside the current feature directory for details.' >&2; exit 1"
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh snapshot "{{ context.run_id }}"
+      - id: converge
+        command: speckit.converge
+        integration: "{{ inputs.integration }}"
+        model: ""
+      - id: converge-check
+        type: shell
+        run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh check "{{ context.run_id }}"
+      - id: converge-implement
+        type: if
+        condition: "{{ steps.converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+        then:
+          - id: converge-implement-run
+            command: speckit.implement
+            integration: "{{ inputs.integration }}"
+            model: ""
+
+  - id: stop-on-not-converged
+    type: if
+    condition: "{{ steps.converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+    then:
+      - id: not-converged
+        type: shell
+        run: "echo 'speckit.converge still reported remaining work after the maximum number of iterations. Inspect the appended tasks in tasks.md and run the Feature Flow again.' >&2; exit 1"
 
   - id: documentation
     command: speckit.extendedflow.documentation

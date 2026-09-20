@@ -18,7 +18,7 @@ Extended Flow manages its own branch creation (issue-based naming: `feature/<iss
 
 **What you keep:**
 - All core spec-kit commands (`speckit.specify`, `speckit.plan`, `speckit.tasks`, `speckit.implement`)
-- All extended flow commands (`speckit.extendedflow.review`, `speckit.extendedflow.fix`, etc.)
+- All extended flow commands (`speckit.extendedflow.documentation`, `speckit.extendedflow.finish`, etc.)
 - Issue-to-PR automation via the `finish` command
 
 To re-enable the git extension later (if you stop using Extended Flow):
@@ -28,7 +28,7 @@ specify extension enable git
 
 ## Common Issues
 
-**Reviewer always returns FAIL:** Check that `.specify/spec.md` is up to date. Review findings are inside the current feature directory (`specs/<NNN>-<feature>/review-findings.md`). Adjust `max_iterations` in `workflows/workflow.yml` if needed.
+**Workflow fails with "still reported remaining work":** `speckit.converge` kept appending tasks after the 5-iteration cap. Inspect the appended `## Phase N: Convergence` tasks in the feature's `tasks.md`, fix the underlying spec/plan/tasks gap, and re-run the Feature Flow. `check-converge.sh` detects the append by hashing `tasks.md` before and after converge — see `scripts/check-converge.sh`.
 
 **Workflow stuck in loop:** Check `specify workflow status`. The cap of 5 iterations prevents infinite loops.
 

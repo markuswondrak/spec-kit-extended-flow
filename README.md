@@ -31,23 +31,23 @@ Extended Flow closes the loop. **Intent in, working software out — reviewed ag
 
 | | Standard SDD | Extended Flow |
 |---|---|---|
-| After implementation | ✅ Done | 🔄 QA Review Loop |
+| After implementation | ✅ Done | 🔄 Convergence Loop |
 | Documentation | Manual, drifts | Auto-reconciled per layer |
 | Code-vs-docs conflicts | Silent | Flagged for human resolution |
 | Issue → PR | Manual | Automated branch, commit, PR |
 
 ### How the principles become concrete
 
-- **QA Review Loop.** A Review agent analyzes the implementation against the spec. If it finds critical issues, a Fix agent makes targeted corrections and the review runs again. This loops until the reviewer signs off with `PASS` — up to 5 iterations max.
+- **Convergence Loop.** After implementation, Spec-Kit's standard `speckit.converge` command assesses the codebase against the spec, plan, and tasks. If it finds remaining work, it appends new tasks and `speckit.implement` runs again. This loops until converge reports no remaining tasks — up to 5 iterations max. Built entirely on standard Spec-Kit commands.
 - **Documentation Reconciliation.** After a passing review, a Documentation agent scans all implementation diffs and updates every documentation layer (global constraints, architecture decisions, interface contracts, AI debt register). **Code-vs-docs conflicts are flagged for human resolution — never auto-resolved.** This is a core invariant.
 - **Issue → PR automation.** When started from a GitHub issue, the workflow automatically creates a feature branch, cleans up temporary files, commits all changes, and opens a pull request that closes the issue.
 
 ### A family of flows
 
-Extended Flow ships a **family of composable flows** that share the same guard rails (QA review loop, safety caps, human gates) and the same documentation model. Today the family has three members:
+Extended Flow ships a **family of composable flows** that share issue-to-PR automation and clear safety boundaries. The Feature Flow uses Spec-Kit's standard implement/converge loop; the Quick Flow adds a self-fixing review; the Bugfix Flow delegates bug handling to Spec-Kit's standard bug extension. The family has three members:
 
-- **Feature Flow** — the SDD lifecycle for new features (`specify → plan → tasks → implement → review → documentation → finish`).
-- **Bugfix Flow** — a TDD lifecycle for surgical bugfixes (`analyze → test → fix → review → finish`), skipping spec/plan/tasks generation.
+- **Feature Flow** — the SDD lifecycle for new features (`specify → plan → tasks → analyze → implement → converge → documentation → finish`).
+- **Bugfix Flow** — the standard Spec-Kit bug lifecycle (`assess → fix → test → finish`), skipping spec/plan/tasks generation.
 - **Quick Flow** — a lightweight pipeline for trivial, well-defined changes (`implement → review-fix → doc-check → finish`), no spec/plan/tasks, no human gates, self-fixing review in a single pass.
 
 See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The family is designed to grow — future flows slot in as peers.
@@ -59,20 +59,22 @@ See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The
 ```bash
 # 1. Install the complete bundle (preset + extension + 3 workflows)
 #
-# Option A — For users (remote, from release ZIP)
-#   The one-line `bundle install <id>` requires the bundle to be registered
-#   in the Spec-Kit community catalog, which is not yet the case. Until then,
-#   install the three components granularly:
-specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
-specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/bugfix-workflow.yml
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
+# Option A — For users (remote, from this repo's HTTPS catalog)
+#   Register the project-owned catalog once, then install the bundle in one step.
+CATALOG=https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/catalog
+specify extension catalog add "$CATALOG/extension-catalog.json" --name spec-kit-extended-flow --install-allowed --priority 1
+specify preset catalog add "$CATALOG/preset-catalog.json" --name spec-kit-extended-flow --install-allowed --priority 1
+specify workflow catalog add "$CATALOG/workflow-catalog.json" --name spec-kit-extended-flow
+specify bundle catalog add "$CATALOG/bundle-catalog.json" --id spec-kit-extended-flow --priority 1
+specify bundle install spec-kit-extended-flow
 
 # Option B — For developers of this flow (local checkout)
 #   Spec-Kit's bundle installer resolves extensions through the extension
-#   catalog only, so the extension must be installed separately first:
+#   catalog only, so both extensions must be installed separately first:
+specify extension add bug
 specify extension add --dev .
+specify preset add --dev .
+# `--from` expects a ZIP package URL; do not pass a bare repository URL.
 specify bundle install .
 
 # 2. Run the Feature Flow
@@ -80,7 +82,7 @@ specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
 ```
 
-**What happens:** The workflow generates your spec, plan, and task list (with human approval gates at each stage), implements everything, runs QA review in a loop until PASS, then reconciles documentation.
+**What happens:** The workflow generates a specification, plan, and tasks (with human approval gates), implements them through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
 
 ### Bugfix Quickstart
 
@@ -91,7 +93,7 @@ specify workflow run spec-kit-bugfix-flow \
   --input issue="42"
 ```
 
-**What happens:** The workflow analyzes the bug, writes a failing test (RED), applies a surgical fix (GREEN), runs independent QA review in a loop until PASS, then commits and opens a PR.
+**What happens:** The workflow uses Spec-Kit's standard bug assessment, fix, and verification commands, pauses for assessment approval, then commits and opens a PR.
 
 ### Quick Flow Quickstart
 
@@ -113,11 +115,11 @@ specify workflow run spec-kit-quick-flow \
 <summary><strong>Other input modes</strong></summary>
 
 ```bash
-# From a spec file
+# Feature Flow from a spec file
 specify workflow run spec-kit-extended-flow \
   --input file="./specs/todo-api.md"
 
-# From a GitHub issue
+# Feature Flow from a GitHub issue
 specify workflow run spec-kit-extended-flow \
   --input issue="42"
 
@@ -144,16 +146,22 @@ Quick Flow creates the same branch naming and uses `chore:` as the commit prefix
 If you prefer to install preset, extension, and workflows separately:
 
 ```bash
-# 1. Install preset (templates + scripts)
+# 1. Install Spec-Kit's standard bug extension
+specify extension add bug
+
+# 2. Install preset (templates + scripts)
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
-# 2. Install extension (commands)
+# 3. Install extension (commands)
 specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
-# 3. Install workflows
+# 4. Install workflows
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/bugfix-workflow.yml
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
+
+# Or install the complete bundle with a pinned version:
+specify bundle install spec-kit-extended-flow --version 2.1.0
 ```
 </details>
 
@@ -170,22 +178,22 @@ specify extension add --dev .
 specify bundle install .
 ```
 
-**Why two steps?** Spec-Kit's bundle installer resolves extensions through the extension catalog only (not from the bundle directory). Until this bundle is published to the community catalog, the extension must be installed separately first. The bundle installer then detects it as already present and skips it. See [Spec-Kit #3058](https://github.com/github/spec-kit/issues/3058) for the design rationale.
+**Why two steps?** When installing the bundle from a local path, Spec-Kit still resolves each declared component through its catalog stack (a local bundle source supplies only the manifest). Installing the extension with `--dev` first makes the bundler detect it as already present and skip it. With the [project-owned HTTPS catalog](#quickstart) registered, the normal one-line `specify bundle install spec-kit-extended-flow` works instead. See [Spec-Kit #3058](https://github.com/github/spec-kit/issues/3058) for the design rationale.
 </details>
 
 ---
 
 ## Flows
 
-Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps, gates, and review loop — but all flows share the same guard rails, documentation model, and issue-to-PR automation.
+Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps and gates — but all flows share the same guard rails, documentation model, and issue-to-PR automation.
 
 ### Feature Flow
 
-The SDD lifecycle for new features. Generates spec, plan, and tasks, implements them, runs a QA review loop, reconciles documentation, and ships a PR. See [docs/flows.md](docs/flows.md#feature-flow) for the full diagram and step table.
+The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a cross-artifact consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR. See [docs/flows.md](docs/flows.md#feature-flow) for the full diagram and step table.
 
 ### Bugfix Flow
 
-A TDD lifecycle for surgical bugfixes. Skips spec/plan/tasks generation and follows a **RED-GREEN-REVIEW** cycle, then ships a PR. See [docs/flows.md](docs/flows.md#bugfix-flow) for the full diagram and step table.
+A standard Spec-Kit bug lifecycle for surgical bugfixes. It uses `speckit.bug.assess`, `speckit.bug.fix`, and `speckit.bug.test`, with Extended Flow adding the assessment gate and issue-to-PR finish step. See [docs/flows.md](docs/flows.md#bugfix-flow) for the full diagram and step table.
 
 ### Quick Flow
 
@@ -197,7 +205,7 @@ A lightweight pipeline for trivial, well-defined changes. Skips spec/plan/tasks 
 
 ### Spec Input Parameters
 
-Both flows accept three input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
+Each flow accepts three input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
 
 | Parameter | Type | Example | How it works |
 |-----------|------|---------|--------------|
@@ -213,7 +221,9 @@ Run these standalone outside the workflows:
 
 | Command | Purpose |
 |---------|---------|
-| `/speckit.extendedflow.review` | QA review only |
+| `/speckit.bug.assess` | Assess a bug report (provided by Spec-Kit's `bug` extension) |
+| `/speckit.bug.fix` | Apply an assessed bug remediation (provided by Spec-Kit's `bug` extension) |
+| `/speckit.bug.test` | Verify an assessed bug fix (provided by Spec-Kit's `bug` extension) |
 | `/speckit.extendedflow.documentation` | Documentation reconciliation only |
 | `/speckit.extendedflow.documentation-init` | Bootstrap documentation for an existing project |
 | `/speckit.extendedflow.finish` | Cleanup, commit, and PR (post-implementation) |
