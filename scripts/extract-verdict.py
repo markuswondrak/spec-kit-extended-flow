@@ -46,14 +46,17 @@ def main() -> int:
 
     matches = []
     for candidate in candidates:
-        match = re.fullmatch(r"review-findings-(\d+)-(.*)\.md", candidate.name)
-        if match:
-            matches.append((int(match.group(1)), candidate, match.group(2)))
-    if not matches:
-        return error("Could not determine latest review findings file")
-    _, verdict_file, verdict = max(matches, key=lambda item: item[0])
-    if verdict not in ("PASS", "FAIL"):
-        return error(f"Unexpected verdict '{verdict}' in filename: {verdict_file.name}")
+        match = re.fullmatch(r"review-findings-([1-9]\d*)-(PASS|FAIL)\.md", candidate.name)
+        if match is None:
+            return error(f"Invalid review findings filename: {candidate.name}")
+        matches.append((int(match.group(1)), candidate, match.group(2)))
+
+    latest_iteration = max(iteration for iteration, _, _ in matches)
+    latest = [entry for entry in matches if entry[0] == latest_iteration]
+    if len(latest) != 1:
+        names = ", ".join(candidate.name for _, candidate, _ in sorted(latest, key=lambda item: item[1].name))
+        return error(f"Multiple review findings files for iteration {latest_iteration}: {names}")
+    _, verdict_file, verdict = latest[0]
 
     print(verdict)
     if run_id:

@@ -21,7 +21,8 @@ def slugify(value: str, maximum: int = 50) -> str:
 
 def main() -> int:
     issue = sys.argv[1] if len(sys.argv) > 1 else ""
-    prefix = sys.argv[2] if len(sys.argv) > 2 else "feature"
+    prefix = sys.argv[2] if len(sys.argv) > 2 else ""
+    prefix = prefix or "feature"
     if not issue:
         return error("Issue number is required.")
     if shutil.which("gh") is None:

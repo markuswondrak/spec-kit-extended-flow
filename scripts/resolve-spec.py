@@ -4,6 +4,7 @@
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 
 def error(message: str) -> int:
@@ -18,8 +19,11 @@ def main() -> int:
     output = b""
 
     if file_path:
+        path = Path(file_path)
+        if not path.is_file():
+            return error(f"Spec file not found: {file_path}")
         try:
-            with open(file_path, "rb") as spec_file:
+            with path.open("rb") as spec_file:
                 file_content = spec_file.read()
         except OSError:
             return error(f"Spec file not found: {file_path}")

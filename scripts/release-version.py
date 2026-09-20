@@ -32,6 +32,20 @@ def run_git(project_dir: Path, *arguments: str) -> None:
     subprocess.run(["git", "-C", str(project_dir), *arguments], check=True)
 
 
+def project_directory() -> Path:
+    root = Path(__file__).resolve().parent.parent
+    result = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "--show-toplevel"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0 or Path(result.stdout.strip()).resolve() != root:
+        error("The release script must be located in a git repository root.")
+    return root
+
+
 def version_from_manifest(path: Path) -> str:
     match = VERSION_PATTERN.search(path.read_text(encoding="utf-8"))
     return "" if match is None else match.group(0).split('"', 1)[1].rsplit('"', 1)[0]
@@ -77,16 +91,7 @@ def main(arguments: list[str]) -> int:
 
     if shutil.which("git") is None:
         error("Not a git repository. Run from inside a git repository.")
-    result = subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        check=False,
-    )
-    project_dir = Path(result.stdout.strip()) if result.returncode == 0 else None
-    if project_dir is None or not (project_dir / ".git").is_dir():
-        error("Not a git repository. Run from inside a git repository.")
+    project_dir = project_directory()
 
     preset_file = project_dir / "preset.yml"
     extension_file = project_dir / "extension.yml"
@@ -120,7 +125,11 @@ def main(arguments: list[str]) -> int:
     update_bundle_component_versions(bundle_file, version)
 
     try:
-        subprocess.run([sys.executable, str(Path(__file__).with_name("build-catalog.py"))], check=True)
+        subprocess.run(
+            [sys.executable, str(project_dir / "scripts" / "build-catalog.py")],
+            cwd=project_dir,
+            check=True,
+        )
     except subprocess.CalledProcessError:
         error("Failed to build catalog artifacts and synchronize catalog pins.")
 

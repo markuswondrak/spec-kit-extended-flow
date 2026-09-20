@@ -121,7 +121,7 @@ def main() -> int:
             entries[license_name] = source
 
     dist_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as temporary_directory:
+    with tempfile.TemporaryDirectory(dir=dist_dir) as temporary_directory:
         temporary_path = Path(temporary_directory) / package_name
         write_archive(temporary_path, entries)
         os.replace(temporary_path, package_path)

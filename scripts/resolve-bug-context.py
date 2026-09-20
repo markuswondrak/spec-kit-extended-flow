@@ -26,7 +26,7 @@ def main() -> int:
         if not (bug_dir / "assessment.md").is_file():
             return error(f"Assessment not found for bug slug: {requested_slug}")
     else:
-        assessments = list(bugs_dir.glob("*/assessment.md"))
+        assessments = [path for path in bugs_dir.glob("*/assessment.md") if path.is_file()]
         if not assessments:
             return error(f"No assessment.md found in {bugs_dir}")
         # The shell script favors the later glob entry when mtimes tie.

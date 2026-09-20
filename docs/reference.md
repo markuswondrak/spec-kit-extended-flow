@@ -46,7 +46,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 
 ### Downstream Runtime
 
-Downstream workflows invoke the installed runtime scripts with `python`, so Python 3 must be available on the downstream project's `PATH`. Windows runtime execution has not been verified; this change does not claim Windows support.
+Downstream workflows invoke the installed runtime scripts with `python3`, so Python 3 must be available on the downstream project's `PATH`. Windows runtime execution has not been verified; this change does not claim Windows support.
 
 ## Customization
 

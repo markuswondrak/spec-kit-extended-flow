@@ -8,8 +8,8 @@ import sys
 def main() -> int:
     repo_root = Path.cwd()
     variant_dir = repo_root / ".github/PULL_REQUEST_TEMPLATE"
-    if variant_dir.is_dir():
-        variants = sorted(path for path in variant_dir.glob("*.md") if path.is_file())
+    if variant_dir.is_dir() and not variant_dir.is_symlink():
+        variants = sorted(path for path in variant_dir.glob("*.md") if path.is_file() and not path.is_symlink())
         if variants:
             print(variants[0])
             return 0

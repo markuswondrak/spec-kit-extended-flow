@@ -31,7 +31,7 @@ def main() -> int:
         content = test_file.read_text()
     except OSError:
         return error(f"Bug verification report not found: {test_file}")
-    match = re.search(r"^\s*-\s*\*\*Result\*\*:\s*(.*)$", content, re.MULTILINE)
+    match = re.search(r"^[ \t]*-[ \t]*\*\*Result\*\*:[ \t]*(.*)$", content, re.MULTILINE)
     result = match.group(1) if match else ""
     if result == "verified":
         print("verified")

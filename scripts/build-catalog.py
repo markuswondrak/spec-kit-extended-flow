@@ -173,7 +173,7 @@ def main() -> int:
     }
 
     output_directory.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory() as temporary_directory:
+    with tempfile.TemporaryDirectory(dir=output_directory) as temporary_directory:
         temporary_path = Path(temporary_directory)
         artifacts = (
             ("extension", extension_artifact, extension_entries),

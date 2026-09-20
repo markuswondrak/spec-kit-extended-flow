@@ -89,6 +89,29 @@ class ResolveSpecTests(RuntimeScriptTestCase):
         self.assertEqual(result.stdout, b"")
         self.assertEqual(result.stderr, f"ERROR: Spec file not found: {missing}\n".encode())
 
+    def test_non_regular_file_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            directory = root / "not-a-file"
+            directory.mkdir()
+            result = self.run_script("resolve-spec.py", "", str(directory), "", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, f"ERROR: Spec file not found: {directory}\n".encode())
+
+    @unittest.skipUnless(hasattr(os, "mkfifo"), "FIFOs require POSIX")
+    def test_fifo_is_rejected_without_waiting_for_a_writer(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            fifo = root / "request.fifo"
+            os.mkfifo(fifo)
+            result = self.run_script("resolve-spec.py", "", str(fifo), "", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, f"ERROR: Spec file not found: {fifo}\n".encode())
+
     def test_missing_input_reports_only_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             result = self.run_script("resolve-spec.py", "", "", "", cwd=temporary_directory)
@@ -140,9 +163,11 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             )
             env = {"PATH": f"{bin_directory}:{os.environ['PATH']}"}
             default = self.run_script("create-branch.py", "42", cwd=root, env=env)
+            empty = self.run_script("create-branch.py", "42", "", cwd=root, env=env)
             custom = self.run_script("create-branch.py", "42", "fix/", cwd=root, env=env)
 
         self.assertEqual((default.returncode, default.stdout, default.stderr), (0, b"feature/42-add-user-auth\n", b""))
+        self.assertEqual((empty.returncode, empty.stdout, empty.stderr), (0, b"feature/42-add-user-auth\n", b""))
         self.assertEqual((custom.returncode, custom.stdout, custom.stderr), (0, b"fix/42-add-user-auth\n", b""))
 
     def test_create_branch_missing_issue_is_a_stderr_error(self):
@@ -204,7 +229,31 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
-        self.assertIn(b"ERROR: Unexpected verdict 'MAYBE'", result.stderr)
+        self.assertIn(b"ERROR: Invalid review findings filename: review-findings-1-MAYBE.md", result.stderr)
+
+    def test_extract_verdict_rejects_malformed_artifacts_instead_of_using_a_stale_pass(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            feature = self.make_feature(root)
+            (feature / "review-findings-1-PASS.md").touch()
+            (feature / "review-findings-2x-FAIL.md").touch()
+            result = self.run_script("extract-verdict.py", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Invalid review findings filename: review-findings-2x-FAIL.md", result.stderr)
+
+    def test_extract_verdict_rejects_conflicting_highest_iteration(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            feature = self.make_feature(root)
+            (feature / "review-findings-2-PASS.md").touch()
+            (feature / "review-findings-2-FAIL.md").touch()
+            result = self.run_script("extract-verdict.py", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Multiple review findings files for iteration 2", result.stderr)
 
     def test_init_quick_creates_the_pointer_and_returns_the_directory(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -249,6 +298,17 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"login-timeout\n", b""))
         self.assertEqual(pointer, {"feature_directory": ".specify/bugs/login-timeout", "type": "bug"})
 
+    def test_resolve_bug_context_ignores_assessment_directories(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            assessment_directory = root / ".specify/bugs/invalid/assessment.md"
+            assessment_directory.mkdir(parents=True)
+            result = self.run_script("resolve-bug-context.py", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: No assessment.md found", result.stderr)
+
     def test_check_bug_verdict_uses_verified_as_the_only_success_token(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
@@ -262,11 +322,16 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             verified = self.run_script("check-bug-verdict.py", cwd=root)
             test_report.write_text("- **Result**: partial\n", encoding="utf-8")
             partial = self.run_script("check-bug-verdict.py", cwd=root)
+            test_report.write_text("- **Result**:\n  verified\n", encoding="utf-8")
+            multiline = self.run_script("check-bug-verdict.py", cwd=root)
 
         self.assertEqual((verified.returncode, verified.stdout, verified.stderr), (0, b"verified\n", b""))
         self.assertEqual(partial.returncode, 1)
         self.assertEqual(partial.stdout, b"")
         self.assertEqual(partial.stderr, b"partial\nERROR: Bug verification result is 'partial'.\n")
+        self.assertEqual(multiline.returncode, 1)
+        self.assertEqual(multiline.stdout, b"")
+        self.assertIn(b"ERROR: Missing or invalid Result field", multiline.stderr)
 
     def test_resolve_pr_template_prefers_alphabetical_variants(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -280,3 +345,17 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             result = self.run_script("resolve-pr-template.py", cwd=root)
 
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, f"{alpha}\n".encode(), b""))
+
+    def test_resolve_pr_template_ignores_symlinked_variants(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            variants = root / ".github/PULL_REQUEST_TEMPLATE"
+            variants.mkdir(parents=True)
+            external = root / "external.md"
+            external.touch()
+            (variants / "alpha.md").symlink_to(external)
+            fallback = root / "PULL_REQUEST_TEMPLATE.md"
+            fallback.touch()
+            result = self.run_script("resolve-pr-template.py", cwd=root)
+
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, f"{fallback}\n".encode(), b""))

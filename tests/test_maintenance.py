@@ -35,9 +35,6 @@ class MaintenanceScriptTests(unittest.TestCase):
             destination,
             ignore=shutil.ignore_patterns(".git", "__pycache__", "dist", "artifacts"),
         )
-        for script in RUNTIME_SCRIPTS:
-            path = destination / "scripts" / script
-            path.chmod(path.stat().st_mode | stat.S_IXUSR)
 
     def run_script(self, project, script, *args, env=None):
         environment = os.environ.copy()
@@ -80,6 +77,7 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertTrue(RUNTIME_SCRIPTS <= set(path.removeprefix("scripts/") for path in contents if path.startswith("scripts/")))
         self.assertFalse(any(name.endswith(".sh") for name in contents))
         for script in RUNTIME_SCRIPTS:
+            self.assertTrue((ROOT / "scripts" / script).stat().st_mode & stat.S_IXUSR)
             timestamp, mode, is_directory = contents[f"scripts/{script}"]
             self.assertEqual(timestamp, (1980, 1, 1, 0, 0, 0))
             self.assertFalse(is_directory)
@@ -150,3 +148,83 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertEqual(catalogs["preset-catalog.json"]["presets"]["spec-kit-extended-flow"]["version"], "1.2.3")
         self.assertEqual(catalogs["bundle-catalog.json"]["bundles"]["spec-kit-extended-flow"]["version"], "1.2.3")
         self.assertEqual(tags.stdout, "v1.2.3\n")
+
+    def test_release_version_uses_the_script_repository_not_the_callers_repository(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            project = root / "project"
+            caller = root / "caller"
+            self.copy_project(project)
+            for repository in (project, caller):
+                subprocess.run(["git", "init", "-b", "main", str(repository)], check=True, stdout=subprocess.DEVNULL)
+                subprocess.run(["git", "-C", str(repository), "config", "user.email", "tests@example.com"], check=True)
+                subprocess.run(["git", "-C", str(repository), "config", "user.name", "Tests"], check=True)
+                (repository / "marker.txt").write_text("initial\n", encoding="utf-8")
+                subprocess.run(["git", "-C", str(repository), "add", "."], check=True)
+                subprocess.run(["git", "-C", str(repository), "commit", "-m", "initial"], check=True, stdout=subprocess.DEVNULL)
+
+            caller_head = subprocess.run(
+                ["git", "-C", str(caller), "rev-parse", "HEAD"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            result = subprocess.run(
+                [PYTHON, str(project / "scripts" / "release-version.py"), "1.2.3"],
+                cwd=caller,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            caller_after = subprocess.run(
+                ["git", "-C", str(caller), "rev-parse", "HEAD"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            caller_tags = subprocess.run(
+                ["git", "-C", str(caller), "tag", "--list"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            project_tags = subprocess.run(
+                ["git", "-C", str(project), "tag", "--list", "v1.2.3"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+        self.assertEqual(caller_after, caller_head)
+        self.assertEqual(caller_tags, "")
+        self.assertEqual(project_tags, "v1.2.3\n")
+
+    def test_release_uses_the_script_repository_not_the_callers_repository(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            project = root / "project"
+            caller = root / "caller"
+            self.copy_project(project)
+            for repository in (project, caller):
+                subprocess.run(["git", "init", "-b", "main", str(repository)], check=True, stdout=subprocess.DEVNULL)
+                subprocess.run(["git", "-C", str(repository), "config", "user.email", "tests@example.com"], check=True)
+                subprocess.run(["git", "-C", str(repository), "config", "user.name", "Tests"], check=True)
+                (repository / "marker.txt").write_text("initial\n", encoding="utf-8")
+                subprocess.run(["git", "-C", str(repository), "add", "."], check=True)
+                subprocess.run(["git", "-C", str(repository), "commit", "-m", "initial"], check=True, stdout=subprocess.DEVNULL)
+
+            caller_head = subprocess.run(
+                ["git", "-C", str(caller), "rev-parse", "HEAD"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            result = subprocess.run(
+                [PYTHON, str(project / "scripts" / "release.py")],
+                cwd=caller,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=False,
+            )
+            caller_after = subprocess.run(
+                ["git", "-C", str(caller), "rev-parse", "HEAD"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            caller_tags = subprocess.run(
+                ["git", "-C", str(caller), "tag", "--list"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+            project_tags = subprocess.run(
+                ["git", "-C", str(project), "tag", "--list", "v0.16.0"], check=True, text=True, stdout=subprocess.PIPE
+            ).stdout
+
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+        self.assertEqual(caller_after, caller_head)
+        self.assertEqual(caller_tags, "")
+        self.assertEqual(project_tags, "v0.16.0\n")
