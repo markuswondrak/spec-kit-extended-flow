@@ -8,6 +8,7 @@ PROJECT_DIR="$(dirname "$TEST_DIR")"
 SCRIPT_FILE="$PROJECT_DIR/scripts/init-quick.sh"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
+BASH_BIN="$(command -v bash)"
 
 PASSED=0
 FAILED=0
@@ -165,11 +166,13 @@ exit 1
 '
 run_test "Issue fetch failure" "99" "" 1 "Failed to fetch issue" "" "$mock_gh_fail"
 
-# Test 7: Missing gh CLI when issue provided
+# Test 7: Missing gh CLI when issue provided — empty bin dir so no gh is found
 set +e
 work_dir="$TMP_DIR/test_missing_gh"
 mkdir -p "$work_dir"
-actual_output=$(cd "$work_dir" && PATH="/usr/bin:/bin" bash "$SCRIPT_FILE" "42" "" 2>&1)
+empty_bin="$TMP_DIR/empty-bin-init-quick"
+mkdir -p "$empty_bin"
+actual_output=$(cd "$work_dir" && PATH="$empty_bin" "$BASH_BIN" "$SCRIPT_FILE" "42" "" 2>&1)
 actual_exit=$?
 set -e
 if [ "$actual_exit" -ne 1 ]; then
