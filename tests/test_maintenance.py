@@ -206,6 +206,13 @@ class MaintenanceScriptTests(unittest.TestCase):
             caller_head = subprocess.run(
                 ["git", "-C", str(caller), "rev-parse", "HEAD"], check=True, text=True, stdout=subprocess.PIPE
             ).stdout
+            current_version = next(
+                line.split('"')[1]
+                for line in (project / "preset.yml").read_text(encoding="utf-8").splitlines()
+                if line.startswith("  version: ")
+            )
+            major, minor, _ = (int(part) for part in current_version.split("."))
+            expected_tag = f"v{major}.{minor + 1}.0"
             result = subprocess.run(
                 [PYTHON, str(project / "scripts" / "release.py")],
                 cwd=caller,
@@ -221,10 +228,10 @@ class MaintenanceScriptTests(unittest.TestCase):
                 ["git", "-C", str(caller), "tag", "--list"], check=True, text=True, stdout=subprocess.PIPE
             ).stdout
             project_tags = subprocess.run(
-                ["git", "-C", str(project), "tag", "--list", "v0.16.0"], check=True, text=True, stdout=subprocess.PIPE
+                ["git", "-C", str(project), "tag", "--list", expected_tag], check=True, text=True, stdout=subprocess.PIPE
             ).stdout
 
         self.assertEqual((result.returncode, result.stderr), (0, ""))
         self.assertEqual(caller_after, caller_head)
         self.assertEqual(caller_tags, "")
-        self.assertEqual(project_tags, "v0.16.0\n")
+        self.assertEqual(project_tags, f"{expected_tag}\n")
