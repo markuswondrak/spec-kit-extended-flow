@@ -50,4 +50,4 @@ specify extension add extendedflow --from https://github.com/markuswondrak/spec-
 
 `specify preset add --from` expects a ZIP package URL. The same applies to `specify extension add --from`. Do not pass the GitHub repository landing page URL — that downloads HTML, not a preset package.
 
-Release packages are built as `dist/spec-kit-extended-flow.zip` by `python3 scripts/package-preset.py` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
+Release packages are built as `dist/spec-kit-extended-flow.zip` by `python3 scripts/package-preset.py`, alongside the versioned extension, preset, and bundle archives under `catalog/artifacts/`. All of them are published as GitHub Release assets by the manually triggered `.github/workflows/release-preset.yml` workflow (see [docs/releasing.md](releasing.md)).

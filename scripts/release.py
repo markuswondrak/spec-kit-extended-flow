@@ -193,6 +193,8 @@ def main() -> int:
     print(f"  Tag:    {tag}")
     print(f"  Branch: {main_branch}")
     print("========================================")
+    print("\nPublishing runs from CI. Cut the release with:")
+    print(f"  gh workflow run release-preset.yml -f version={version}")
     return 0
 
 

@@ -32,11 +32,11 @@ provides:
 
   workflows:
     - id: "spec-kit-extended-flow"
-      version: "0.10.1"
+      version: "0.16.0"
     - id: "spec-kit-bugfix-flow"
-      version: "0.2.1"
+      version: "0.16.0"
     - id: "spec-kit-quick-flow"
-      version: "0.1.1"
+      version: "0.16.0"
 
 tags:
   - "qa"

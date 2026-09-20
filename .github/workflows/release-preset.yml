@@ -1,49 +1,109 @@
-name: Release preset package
+name: Release bundle
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (semver, e.g. 1.2.3)"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
-  package:
+  release:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          version="${INPUT_VERSION#v}"
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: invalid version '$INPUT_VERSION'. Expected semver: MAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version and tag
+        id: bump
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "Tag $TAG already exists; rebuilding and republishing it."
+            echo "existing=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          python3 scripts/release-version.py "$VERSION"
+          git push origin "HEAD:$DEFAULT_BRANCH"
+          git push origin "$TAG"
+          echo "existing=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout released revision
+        if: steps.bump.outputs.existing == 'true'
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: git checkout "$TAG"
+
+      - name: Check version consistency
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: python3 scripts/check-release.py "$VERSION"
+
+      - name: Run test suite
+        run: python -m unittest discover -s tests -t . -v
 
       - name: Build preset package
         run: python3 scripts/package-preset.py
 
-      - name: Verify preset package
-        run: python3 -c "import zipfile; archive=zipfile.ZipFile('dist/spec-kit-extended-flow.zip'); assert archive.testzip() is None; assert 'extension.yml' in archive.namelist(); assert 'bundle.yml' in archive.namelist()"
-
       - name: Build catalog artifacts
         run: python3 scripts/build-catalog.py
 
-      - name: Verify catalog artifacts
-        run: python3 -c "import pathlib, zipfile; artifacts=list(pathlib.Path('catalog/artifacts').glob('*.zip')); assert artifacts; assert all(zipfile.ZipFile(artifact).testzip() is None for artifact in artifacts)"
+      - name: Verify release artifacts
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: python3 scripts/check-release.py "$VERSION" --artifacts
 
-      - name: Publish GitHub release assets
+      - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          tag="$GITHUB_REF_NAME"
-
           assets=("dist/spec-kit-extended-flow.zip")
           for artifact in catalog/artifacts/*.zip; do
             assets+=("$artifact")
           done
 
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "${assets[@]}" --clobber
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "${assets[@]}" --clobber
           else
-            gh release create "$tag" "${assets[@]}" \
-              --title "$tag" \
-              --notes "Spec-Kit Extended Flow preset package and catalog artifacts."
+            gh release create "$TAG" "${assets[@]}" \
+              --title "$TAG" \
+              --generate-notes
           fi

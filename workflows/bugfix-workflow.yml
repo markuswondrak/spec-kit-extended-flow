@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-bugfix-flow"
   name: "Spec-Kit Extended Flow — Bugfix Flow"
-  version: "0.2.1"
+  version: "0.16.0"
   author: "Markus Wondrak"
   description: "The Bugfix Flow: Spec-Kit's standard bug assessment, fix, and verification commands with an assessment gate and issue-to-PR automation."
 

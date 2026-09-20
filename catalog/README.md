@@ -14,7 +14,7 @@ mechanism for repository-local components (see
 |---|---|
 | `extension-catalog.json` | Points at the `extendedflow` extension archive. |
 | `preset-catalog.json` | Points at the `spec-kit-extended-flow` preset archive. |
-| `workflow-catalog.json` | Points directly at the four `workflows/*.yml` definitions. |
+| `workflow-catalog.json` | Points directly at the three `workflows/*.yml` definitions. |
 | `bundle-catalog.json` | Points at the built bundle artifact. |
 | `artifacts/` | Generated archives referenced by the catalogs. |
 

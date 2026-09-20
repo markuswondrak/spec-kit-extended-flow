@@ -124,13 +124,24 @@ class MaintenanceScriptTests(unittest.TestCase):
             subprocess.run(["git", "-C", str(project), "add", "."], check=True)
             subprocess.run(["git", "-C", str(project), "commit", "-m", "initial"], check=True, stdout=subprocess.DEVNULL)
             result = self.run_script(project, "release-version.py", "1.2.3")
+            checked = self.run_script(project, "check-release.py", "1.2.3")
+            mismatched = self.run_script(project, "check-release.py", "9.9.9")
             manifests = {
                 name: (project / name).read_text(encoding="utf-8")
                 for name in ("preset.yml", "extension.yml", "bundle.yml")
             }
+            workflows = {
+                name: (project / "workflows" / name).read_text(encoding="utf-8")
+                for name in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml")
+            }
             catalogs = {
                 name: json.loads((project / "catalog" / name).read_text(encoding="utf-8"))
-                for name in ("extension-catalog.json", "preset-catalog.json", "bundle-catalog.json")
+                for name in (
+                    "extension-catalog.json",
+                    "preset-catalog.json",
+                    "bundle-catalog.json",
+                    "workflow-catalog.json",
+                )
             }
             tags = subprocess.run(
                 ["git", "-C", str(project), "tag", "-l", "v1.2.3"],
@@ -143,10 +154,17 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertIn("Released version 1.2.3", result.stdout)
         self.assertIn('version: "1.2.3"', manifests["preset.yml"])
         self.assertIn('version: "1.2.3"', manifests["extension.yml"])
-        self.assertEqual(manifests["bundle.yml"].count('version: "1.2.3"'), 3)
+        self.assertEqual(manifests["bundle.yml"].count('version: "1.2.3"'), 6)
+        self.assertIn('version: "1.0.0"', manifests["bundle.yml"])
+        for name, contents in workflows.items():
+            self.assertIn('version: "1.2.3"', contents)
         self.assertEqual(catalogs["extension-catalog.json"]["extensions"]["extendedflow"]["version"], "1.2.3")
         self.assertEqual(catalogs["preset-catalog.json"]["presets"]["spec-kit-extended-flow"]["version"], "1.2.3")
         self.assertEqual(catalogs["bundle-catalog.json"]["bundles"]["spec-kit-extended-flow"]["version"], "1.2.3")
+        for workflow_id in ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow"):
+            self.assertEqual(catalogs["workflow-catalog.json"]["workflows"][workflow_id]["version"], "1.2.3")
+        self.assertEqual(checked.returncode, 0)
+        self.assertEqual(mismatched.returncode, 1)
         self.assertEqual(tags.stdout, "v1.2.3\n")
 
     def test_release_version_uses_the_script_repository_not_the_callers_repository(self):
@@ -235,3 +253,76 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertEqual(caller_after, caller_head)
         self.assertEqual(caller_tags, "")
         self.assertEqual(project_tags, f"{expected_tag}\n")
+
+    def init_repository(self, project):
+        subprocess.run(["git", "init", "-b", "main", str(project)], check=True, stdout=subprocess.DEVNULL)
+        subprocess.run(["git", "-C", str(project), "config", "user.email", "tests@example.com"], check=True)
+        subprocess.run(["git", "-C", str(project), "config", "user.name", "Tests"], check=True)
+        subprocess.run(["git", "-C", str(project), "add", "."], check=True)
+        subprocess.run(
+            ["git", "-C", str(project), "commit", "-m", "initial"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+        )
+
+    def test_check_release_detects_manifest_workflow_and_pin_drift(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            project = Path(temporary_directory) / "project"
+            self.copy_project(project)
+            self.init_repository(project)
+            self.run_script(project, "release-version.py", "1.2.3")
+
+            consistent = self.run_script(project, "check-release.py", "1.2.3")
+
+            workflow_file = project / "workflows" / "quick-flow.yml"
+            workflow_file.write_text(
+                workflow_file.read_text(encoding="utf-8").replace(
+                    'version: "1.2.3"', 'version: "9.9.9"', 1
+                ),
+                encoding="utf-8",
+            )
+            workflow_drift = self.run_script(project, "check-release.py", "1.2.3")
+
+            bundle_file = project / "bundle.yml"
+            bundle_file.write_text(
+                bundle_file.read_text(encoding="utf-8").replace(
+                    'id: "spec-kit-bugfix-flow"\n      version: "1.2.3"',
+                    'id: "spec-kit-bugfix-flow"\n      version: "9.9.9"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            pin_drift = self.run_script(project, "check-release.py", "1.2.3")
+
+        self.assertEqual((consistent.returncode, consistent.stderr), (0, ""))
+        self.assertEqual(workflow_drift.returncode, 1)
+        self.assertIn("quick-flow.yml", workflow_drift.stderr)
+        self.assertEqual(pin_drift.returncode, 1)
+        self.assertIn("spec-kit-bugfix-flow", pin_drift.stderr)
+
+    def test_check_release_verifies_release_artifacts(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            project = Path(temporary_directory) / "project"
+            self.copy_project(project)
+            self.init_repository(project)
+            self.run_script(project, "release-version.py", "1.2.3")
+            self.run_script(project, "package-preset.py")
+            self.run_script(project, "build-catalog.py")
+
+            verified = self.run_script(project, "check-release.py", "1.2.3", "--artifacts")
+
+            (project / "catalog" / "artifacts" / "extendedflow-1.2.3.zip").unlink()
+            missing = self.run_script(project, "check-release.py", "1.2.3", "--artifacts")
+
+        self.assertEqual((verified.returncode, verified.stderr), (0, ""))
+        self.assertEqual(missing.returncode, 1)
+        self.assertIn("extendedflow-1.2.3.zip", missing.stderr)
+
+    def test_release_workflow_is_manual_only_and_gated(self):
+        workflow = (ROOT / ".github/workflows/release-preset.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("push:", workflow)
+        self.assertIn("python -m unittest discover", workflow)
+        self.assertIn("scripts/check-release.py", workflow)
+        self.assertIn("--generate-notes", workflow)
+        self.assertIn("--clobber", workflow)
