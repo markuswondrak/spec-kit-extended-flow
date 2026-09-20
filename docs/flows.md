@@ -95,7 +95,7 @@ flowchart TD
     J --> K[✅ done]
 ```
 
-1. **Init** — Create feature directory and `feature.json` pointer
+1. **Init** — Create or reuse the feature directory and `feature.json` pointer
 2. **Implement** — Direct implementation from the instruction (no tasks.md)
 3. **Review + Fix** — Self-fixing review in a single pass
 4. **Doc Check** — Lightweight documentation impact check
@@ -105,7 +105,7 @@ flowchart TD
 |------|------|-------------|
 | `resolve-spec` | shell | Resolves file paths and GitHub issues to instruction content |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
-| `init-quick` | shell | Creates feature directory and `feature.json` with `type: "quick"` |
+| `init-quick` | shell | Creates or reuses the feature directory and writes `feature.json` with `type: "quick"` |
 | `quick-implement` | command | Implements the change directly from the instruction |
 | `quick-review` | command | Self-fixing review: reviews and corrects in one pass → PASS or FAIL |
 | `doc-check` | command | Lightweight documentation impact check, flags conflicts |

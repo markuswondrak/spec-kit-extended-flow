@@ -37,7 +37,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
 | Resolve spec | `scripts/resolve-spec.py` | Resolves spec/file/issue inputs |
 | Create branch | `scripts/create-branch.py` | Creates feature branch from issue |
-| Init quick | `scripts/init-quick.py` | Initializes Quick Flow feature directory |
+| Init quick | `scripts/init-quick.py` | Creates or reuses the Quick Flow feature directory and pointer |
 | Verify spec | `scripts/verify-spec.py` | Validates spec file was created |
 | Check converge | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks |
 | Extract verdict | `scripts/extract-verdict.py` | Extracts the Quick Flow PASS/FAIL from the review filename |

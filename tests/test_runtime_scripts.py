@@ -264,15 +264,24 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/quick-add-validation-message\n", b""))
         self.assertEqual(pointer, {"feature_directory": "specs/quick-add-validation-message", "type": "quick"})
 
-    def test_init_quick_rejects_an_existing_directory(self):
+    def test_init_quick_reuses_an_existing_directory_and_clears_stale_artifacts(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            (root / "specs/quick-existing").mkdir(parents=True)
+            feature = root / "specs/quick-existing"
+            feature.mkdir(parents=True)
+            (feature / "review-findings-1-FAIL.md").write_text("# stale verdict\n", encoding="utf-8")
+            (feature / "doc-check.md").write_text("# stale doc check\n", encoding="utf-8")
+            foreign = feature / "notes.txt"
+            foreign.write_text("keep me\n", encoding="utf-8")
             result = self.run_script("init-quick.py", "", "existing", cwd=root)
+            pointer = json.loads((root / ".specify/feature.json").read_text(encoding="utf-8"))
+            remaining = sorted(path.name for path in feature.iterdir())
+            foreign_contents = foreign.read_text(encoding="utf-8")
 
-        self.assertEqual(result.returncode, 1)
-        self.assertEqual(result.stdout, b"")
-        self.assertEqual(result.stderr, b"ERROR: Feature directory already exists: specs/quick-existing\n")
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/quick-existing\n", b""))
+        self.assertEqual(pointer, {"feature_directory": "specs/quick-existing", "type": "quick"})
+        self.assertEqual(remaining, ["notes.txt"])
+        self.assertEqual(foreign_contents, "keep me\n")
 
     def test_verify_spec_accepts_alternate_feature_pointer_keys(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

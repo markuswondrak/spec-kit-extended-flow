@@ -53,8 +53,13 @@ def main() -> int:
 
     feature_dir = Path("specs") / directory_name
     if feature_dir.is_dir():
-        return error(f"Feature directory already exists: {feature_dir}")
-    feature_dir.mkdir(parents=True)
+        for stale in feature_dir.glob("review-findings-*.md"):
+            stale.unlink()
+        stale_doc_check = feature_dir / "doc-check.md"
+        if stale_doc_check.is_file():
+            stale_doc_check.unlink()
+    else:
+        feature_dir.mkdir(parents=True)
     Path(".specify").mkdir(parents=True, exist_ok=True)
     Path(".specify/feature.json").write_text(
         json.dumps({"feature_directory": str(feature_dir), "type": "quick"}, separators=(", ", ": ")) + "\n"
