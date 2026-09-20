@@ -35,8 +35,8 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
-| Resolve spec | `scripts/resolve-spec.py` | Resolves spec/file/issue inputs |
-| Create branch | `scripts/create-branch.py` | Creates feature branch from issue |
+| Resolve spec | `scripts/resolve-spec.py` | Resolves `spec`/`file`/`issue` inputs from the run directory and persists the result |
+| Create branch | `scripts/create-branch.py` | Creates feature branch from the run's issue |
 | Init quick | `scripts/init-quick.py` | Creates or reuses the Quick Flow feature directory and pointer |
 | Verify spec | `scripts/verify-spec.py` | Validates spec file was created |
 | Check converge | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks |
@@ -47,6 +47,8 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 ### Downstream Runtime
 
 Downstream workflows invoke the installed runtime scripts with `python3`, so Python 3 must be available on the downstream project's `PATH`. Windows runtime execution has not been verified; this change does not claim Windows support.
+
+Shell steps pass only the engine-validated run id (`{{ context.run_id }}`) on the command line. The scripts read user input from `.specify/workflows/runs/<run_id>/inputs.json` and the resolved instruction from `.specify/workflows/runs/<run_id>/resolved-spec.txt`, so untrusted text is never interpreted by the shell.
 
 ## Customization
 

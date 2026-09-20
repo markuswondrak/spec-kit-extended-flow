@@ -35,13 +35,13 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/resolve-spec.py` | Resolves `spec`, `file`, and `issue` inputs into specification/bug-report content |
-| `scripts/create-branch.py` | Creates a `<prefix>/<issue>-<slug>` branch from a GitHub issue (default prefix: `feature`, bugfix prefix: `fix`) |
+| `scripts/resolve-spec.py` | Reads `spec`, `file`, and `issue` from the run's `inputs.json` and resolves them into specification/bug-report content (persisted to `resolved-spec.txt`) |
+| `scripts/create-branch.py` | Reads the issue from the run's `inputs.json` and creates a `<prefix>/<issue>-<slug>` branch (default prefix: `feature`, bugfix prefix: `fix`) |
 | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks (standard Spec-Kit convergence loop) |
 | `scripts/extract-verdict.py` | Extracts the Quick Flow review verdict from the review findings filename |
 | `scripts/resolve-bug-context.py` | Records the standard bug extension's active bug directory in `feature.json` |
 | `scripts/check-bug-verdict.py` | Validates the standard bug extension's `test.md` result |
-| `scripts/init-quick.py` | Creates or reuses a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
+| `scripts/init-quick.py` | Reads the run's `inputs.json`/`resolved-spec.txt` and creates or reuses a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
 | `scripts/resolve-pr-template.py` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
 | `scripts/package-preset.py` | Builds the preset ZIP package |
 | `scripts/build-catalog.py` | Builds deterministic project-owned HTTPS catalog archives under `catalog/artifacts/` and syncs catalog version pins |

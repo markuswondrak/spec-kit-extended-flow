@@ -41,7 +41,7 @@ inputs:
 steps:
   - id: resolve-spec
     type: shell
-    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ context.run_id }}"
 
   - id: create-branch
     type: if
@@ -49,7 +49,7 @@ steps:
     then:
       - id: branch
         type: shell
-        run: python3 .specify/presets/spec-kit-extended-flow/scripts/create-branch.py "{{ inputs.issue }}" "fix"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/create-branch.py "{{ context.run_id }}" "fix"
 
   - id: bug-assess
     command: speckit.bug.assess

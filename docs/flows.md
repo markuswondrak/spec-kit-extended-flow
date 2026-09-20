@@ -2,6 +2,8 @@
 
 Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps and gates, while issue-to-PR automation and safety boundaries are shared across the family.
 
+Shell steps only interpolate the engine-validated `context.run_id`. User-provided `spec`, `file`, and `issue` text and step stdout are read from the engine-owned run directory (`.specify/workflows/runs/<run_id>/`) instead of being spliced into the command line, so backticks, `$(...)`, and other shell metacharacters in issue bodies can never be executed as shell syntax.
+
 ## Feature Flow
 
 The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
@@ -30,7 +32,7 @@ flowchart TD
 
 | Step | Type | Description |
 |------|------|-------------|
-| `resolve-spec` | shell | Resolves file paths and GitHub issues to spec content |
+| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to spec content |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `specify` | command | Generates the specification from your input |
 | `verify-spec` | shell | Confirms the specification was actually written |
@@ -103,7 +105,7 @@ flowchart TD
 
 | Step | Type | Description |
 |------|------|-------------|
-| `resolve-spec` | shell | Resolves file paths and GitHub issues to instruction content |
+| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to instruction content |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `init-quick` | shell | Creates or reuses the feature directory and writes `feature.json` with `type: "quick"` |
 | `quick-implement` | command | Implements the change directly from the instruction |

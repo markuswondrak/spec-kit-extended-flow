@@ -42,14 +42,26 @@ class RuntimeScriptTestCase(unittest.TestCase):
         )
         return root / feature_directory
 
+    def write_run_inputs(self, root, run_id="run-1", **inputs):
+        run_directory = root / ".specify/workflows/runs" / run_id
+        run_directory.mkdir(parents=True, exist_ok=True)
+        (run_directory / "inputs.json").write_text(
+            json.dumps({"inputs": inputs}) + "\n", encoding="utf-8"
+        )
+        return run_directory
+
 
 class ResolveSpecTests(RuntimeScriptTestCase):
     def test_spec_stdout_has_the_contractual_blank_final_line(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            result = self.run_script("resolve-spec.py", "Build an API", "", "", cwd=temporary_directory)
+            root = Path(temporary_directory)
+            self.write_run_inputs(root, spec="Build an API")
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
+            resolved = (root / ".specify/workflows/runs/run-1/resolved-spec.txt").read_bytes()
 
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout, b"Build an API\n\n")
+        self.assertEqual(resolved, b"Build an API\n\n")
         self.assertEqual(result.stderr, b"")
 
     def test_file_issue_and_spec_are_concatenated_in_input_order(self):
@@ -67,11 +79,10 @@ class ResolveSpecTests(RuntimeScriptTestCase):
                 sys.stdout.write("# Issue title\\n\\nIssue body\\n")
                 """,
             )
+            self.write_run_inputs(root, spec="Plain request", file=str(spec_file), issue="42")
             result = self.run_script(
                 "resolve-spec.py",
-                "Plain request",
-                str(spec_file),
-                "42",
+                "run-1",
                 cwd=root,
                 env={"PATH": f"{bin_directory}:{os.environ['PATH']}"},
             )
@@ -80,10 +91,25 @@ class ResolveSpecTests(RuntimeScriptTestCase):
         self.assertEqual(result.stdout, b"File request\n# Issue title\n\nIssue body\nPlain request\n\n")
         self.assertEqual(result.stderr, b"")
 
+    def test_shell_metacharacters_are_passed_through_verbatim(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            payload = "Use `OptionList` and $(touch pwned) and [n]"
+            self.write_run_inputs(root, spec=payload)
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
+
+            pwned = (root / "pwned").exists()
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, payload.encode() + b"\n\n")
+        self.assertFalse(pwned)
+
     def test_missing_file_reports_only_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            missing = Path(temporary_directory) / "missing.md"
-            result = self.run_script("resolve-spec.py", "", str(missing), "", cwd=temporary_directory)
+            root = Path(temporary_directory)
+            missing = root / "missing.md"
+            self.write_run_inputs(root, file=str(missing))
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
@@ -94,7 +120,8 @@ class ResolveSpecTests(RuntimeScriptTestCase):
             root = Path(temporary_directory)
             directory = root / "not-a-file"
             directory.mkdir()
-            result = self.run_script("resolve-spec.py", "", str(directory), "", cwd=root)
+            self.write_run_inputs(root, file=str(directory))
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
@@ -106,7 +133,8 @@ class ResolveSpecTests(RuntimeScriptTestCase):
             root = Path(temporary_directory)
             fifo = root / "request.fifo"
             os.mkfifo(fifo)
-            result = self.run_script("resolve-spec.py", "", str(fifo), "", cwd=root)
+            self.write_run_inputs(root, file=str(fifo))
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
@@ -114,7 +142,9 @@ class ResolveSpecTests(RuntimeScriptTestCase):
 
     def test_missing_input_reports_only_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            result = self.run_script("resolve-spec.py", "", "", "", cwd=temporary_directory)
+            root = Path(temporary_directory)
+            self.write_run_inputs(root)
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
@@ -123,12 +153,32 @@ class ResolveSpecTests(RuntimeScriptTestCase):
             b"ERROR: No specification provided. Set at least one of: --input spec, --input file, or --input issue.\n",
         )
 
+    def test_missing_run_inputs_reports_only_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = self.run_script("resolve-spec.py", "run-1", cwd=temporary_directory)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Workflow inputs not found:", result.stderr)
+
+    def test_issue_must_be_numeric(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_run_inputs(root, issue="42; rm -rf /")
+            result = self.run_script("resolve-spec.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, b"ERROR: Invalid issue number: '42; rm -rf /'.\n")
+
     def test_issue_requires_gh_without_writing_stdout(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            empty_path = Path(temporary_directory) / "empty-path"
+            root = Path(temporary_directory)
+            empty_path = root / "empty-path"
             empty_path.mkdir()
+            self.write_run_inputs(root, issue="42")
             result = self.run_script(
-                "resolve-spec.py", "", "", "42", cwd=temporary_directory, env={"PATH": str(empty_path)}
+                "resolve-spec.py", "run-1", cwd=root, env={"PATH": str(empty_path)}
             )
 
         self.assertEqual(result.returncode, 1)
@@ -162,9 +212,10 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
                 """,
             )
             env = {"PATH": f"{bin_directory}:{os.environ['PATH']}"}
-            default = self.run_script("create-branch.py", "42", cwd=root, env=env)
-            empty = self.run_script("create-branch.py", "42", "", cwd=root, env=env)
-            custom = self.run_script("create-branch.py", "42", "fix/", cwd=root, env=env)
+            self.write_run_inputs(root, issue="42")
+            default = self.run_script("create-branch.py", "run-1", cwd=root, env=env)
+            empty = self.run_script("create-branch.py", "run-1", "", cwd=root, env=env)
+            custom = self.run_script("create-branch.py", "run-1", "fix/", cwd=root, env=env)
 
         self.assertEqual((default.returncode, default.stdout, default.stderr), (0, b"feature/42-add-user-auth\n", b""))
         self.assertEqual((empty.returncode, empty.stdout, empty.stderr), (0, b"feature/42-add-user-auth\n", b""))
@@ -172,11 +223,23 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
 
     def test_create_branch_missing_issue_is_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
-            result = self.run_script("create-branch.py", cwd=temporary_directory)
+            root = Path(temporary_directory)
+            self.write_run_inputs(root)
+            result = self.run_script("create-branch.py", "run-1", cwd=root)
 
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
         self.assertEqual(result.stderr, b"ERROR: Issue number is required.\n")
+
+    def test_create_branch_rejects_a_non_numeric_issue(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_run_inputs(root, issue="42 --json title")
+            result = self.run_script("create-branch.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, b"ERROR: Invalid issue number: '42 --json title'.\n")
 
     def test_check_converge_returns_exact_verdict_tokens_and_writes_state(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -258,7 +321,9 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
     def test_init_quick_creates_the_pointer_and_returns_the_directory(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            result = self.run_script("init-quick.py", "", "Add validation message", cwd=root)
+            run_directory = self.write_run_inputs(root)
+            (run_directory / "resolved-spec.txt").write_text("Add validation message", encoding="utf-8")
+            result = self.run_script("init-quick.py", "run-1", cwd=root)
             pointer = json.loads((root / ".specify/feature.json").read_text(encoding="utf-8"))
 
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/quick-add-validation-message\n", b""))
@@ -273,7 +338,9 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             (feature / "doc-check.md").write_text("# stale doc check\n", encoding="utf-8")
             foreign = feature / "notes.txt"
             foreign.write_text("keep me\n", encoding="utf-8")
-            result = self.run_script("init-quick.py", "", "existing", cwd=root)
+            run_directory = self.write_run_inputs(root)
+            (run_directory / "resolved-spec.txt").write_text("existing", encoding="utf-8")
+            result = self.run_script("init-quick.py", "run-1", cwd=root)
             pointer = json.loads((root / ".specify/feature.json").read_text(encoding="utf-8"))
             remaining = sorted(path.name for path in feature.iterdir())
             foreign_contents = foreign.read_text(encoding="utf-8")
@@ -282,6 +349,43 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
         self.assertEqual(pointer, {"feature_directory": "specs/quick-existing", "type": "quick"})
         self.assertEqual(remaining, ["notes.txt"])
         self.assertEqual(foreign_contents, "keep me\n")
+
+    def test_init_quick_derives_a_safe_slug_from_shell_metacharacters(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            run_directory = self.write_run_inputs(root)
+            (run_directory / "resolved-spec.txt").write_text(
+                "Rename `login` $(touch pwned) button", encoding="utf-8"
+            )
+            result = self.run_script("init-quick.py", "run-1", cwd=root)
+            pointer = json.loads((root / ".specify/feature.json").read_text(encoding="utf-8"))
+            pwned = (root / "pwned").exists()
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, b"specs/quick-rename-login-touch-pwned\n")
+        self.assertEqual(pointer["type"], "quick")
+        self.assertFalse(pwned)
+
+    def test_init_quick_uses_the_issue_title_when_an_issue_is_present(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            self.write_command(
+                bin_directory,
+                "gh",
+                """
+                print("Add user auth")
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            result = self.run_script(
+                "init-quick.py", "run-1", cwd=root, env={"PATH": f"{bin_directory}:{os.environ['PATH']}"}
+            )
+            pointer = json.loads((root / ".specify/feature.json").read_text(encoding="utf-8"))
+
+        self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/42-quick-add-user-auth\n", b""))
+        self.assertEqual(pointer, {"feature_directory": "specs/42-quick-add-user-auth", "type": "quick"})
 
     def test_verify_spec_accepts_alternate_feature_pointer_keys(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

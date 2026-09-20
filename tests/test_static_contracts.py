@@ -1,6 +1,7 @@
 """Target-state static contracts for Python runtime migration."""
 
 from pathlib import Path
+import re
 import unittest
 
 
@@ -40,6 +41,29 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                 self.assertNotIn(".sh", content)
                 for script in scripts:
                     self.assertIn(f"python3 {PRESET_PATH}/{script}", content)
+
+    def test_shell_steps_never_interpolate_user_input_or_step_output(self):
+        """Shell `run:` lines may only interpolate the engine-validated run id.
+
+        User-supplied spec/issue/file text and step stdout contain arbitrary
+        characters; splicing them into a `run:` template makes the engine's
+        `/bin/sh -c` execute them as shell syntax (issue #11). Scripts read that
+        data from the run directory instead.
+        """
+        for workflow in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml"):
+            content = (ROOT / "workflows" / workflow).read_text(encoding="utf-8")
+            for line_number, line in enumerate(content.splitlines(), start=1):
+                stripped = line.strip()
+                if not stripped.startswith("run:"):
+                    continue
+                for block in re.findall(r"\{\{(.+?)\}\}", stripped):
+                    with self.subTest(workflow=workflow, line=line_number):
+                        self.assertEqual(
+                            block.strip(),
+                            "context.run_id",
+                            f"{workflow}:{line_number} interpolates untrusted data "
+                            f"into a shell command",
+                        )
 
     def test_documentation_describes_python_runtime_scripts_not_shell_scripts(self):
         documentation = "".join(
