@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Initialize a Quick Flow directory and feature pointer from the current directory."""
+"""Initialize a Quick Flow directory and feature pointer from a workflow run."""
 
 import json
 from pathlib import Path
@@ -9,9 +9,52 @@ import subprocess
 import sys
 
 
+RUNS_DIR = Path(".specify") / "workflows" / "runs"
+RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
+ISSUE_PATTERN = re.compile(r"^[0-9]+$")
+
+
 def error(message: str) -> int:
     print(f"ERROR: {message}", file=sys.stderr)
     return 1
+
+
+class InputError(Exception):
+    """Raised when the workflow run inputs cannot be read."""
+
+
+def load_run_inputs(run_id: str) -> dict:
+    """Load the ``inputs`` object the engine wrote for *run_id*.
+
+    The issue number is read from the run's ``inputs.json`` file rather than
+    from the command line, so it is never interpreted by the shell executing
+    this script.
+    """
+    if not RUN_ID_PATTERN.fullmatch(run_id):
+        raise InputError(f"Invalid run id: {run_id!r}.")
+    inputs_path = RUNS_DIR / run_id / "inputs.json"
+    try:
+        document = json.loads(inputs_path.read_text(encoding="utf-8"))
+    except OSError:
+        raise InputError(f"Workflow inputs not found: {inputs_path}")
+    except json.JSONDecodeError:
+        raise InputError(f"Workflow inputs are not valid JSON: {inputs_path}")
+    if not isinstance(document, dict) or not isinstance(document.get("inputs"), dict):
+        raise InputError(f"Workflow inputs are malformed: {inputs_path}")
+    return document["inputs"]
+
+
+def read_resolved_spec(run_id: str) -> str:
+    """Read the instruction resolved by the ``resolve-spec`` step.
+
+    The resolved text is read from the run directory instead of a command-line
+    argument so it is never interpreted by the shell executing this script.
+    """
+    resolved_path = RUNS_DIR / run_id / "resolved-spec.txt"
+    try:
+        return resolved_path.read_bytes().decode(errors="surrogateescape")
+    except OSError:
+        raise InputError(f"Resolved spec not found: {resolved_path}")
 
 
 def slugify(value: str, maximum: int = 50) -> str:
@@ -21,8 +64,21 @@ def slugify(value: str, maximum: int = 50) -> str:
 
 
 def main() -> int:
-    issue = sys.argv[1] if len(sys.argv) > 1 else ""
-    spec_text = sys.argv[2] if len(sys.argv) > 2 else ""
+    run_id = sys.argv[1] if len(sys.argv) > 1 else ""
+    if not run_id:
+        return error("Run id is required.")
+
+    try:
+        inputs = load_run_inputs(run_id)
+        issue = inputs.get("issue") or ""
+        if not isinstance(issue, str):
+            return error("Workflow input 'issue' must be a string.")
+        if issue and not ISSUE_PATTERN.fullmatch(issue):
+            return error(f"Invalid issue number: {issue!r}.")
+        spec_text = "" if issue else read_resolved_spec(run_id)
+    except InputError as exc:
+        return error(str(exc))
+
     if not issue and not spec_text:
         return error("At least one of issue or spec text is required.")
 

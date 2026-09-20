@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""Resolve Extended Flow specification inputs from the current directory."""
+"""Resolve Extended Flow specification inputs from a workflow run."""
 
+import json
+import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+
+RUNS_DIR = Path(".specify") / "workflows" / "runs"
+RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
+ISSUE_PATTERN = re.compile(r"^[0-9]+$")
 
 
 def error(message: str) -> int:
@@ -12,10 +19,56 @@ def error(message: str) -> int:
     return 1
 
 
+class InputError(Exception):
+    """Raised when the workflow run inputs cannot be read."""
+
+
+def load_run_inputs(run_id: str) -> dict:
+    """Load the ``inputs`` object the engine wrote for *run_id*.
+
+    User-supplied text is read from the run's ``inputs.json`` file rather than
+    from the command line, so it is never interpreted by the shell executing
+    this script.
+    """
+    if not RUN_ID_PATTERN.fullmatch(run_id):
+        raise InputError(f"Invalid run id: {run_id!r}.")
+    inputs_path = RUNS_DIR / run_id / "inputs.json"
+    try:
+        document = json.loads(inputs_path.read_text(encoding="utf-8"))
+    except OSError:
+        raise InputError(f"Workflow inputs not found: {inputs_path}")
+    except json.JSONDecodeError:
+        raise InputError(f"Workflow inputs are not valid JSON: {inputs_path}")
+    if not isinstance(document, dict) or not isinstance(document.get("inputs"), dict):
+        raise InputError(f"Workflow inputs are malformed: {inputs_path}")
+    return document["inputs"]
+
+
+def read_input(inputs: dict, key: str) -> str:
+    value = inputs.get(key, "")
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        raise InputError(f"Workflow input {key!r} must be a string.")
+    return value
+
+
 def main() -> int:
-    spec = sys.argv[1] if len(sys.argv) > 1 else ""
-    file_path = sys.argv[2] if len(sys.argv) > 2 else ""
-    issue = sys.argv[3] if len(sys.argv) > 3 else ""
+    run_id = sys.argv[1] if len(sys.argv) > 1 else ""
+    if not run_id:
+        return error("Run id is required.")
+
+    try:
+        inputs = load_run_inputs(run_id)
+        spec = read_input(inputs, "spec")
+        file_path = read_input(inputs, "file")
+        issue = read_input(inputs, "issue")
+    except InputError as exc:
+        return error(str(exc))
+
+    if issue and not ISSUE_PATTERN.fullmatch(issue):
+        return error(f"Invalid issue number: {issue!r}.")
+
     output = b""
 
     if file_path:
@@ -63,7 +116,17 @@ def main() -> int:
 
     # Command substitution in the shell implementation strips trailing newlines
     # from each input before it appends one, then echo appends this final newline.
-    sys.stdout.buffer.write(output + b"\n")
+    resolved = output + b"\n"
+
+    # Persist the resolved instruction for shell steps that cannot receive free
+    # text as an argument without exposing it to shell interpretation (see the
+    # Quick Flow's init-quick step).
+    try:
+        (RUNS_DIR / run_id / "resolved-spec.txt").write_bytes(resolved)
+    except OSError as exc:
+        return error(f"Failed to persist resolved spec: {exc}")
+
+    sys.stdout.buffer.write(resolved)
     return 0
 
 
