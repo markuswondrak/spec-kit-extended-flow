@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-09-20T00:00:00Z",
+  "updated_at": "2026-09-20T13:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/catalog/bundle-catalog.json",
   "bundles": {
     "spec-kit-extended-flow": {
       "name": "Spec-Kit Extended Flow",
       "id": "spec-kit-extended-flow",
-      "version": "0.13.0",
+      "version": "0.15.0",
       "role": "developer",
       "description": "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline.",
       "author": "Markus Wondrak",
       "license": "MIT",
-      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.13.0/spec-kit-extended-flow-bundle-0.13.0.zip",
+      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.15.0/spec-kit-extended-flow-bundle-0.15.0.zip",
       "requires": {
         "speckit_version": ">=0.11.2"
       },

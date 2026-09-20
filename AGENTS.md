@@ -1,6 +1,6 @@
 # Spec-Kit Extended Flow — Global Constraints
 
-This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and shell scripts (`scripts/`). All changes must preserve the Spec-Kit contract.
+This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and Python runtime scripts plus shell tooling (`scripts/`). All changes must preserve the Spec-Kit contract.
 
 ## Hard Prohibitions
 
@@ -26,30 +26,33 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `preset.yml` | Preset manifest: templates, scripts, version, tags |
 | `extension.yml` | Extension manifest: commands, version, tags |
 | `bundle.yml` | Bundle manifest: composes preset + extension + workflows into a single install unit |
-| `scripts/` | Executable shell scripts called by workflow steps |
+| `scripts/` | Python 3 stdlib runtime and repository-maintenance scripts |
 | `commands/` | Agent system prompts (documentation, documentation-init, finish, quick-implement, quick-review, doc-check) |
 | `templates/` | Structured output templates (review-findings, documentation) |
-| `tests/` | Bash test suites for shell scripts and workflow structure |
+| `tests/` | Python stdlib unittest suites for runtime scripts and workflow structure |
 
 ### Scripts
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/resolve-spec.sh` | Resolves `spec`, `file`, and `issue` inputs into specification/bug-report content |
-| `scripts/create-branch.sh` | Creates a `<prefix>/<issue>-<slug>` branch from a GitHub issue (default prefix: `feature`, bugfix prefix: `fix`) |
-| `scripts/check-converge.sh` | Detects whether `speckit.converge` appended new tasks (standard Spec-Kit convergence loop) |
-| `scripts/extract-verdict.sh` | Extracts the Quick Flow review verdict from the review findings filename |
-| `scripts/resolve-bug-context.sh` | Records the standard bug extension's active bug directory in `feature.json` |
-| `scripts/check-bug-verdict.sh` | Validates the standard bug extension's `test.md` result |
-| `scripts/init-quick.sh` | Initializes a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
-| `scripts/resolve-pr-template.sh` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
-| `scripts/package-preset.sh` | Builds the preset ZIP package |
-| `scripts/build-catalog.sh` | Builds the project-owned HTTPS catalog archives under `catalog/artifacts/` and syncs catalog version pins |
-| `scripts/release-version.sh` | Bumps version, commits, and tags a release |
+| `scripts/resolve-spec.py` | Resolves `spec`, `file`, and `issue` inputs into specification/bug-report content |
+| `scripts/create-branch.py` | Creates a `<prefix>/<issue>-<slug>` branch from a GitHub issue (default prefix: `feature`, bugfix prefix: `fix`) |
+| `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks (standard Spec-Kit convergence loop) |
+| `scripts/extract-verdict.py` | Extracts the Quick Flow review verdict from the review findings filename |
+| `scripts/resolve-bug-context.py` | Records the standard bug extension's active bug directory in `feature.json` |
+| `scripts/check-bug-verdict.py` | Validates the standard bug extension's `test.md` result |
+| `scripts/init-quick.py` | Initializes a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
+| `scripts/resolve-pr-template.py` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
+| `scripts/package-preset.py` | Builds the preset ZIP package |
+| `scripts/build-catalog.py` | Builds deterministic project-owned HTTPS catalog archives under `catalog/artifacts/` and syncs catalog version pins |
+| `scripts/release-version.py` | Bumps version, commits, and tags a release |
+| `scripts/release.py` | Merges a release branch, bumps the minor version, tags, and pushes |
 
 ## Downstream Project Layout
 
 This repo is a **preset, extension, and bundle**. The agents in `commands/` and the workflows in `workflows/` execute in **downstream projects** that install this bundle via `specify bundle install` (or the preset/extension individually via `specify preset add` / `specify extension add`). The downstream file layout is completely different from this repo.
+
+Downstream runtime requires `python3` on `PATH`; workflow and command runtime call sites use `python3 .specify/presets/spec-kit-extended-flow/scripts/<name>.py`. Windows runtime execution has not been verified, and this does not claim Windows support.
 
 ### Downstream root
 
@@ -124,8 +127,8 @@ Must preserve:
 - **Workflow steps & gates**: See `workflows/workflow.yml` (feature flow), `workflows/bugfix-workflow.yml` (bugfix flow), and `workflows/quick-flow.yml` (quick flow)
 - **Agent behaviors**: See `commands/speckit.extendedflow.documentation.md`, `commands/speckit.extendedflow.finish.md`, `commands/speckit.extendedflow.quick-implement.md`, `commands/speckit.extendedflow.quick-review.md`, `commands/speckit.extendedflow.doc-check.md`, plus the standard `speckit.bug.assess`, `speckit.bug.fix`, and `speckit.bug.test` commands from Spec-Kit's `bug` extension. The Feature Flow's QA loop uses the standard `speckit.analyze` and `speckit.implement`/`speckit.converge` commands.
 - **Output templates**: See `templates/review-findings.md`, `templates/documentation.md`
-- **Input resolution logic**: See `scripts/resolve-spec.sh`
-- **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/check-converge.sh`, `scripts/extract-verdict.sh`, `scripts/resolve-bug-context.sh`, `scripts/check-bug-verdict.sh`
-- **PR template resolution**: See `scripts/resolve-pr-template.sh`
+- **Input resolution logic**: See `scripts/resolve-spec.py`
+- **Branch creation and verdict extraction**: See `scripts/create-branch.py`, `scripts/check-converge.py`, `scripts/extract-verdict.py`, `scripts/resolve-bug-context.py`, `scripts/check-bug-verdict.py`
+- **PR template resolution**: See `scripts/resolve-pr-template.py`
 - **Bundle composition**: See `bundle.yml`
 - **Architecture & design rationale**: See `README.md`

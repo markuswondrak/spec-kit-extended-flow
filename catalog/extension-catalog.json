@@ -1,17 +1,17 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-09-20T00:00:00Z",
+  "updated_at": "2026-09-20T13:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/catalog/extension-catalog.json",
   "extensions": {
     "extendedflow": {
       "name": "Spec-Kit Extended Flow",
       "id": "extendedflow",
-      "version": "0.13.0",
+      "version": "0.15.0",
       "description": "Agent commands for the Extended Flow: documentation reconciliation, project init, finish, quick implement/review, and doc check.",
       "author": "Markus Wondrak",
       "repository": "https://github.com/markuswondrak/spec-kit-extended-flow",
       "license": "MIT",
-      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.13.0/extendedflow-0.13.0.zip",
+      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.15.0/extendedflow-0.15.0.zip",
       "requires": {
         "speckit_version": ">=0.11.2"
       },

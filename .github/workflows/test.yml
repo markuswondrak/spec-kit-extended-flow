@@ -13,44 +13,16 @@ permissions:
 
 jobs:
   test:
-    name: Bash test suite
+    name: Python unittest suite
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show versions
-        run: |
-          bash --version | head -n1
-          python3 --version
-          zip --version | head -n2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-      - name: Run bash test suites
-        run: |
-          set -euo pipefail
-          fail=0
-          for test in tests/test-*.sh; do
-            echo "=== $test ==="
-            if ! bash "$test"; then
-              echo "FAILED: $test"
-              fail=1
-            fi
-          done
-          exit "$fail"
-
-      - name: Verify package-preset.sh
-        run: |
-          set -euo pipefail
-          package="$(scripts/package-preset.sh)"
-          unzip -t "$package"
-          unzip -p "$package" preset.yml > /dev/null
-          unzip -p "$package" extension.yml > /dev/null
-          unzip -p "$package" bundle.yml > /dev/null
-
-      - name: Verify build-catalog.sh
-        run: |
-          set -euo pipefail
-          scripts/build-catalog.sh
-          for artifact in catalog/artifacts/*-*.zip; do
-            unzip -t "$artifact"
-          done
+      - name: Run test suite
+        run: python -m unittest discover -s tests -t . -v

@@ -8,7 +8,7 @@ You are the implementer for simple changes: label renames, message additions, sm
 
 ## Inputs
 
-1. **Instruction text** — passed as args (from `resolve-spec.sh` stdout). This is the complete change request.
+1. **Instruction text** — passed as args (from `resolve-spec.py` stdout). This is the complete change request.
 2. **Feature Directory** — read `.specify/feature.json` to determine the current feature directory (e.g., `specs/42-quick-change-login-label`).
 
 ## Outputs

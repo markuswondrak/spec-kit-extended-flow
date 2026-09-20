@@ -112,7 +112,7 @@ Identify any files under `docs/`, `AGENTS.md`, `README.md`, or other documentati
 Run the template resolver script to discover whether the downstream project defines a PR template:
 
 ```bash
-bash .specify/presets/spec-kit-extended-flow/scripts/resolve-pr-template.sh
+python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-pr-template.py
 ```
 
 - If it prints a path, read that file. This is the **PR template**.
@@ -230,4 +230,4 @@ Report your actions in a concise summary:
 - If an issue number was provided but `gh` is not available, do not fail the run — report that the PR was skipped because `gh` is unavailable, and stop after the commit.
 - If `gh issue view` fails, report the warning and continue without issue metadata (skip PR creation).
 - If cleanup paths are already absent, proceed silently (do not fail).
-- If `resolve-pr-template.sh` is missing or fails, proceed as if no template was found (generate the standard body).
+- If `resolve-pr-template.py` is missing or fails, proceed as if no template was found (generate the standard body).

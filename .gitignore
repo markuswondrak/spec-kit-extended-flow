@@ -2,3 +2,5 @@
 # Never commit these.
 dist/
 catalog/artifacts/
+__pycache__/
+*.py[cod]

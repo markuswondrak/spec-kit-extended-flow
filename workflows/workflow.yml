@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — Feature Flow"
-  version: "0.10.0"
+  version: "0.10.1"
   author: "Markus Wondrak"
   description: "The Feature Flow: SDD lifecycle with a Spec-Kit convergence loop and documentation reconciliation. Runs specification, planning, tasks, a consistency analysis, implementation, implement/converge iterations until converged, and documentation reconciliation. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 
@@ -40,7 +40,7 @@ inputs:
 steps:
   - id: resolve-spec
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
 
   - id: create-branch
     type: if
@@ -48,7 +48,7 @@ steps:
     then:
       - id: branch
         type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/create-branch.py "{{ inputs.issue }}"
 
   - id: specify
     command: speckit.specify
@@ -59,7 +59,7 @@ steps:
 
   - id: verify-spec
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/verify-spec.sh
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/verify-spec.py
 
   - id: spec-gate
     type: gate
@@ -102,14 +102,14 @@ steps:
     steps:
       - id: converge-snapshot
         type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh snapshot "{{ context.run_id }}"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/check-converge.py snapshot "{{ context.run_id }}"
       - id: converge
         command: speckit.converge
         integration: "{{ inputs.integration }}"
         model: ""
       - id: converge-check
         type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh check "{{ context.run_id }}"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/check-converge.py check "{{ context.run_id }}"
       - id: converge-implement
         type: if
         condition: "{{ steps.converge-check.output.stdout | contains('TASKS_APPENDED') }}"
