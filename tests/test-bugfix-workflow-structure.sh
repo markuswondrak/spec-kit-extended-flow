@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Test suite for bugfix-workflow.yml structure
-# Validates that the bugfix workflow follows TDD-RED-GREEN-REVIEW pattern
+# Validates that the bugfix workflow delegates bug handling to Spec-Kit's bug extension
 
 TEST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$TEST_DIR")"
@@ -62,7 +62,7 @@ assert_not_contains "$PROJECT_DIR/bugfix-workflow.yml" "schema_version" "No bugf
 # --- Workflow identity ---
 echo "--- Checking workflow identity ---"
 assert_contains "$BUGFIX_WORKFLOW" 'id: "spec-kit-bugfix-flow"' "Workflow has correct id"
-assert_contains "$BUGFIX_WORKFLOW" "TDD" "Workflow references TDD in name or description"
+assert_contains "$BUGFIX_WORKFLOW" "standard bug" "Workflow references standard bug commands"
 
 # --- Inputs ---
 echo "--- Checking inputs ---"
@@ -80,38 +80,29 @@ assert_contains "$BUGFIX_WORKFLOW" "resolve-spec.sh" "Workflow calls resolve-spe
 assert_contains "$BUGFIX_WORKFLOW" "create-branch" "Workflow has create-branch step"
 assert_contains "$BUGFIX_WORKFLOW" "create-branch.sh" "Workflow calls create-branch.sh"
 
-# --- Steps: bug-analyze + analysis-gate ---
-echo "--- Checking bug-analyze and analysis-gate ---"
-assert_contains "$BUGFIX_WORKFLOW" "bug-analyze" "Workflow has bug-analyze step"
-assert_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.bug-analyze" "Workflow calls bug-analyze command"
-assert_contains "$BUGFIX_WORKFLOW" "analysis-gate" "Workflow has analysis-gate"
+# --- Steps: standard assess + context + gate ---
+echo "--- Checking standard assess and assessment gate ---"
+assert_contains "$BUGFIX_WORKFLOW" "bug-assess" "Workflow has bug-assess step"
+assert_contains "$BUGFIX_WORKFLOW" "speckit.bug.assess" "Workflow calls standard bug assess command"
+assert_contains "$BUGFIX_WORKFLOW" "resolve-bug-context" "Workflow resolves standard bug context"
+assert_contains "$BUGFIX_WORKFLOW" "assessment-gate" "Workflow has assessment gate"
 assert_contains "$BUGFIX_WORKFLOW" "type: gate" "Workflow has gate step"
 
-# --- Steps: bug-test (RED phase) ---
-echo "--- Checking bug-test (RED phase) ---"
+# --- Steps: standard bug-test ---
+echo "--- Checking standard bug-test ---"
 assert_contains "$BUGFIX_WORKFLOW" "bug-test" "Workflow has bug-test step"
-assert_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.bug-test" "Workflow calls bug-test command"
+assert_contains "$BUGFIX_WORKFLOW" "speckit.bug.test" "Workflow calls standard bug test command"
 
-# --- Steps: bug-fix (GREEN phase) ---
-echo "--- Checking bug-fix (GREEN phase) ---"
+# --- Steps: standard bug-fix ---
+echo "--- Checking standard bug-fix ---"
 assert_contains "$BUGFIX_WORKFLOW" "bug-fix" "Workflow has bug-fix step"
-assert_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.bug-fix" "Workflow calls bug-fix command"
-
-# --- Steps: bug-review (REVIEW phase) ---
-echo "--- Checking bug-review (REVIEW phase) ---"
-assert_contains "$BUGFIX_WORKFLOW" "bug-review" "Workflow has bug-review step"
-assert_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.bug-review" "Workflow calls bug-review command"
+assert_contains "$BUGFIX_WORKFLOW" "speckit.bug.fix" "Workflow calls standard bug fix command"
 
 # --- Steps: verdict extraction ---
 echo "--- Checking verdict extraction ---"
-assert_contains "$BUGFIX_WORKFLOW" "extract-verdict.sh" "Workflow calls extract-verdict.sh"
-assert_contains "$BUGFIX_WORKFLOW" "bug-review-verdict" "Workflow has bug-review-verdict step"
-
-# --- Steps: review loop ---
-echo "--- Checking review loop ---"
-assert_contains "$BUGFIX_WORKFLOW" "type: do-while" "Workflow has do-while loop"
-assert_contains "$BUGFIX_WORKFLOW" "max_iterations: 5" "Loop has max 5 iterations"
-assert_contains "$BUGFIX_WORKFLOW" "fix-if-needed" "Workflow has fix-if-needed gate"
+assert_contains "$BUGFIX_WORKFLOW" "check-bug-verdict.sh" "Workflow checks standard bug verdict"
+assert_contains "$BUGFIX_WORKFLOW" "bug-verification" "Workflow has bug-verification step"
+assert_not_contains "$BUGFIX_WORKFLOW" "type: do-while" "Bugfix flow uses standard linear lifecycle"
 
 # --- Steps: finish ---
 echo "--- Checking finish step ---"
@@ -124,7 +115,7 @@ echo "--- Checking finish step args ---"
 assert_not_contains "$BUGFIX_WORKFLOW" 'context.run_id }} {{ inputs.issue' "Finish step does not use two-expression template (regression guard)"
 assert_contains "$BUGFIX_WORKFLOW" 'args: "{{ context.run_id }}"$' "Finish step uses single-expression args"
 
-# --- Absence checks: no spec/plan/tasks ---
+# --- Absence checks: no custom bug commands or feature flow ---
 echo "--- Checking absence of feature-flow steps ---"
 assert_not_contains "$BUGFIX_WORKFLOW" "speckit.specify" "No specify command"
 assert_not_contains "$BUGFIX_WORKFLOW" "speckit.plan" "No plan command"
@@ -134,27 +125,15 @@ assert_not_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.fix" "No feature-fl
 assert_not_contains "$BUGFIX_WORKFLOW" "speckit.extendedflow.documentation" "No documentation step in bugfix flow"
 assert_not_contains "$BUGFIX_WORKFLOW" "verify-spec" "No verify-spec step"
 
-# --- Agent command files ---
-echo "--- Checking agent command files ---"
-assert_file_exists "$PROJECT_DIR/commands/speckit.extendedflow.bug-analyze.md" "bug-analyze command exists"
-assert_file_exists "$PROJECT_DIR/commands/speckit.extendedflow.bug-test.md" "bug-test command exists"
-assert_file_exists "$PROJECT_DIR/commands/speckit.extendedflow.bug-fix.md" "bug-fix command exists"
-assert_file_exists "$PROJECT_DIR/commands/speckit.extendedflow.bug-review.md" "bug-review command exists"
-
-# --- Template file ---
-echo "--- Checking template file ---"
-assert_file_exists "$PROJECT_DIR/templates/bug-analysis.md" "bug-analysis template exists"
-
 # --- Extension registration ---
 echo "--- Checking extension registration ---"
-assert_contains "$PROJECT_DIR/extension.yml" "speckit.extendedflow.bug-analyze" "Extension registers bug-analyze"
-assert_contains "$PROJECT_DIR/extension.yml" "speckit.extendedflow.bug-test" "Extension registers bug-test"
-assert_contains "$PROJECT_DIR/extension.yml" "speckit.extendedflow.bug-fix" "Extension registers bug-fix"
-assert_contains "$PROJECT_DIR/extension.yml" "speckit.extendedflow.bug-review" "Extension registers bug-review"
+assert_contains "$PROJECT_DIR/README.md" "specify extension add bug" "Docs require standard bug extension"
+assert_contains "$PROJECT_DIR/extension.yml" 'speckit_version: ">=0.11.2"' "Extension requires a speckit version that includes the standard bug extension and converge"
+assert_not_contains "$PROJECT_DIR/extension.yml" "speckit.extendedflow.bug-" "Extension does not register custom bug commands"
 
 # --- Preset registration ---
 echo "--- Checking preset registration ---"
-assert_contains "$PROJECT_DIR/preset.yml" "bug-analysis" "Preset registers bug-analysis template"
+assert_not_contains "$PROJECT_DIR/preset.yml" "bug-analysis" "Preset does not register duplicate bug template"
 
 # --- Downstream contract ---
 echo "--- Checking downstream contract ---"

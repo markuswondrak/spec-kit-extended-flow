@@ -12,7 +12,7 @@ set -euo pipefail
 #   4. Merges the current feature branch into main (if not already on main)
 #   5. Reads current version from preset.yml
 #   6. Computes next minor version (MAJOR.MINOR+1.0)
-#   7. Updates version in preset.yml and extension.yml
+#   7. Updates version in preset.yml, extension.yml, and bundle.yml
 #   8. Commits the version bump
 #   9. Creates an annotated git tag (v<version>)
 #   10. Pushes main and tags to origin
@@ -44,12 +44,14 @@ cd "$PROJECT_DIR"
 
 PRESET_FILE="$PROJECT_DIR/preset.yml"
 EXTENSION_FILE="$PROJECT_DIR/extension.yml"
+BUNDLE_FILE="$PROJECT_DIR/bundle.yml"
 
 # ---------------------------------------------------------------------------
 # Preset / extension file checks
 # ---------------------------------------------------------------------------
 [ -f "$PRESET_FILE" ] || error "preset.yml not found at $PRESET_FILE"
 [ -f "$EXTENSION_FILE" ] || error "extension.yml not found at $EXTENSION_FILE"
+[ -f "$BUNDLE_FILE" ] || error "bundle.yml not found at $BUNDLE_FILE"
 
 # ---------------------------------------------------------------------------
 # Determine current branch
@@ -121,10 +123,11 @@ if git rev-parse "$TAG" >/dev/null 2>&1; then
 fi
 
 # ---------------------------------------------------------------------------
-# Update preset.yml and extension.yml
+# Update preset.yml, extension.yml, and bundle.yml
 # ---------------------------------------------------------------------------
 sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$PRESET_FILE"
 sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$EXTENSION_FILE"
+sed -i -E "s/^(  version: )\"[^\"]+\"/\\1\"$VERSION\"/" "$BUNDLE_FILE"
 
 UPDATED_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ "$UPDATED_VERSION" = "$VERSION" ] || error "Failed to update version in preset.yml"
@@ -132,10 +135,13 @@ UPDATED_VERSION=$(grep -E '^  version:' "$PRESET_FILE" | sed -E 's/.*"([^"]+)".*
 UPDATED_EXT_VERSION=$(grep -E '^  version:' "$EXTENSION_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
 [ "$UPDATED_EXT_VERSION" = "$VERSION" ] || error "Failed to update version in extension.yml"
 
+UPDATED_BUNDLE_VERSION=$(grep -E '^  version:' "$BUNDLE_FILE" | sed -E 's/.*"([^"]+)".*/\1/')
+[ "$UPDATED_BUNDLE_VERSION" = "$VERSION" ] || error "Failed to update version in bundle.yml"
+
 # ---------------------------------------------------------------------------
 # Commit and tag
 # ---------------------------------------------------------------------------
-git add "$PRESET_FILE" "$EXTENSION_FILE"
+git add "$PRESET_FILE" "$EXTENSION_FILE" "$BUNDLE_FILE"
 git commit -m "chore(release): bump version to $VERSION"
 git tag -a "$TAG" -m "Release $TAG"
 

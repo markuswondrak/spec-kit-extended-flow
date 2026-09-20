@@ -3,21 +3,21 @@ schema_version: "1.0"
 preset:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow"
-  version: "0.11.0"
-  description: "A complete agentic engineering pipeline that turns intent into working, reviewed, documented software. Extends Spec-Kit's SDD workflow with a QA review loop, living documentation reconciliation, and issue-to-PR automation."
+  version: "0.13.0"
+  description: "A complete agentic engineering pipeline that turns intent into working, reviewed, documented software. Extends Spec-Kit's SDD workflow with the standard implement/converge loop, living documentation reconciliation, and issue-to-PR automation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
 
 requires:
-  speckit_version: ">=0.8.5"
+  speckit_version: ">=0.11.2"
 
 provides:
   templates:
     - type: "template"
-      name: "bug-analysis"
-      file: "templates/bug-analysis.md"
-      description: "Structured template for bug root-cause analysis, fix strategy, and test plan"
+      name: "triage"
+      file: "templates/triage.md"
+      description: "Structured template for triage assessment (verdict, reasoning, signals, confidence)"
 
     - type: "template"
       name: "review-findings"
@@ -28,6 +28,105 @@ provides:
       name: "documentation"
       file: "templates/documentation.md"
       description: "Structured report template for documentation reconciliation (conflicts, layer health, changes by category)"
+
+    # Unattended runtime preamble: prepended to every core command the Extended
+    # Flow invokes so the pipeline runs without interactive prompts. The single
+    # file is composed onto each command at install time, so the context is not
+    # duplicated per command. The standard bug commands come from the `bug`
+    # extension, which the bundle declares as a dependency.
+    - type: "command"
+      name: "speckit.specify"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for specify"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for plan"
+
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for tasks"
+
+    - type: "command"
+      name: "speckit.analyze"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for analyze"
+
+    - type: "command"
+      name: "speckit.implement"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for implement"
+
+    - type: "command"
+      name: "speckit.converge"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for converge"
+
+    - type: "command"
+      name: "speckit.bug.assess"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for bug assessment"
+
+    - type: "command"
+      name: "speckit.bug.fix"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for bug fix"
+
+    - type: "command"
+      name: "speckit.bug.test"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for bug test"
+
+    # The Extended Flow's own commands also run unattended. Prepend the same
+    # preamble so every agent stays inside the project and never blocks on a
+    # question. Interactive bootstrap commands (project-init, documentation-init)
+    # are intentionally excluded — they are run by a human before the flows.
+    - type: "command"
+      name: "speckit.extendedflow.triage"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for triage"
+
+    - type: "command"
+      name: "speckit.extendedflow.documentation"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for documentation reconciliation"
+
+    - type: "command"
+      name: "speckit.extendedflow.finish"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for finish"
+
+    - type: "command"
+      name: "speckit.extendedflow.quick-implement"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for quick implement"
+
+    - type: "command"
+      name: "speckit.extendedflow.quick-review"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for quick review"
+
+    - type: "command"
+      name: "speckit.extendedflow.doc-check"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for doc check"
 
   tags:
   - "qa"

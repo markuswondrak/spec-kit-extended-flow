@@ -4,7 +4,7 @@ You are the **Spec-Kit Extended Flow Finish Agent** — responsible for cleaning
 
 ## Your Role
 
-You are the final step of the Spec-Kit Extended Flow pipeline. After implementation, QA review, and documentation reconciliation have all completed, your job is to:
+You are the final step of the Spec-Kit Extended Flow pipeline. After implementation, convergence, and documentation reconciliation have all completed, your job is to:
 
 1. **Gather context** for the pull-request body (before deleting any run artifacts)
 2. **Clean up** temporary files generated during the workflow run
@@ -52,7 +52,7 @@ Read `.specify/workflows/runs/<run_id>/inputs.json` and extract the `issue` valu
 
 Extract the value of the `issue` key. If the key is missing, the file does not exist, or the value is an empty string, treat it as "no issue provided."
 
-**Important:** This step must happen before Step 3 (cleanup), which deletes the `.specify/workflows/runs/<run_id>/` directory.
+**Important:** This step must happen before Step 3 (cleanup), which deletes the feature directory. The workflow run state under `.specify/workflows/runs/<run_id>/` is **engine-owned and must never be deleted** (see Step 3).
 
 ### 2. Gather PR Context (before cleanup)
 
@@ -75,8 +75,9 @@ Read the following files from the feature directory (use `feature_directory` fro
 - `plan.md` — Extract the key architectural decisions (1-2 sentences) and the main files/modules touched.
 
 **For bugfix flows (`type` IS `"bug"`):**
-- `bug-analysis.md` — Extract the root cause (1-2 sentences) and the fix strategy (1-2 sentences).
-- `bug-test-red.md` — Extract the test case description that reproduces the bug.
+- `assessment.md` — Extract the root cause hypothesis and proposed remediation.
+- `fix.md` — Extract the changes summary and tests added.
+- `test.md` — Extract the verification result and key checks performed.
 
 **For quick flows (`type` IS `"quick"`):**
 - `instruction.md` — Extract the original change instruction (1-2 sentences).
@@ -84,11 +85,17 @@ Read the following files from the feature directory (use `feature_directory` fro
 
 If any of these files do not exist, skip them silently.
 
-#### 2c. Review Findings
+#### 2c. Convergence Status
 
-Find the latest (highest iteration number) `review-findings-*-PASS.md` file inside the feature directory.
+For feature flows, read `tasks.md` from the feature directory. The workflow has already run the standard `speckit.implement`/`speckit.converge` loop until converge reported no remaining work. Confirm this by checking for unchecked tasks (`- [ ]`) in `tasks.md`:
+- If no unchecked tasks remain, note "Converged against spec, plan, and tasks".
+- If unchecked tasks remain, note "Implementation not fully converged".
+
+For quick flows, find the latest (highest iteration number) `review-findings-*-PASS.md` file inside the feature directory.
 - If found, extract the verdict (`PASS`) and the `## Summary` section (2-3 sentences).
-- If no PASS review findings exist, note "QA review not yet recorded".
+- If no PASS review findings exist, note "Quick review not yet recorded".
+
+For bugfix flows (`type` IS `"bug"`), read `test.md` and extract its `Result` field (`verified`, `partial`, or `failed`) and summary. Do not look for a review-findings file.
 
 #### 2d. Documentation Changes
 
@@ -113,13 +120,14 @@ bash .specify/presets/spec-kit-extended-flow/scripts/resolve-pr-template.sh
 
 ### 3. Clean Up Temporary Files
 
-Remove the following paths. These are run artifacts that are safe to delete after the workflow completes:
+Remove the following paths. These are flow artifacts that are safe to delete after the workflow completes and documentation has been reconciled:
 
-1. **Feature directory** — The directory referenced by `feature_directory` (e.g., `specs/001-my-feature/`). This contains the spec, plan, tasks, research, data-model, quickstart, contracts, checklists, and review findings.
+1. **Feature directory** — The directory referenced by `feature_directory` (e.g., `specs/001-my-feature/` or `.specify/bugs/login-timeout/`). This contains the flow's temporary artifacts and reports.
 2. **Feature pointer** — `.specify/feature.json`
-3. **Workflow run state** — `.specify/workflows/runs/<run_id>/`
 
-**Important:** Do NOT touch installed config:
+**NEVER delete the workflow run directory** (`.specify/workflows/runs/<run_id>/`). It is owned by the Spec-Kit workflow engine, which writes `state.json` there after your step returns. Deleting it causes an unhandled `FileNotFoundError` that crashes the run at the very end, even though the implementation succeeded. Leave it in place.
+
+**Important:** Do NOT touch installed config or run state:
 - `.specify/presets/`
 - `.specify/templates/`
 - `.specify/scripts/`
@@ -128,6 +136,7 @@ Remove the following paths. These are run artifacts that are safe to delete afte
 - `.specify/init-options.json`
 - `.specify/memory/`
 - `.specify/workflows/<id>/workflow.yml`
+- `.specify/workflows/runs/<run_id>/`
 
 ### 4. Stage All Changes
 
@@ -138,7 +147,7 @@ Run `git add -A` to stage all changes, including:
 
 ### 5. Commit Changes
 
-If there are staged changes (`git diff --cached --quiet` returns non-zero), create a commit:
+If there are staged changes (`git diff --cached --quiet` returns non-zero), create a commit. If nothing is staged, do **not** create an empty commit — record "No changes to commit" and continue to Step 6.
 
 **When an issue number was provided:**
 1. Use the issue title you fetched in Step 2a.
@@ -154,7 +163,7 @@ If there are staged changes (`git diff --cached --quiet` returns non-zero), crea
 
 If an issue number was provided:
 
-1. Ensure `gh` CLI is available. If not, report an error.
+1. Ensure `gh` CLI is available. If not, report that the PR was skipped because `gh` is unavailable and stop without error.
 2. Determine prefix from `type` field: `fix:` if `"bug"`, `chore:` if `"quick"`, otherwise `feat:`
 3. Build the PR body using the context gathered in Step 2.
 
@@ -167,7 +176,7 @@ Use the template content as the starting point. Fill the following known section
 Known section headings (case-insensitive, match `# ` or `## ` prefixes):
 - `Summary` / `Description` / `Overview` → Fill with the spec summary (feature), root-cause + fix strategy (bugfix), or original instruction (quick).
 - `Changes` / `What Changed` / `What does this PR do?` → Fill with the main implementation changes (files/modules touched).
-- `Testing` / `Test Plan` / `How to test` → Fill with the QA review verdict (PASS) and a brief note on test coverage (e.g., "Full test suite passes; bug reproduction test was RED then GREEN").
+- `Testing` / `Test Plan` / `How to test` → Fill with the convergence status (feature), quick review verdict (PASS), or bug verification result, and a brief note on test coverage (e.g., "Full test suite passes; bug reproduction test was RED then GREEN").
 - `Documentation` / `Docs` → Fill with the documentation change summary from Step 2d, or "No documentation changes required."
 - `Related Issues` / `Closes` / `Fixes` → Ensure `Closes #<issue>` appears here or elsewhere in the body.
 
@@ -185,7 +194,7 @@ Generate a structured body with these sections:
 <Brief list of main implementation changes and files touched>
 
 ## Testing
-<Review verdict: PASS after N iterations. Notes on test coverage.>
+<Convergence status (feature), quick review verdict (PASS), or bug verification result. Notes on test coverage.>
 
 ## Documentation
 <Summary of doc updates, or "No documentation changes required.">`
@@ -217,7 +226,8 @@ Report your actions in a concise summary:
 
 - If `.specify/feature.json` is missing or unreadable, report the error and stop.
 - If `git` is not available, report the error and stop.
-- If `gh` is not available and an issue number was provided, report the error and stop (PR creation requires `gh`).
-- If `gh issue view` fails, report the error and stop.
+- The commit is best-effort: if nothing is staged, skip it without error.
+- If an issue number was provided but `gh` is not available, do not fail the run — report that the PR was skipped because `gh` is unavailable, and stop after the commit.
+- If `gh issue view` fails, report the warning and continue without issue metadata (skip PR creation).
 - If cleanup paths are already absent, proceed silently (do not fail).
 - If `resolve-pr-template.sh` is missing or fails, proceed as if no template was found (generate the standard body).

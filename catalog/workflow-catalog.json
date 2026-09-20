@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-09-20T00:00:00Z",
+  "catalog_url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/catalog/workflow-catalog.json",
+  "workflows": {
+    "spec-kit-unified-flow": {
+      "id": "spec-kit-unified-flow",
+      "name": "Spec-Kit Extended Flow — Unified Flow",
+      "description": "Single entry point that triages the request into Feature, Bugfix, or Quick Flow and runs the matching pipeline end-to-end.",
+      "author": "Markus Wondrak",
+      "version": "0.2.0",
+      "url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/workflows/unified-flow.yml",
+      "tags": [
+        "workflow",
+        "triage",
+        "sdd"
+      ]
+    },
+    "spec-kit-extended-flow": {
+      "id": "spec-kit-extended-flow",
+      "name": "Spec-Kit Extended Flow — Feature Flow",
+      "description": "SDD lifecycle with a Spec-Kit convergence loop and documentation reconciliation.",
+      "author": "Markus Wondrak",
+      "version": "0.10.0",
+      "url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/workflows/workflow.yml",
+      "tags": [
+        "workflow",
+        "sdd",
+        "documentation"
+      ]
+    },
+    "spec-kit-bugfix-flow": {
+      "id": "spec-kit-bugfix-flow",
+      "name": "Spec-Kit Extended Flow — Bugfix Flow",
+      "description": "Standard Spec-Kit bug assess, fix, and verification commands with an assessment gate and issue-to-PR automation.",
+      "author": "Markus Wondrak",
+      "version": "0.2.0",
+      "url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/workflows/bugfix-workflow.yml",
+      "tags": [
+        "workflow",
+        "bugfix",
+        "qa"
+      ]
+    },
+    "spec-kit-quick-flow": {
+      "id": "spec-kit-quick-flow",
+      "name": "Spec-Kit Extended Flow — Quick Flow",
+      "description": "Lightweight pipeline for trivial, well-defined changes. No spec/plan/tasks generation, self-fixing review in a single pass.",
+      "author": "Markus Wondrak",
+      "version": "0.1.0",
+      "url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/workflows/quick-flow.yml",
+      "tags": [
+        "workflow",
+        "quick",
+        "review"
+      ]
+    }
+  }
+}

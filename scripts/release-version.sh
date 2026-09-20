@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# release-version.sh — Bumps the version in preset.yml and extension.yml and creates a git tag.
+# release-version.sh — Bumps the version in preset.yml, extension.yml, and bundle.yml and creates a git tag.
 #
 # Usage: release-version.sh <version>
 #
@@ -11,7 +11,7 @@ set -euo pipefail
 # The script:
 #   1. Validates the version format (semver: MAJOR.MINOR.PATCH)
 #   2. Checks the working tree is clean
-#   3. Updates the version field in preset.yml and extension.yml
+#   3. Updates the version field in preset.yml, extension.yml, and bundle.yml
 #   4. Commits the version bump
 #   5. Creates an annotated git tag (v<version>)
 #

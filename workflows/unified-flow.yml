@@ -1,0 +1,256 @@
+schema_version: "1.0"
+
+workflow:
+  id: "spec-kit-unified-flow"
+  name: "Spec-Kit Extended Flow — Unified Flow"
+  version: "0.2.0"
+  author: "Markus Wondrak"
+  description: "The Unified Flow: a single entry point that triages the request into Feature, Bugfix, or Quick Flow and runs the matching pipeline end-to-end, including the standard Spec-Kit implement/converge loop."
+
+requires:
+  speckit_version: ">=0.11.2"
+  integrations:
+    any:
+      - "claude"
+      - "copilot"
+      - "gemini"
+      - "opencode"
+
+inputs:
+  spec:
+    type: string
+    required: false
+    default: ""
+    prompt: "What to build, fix, or change. A plain-text description of the request."
+  file:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a description file (e.g., ./specs/feature.md). The file contents will be used as the request."
+  issue:
+    type: string
+    required: false
+    default: ""
+    prompt: "GitHub issue number from this repository (e.g., 42). The issue title and body will be used as the request."
+  integration:
+    type: string
+    required: false
+    default: "auto"
+    prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
+  flow:
+    type: string
+    required: false
+    default: ""
+    enum: ["", "feature", "bugfix", "quick"]
+    prompt: "Force a specific flow (empty = let triage decide)."
+
+steps:
+  - id: resolve-spec
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+
+  - id: triage
+    command: speckit.extendedflow.triage
+    integration: "{{ inputs.integration }}"
+    model: ""
+    input:
+      args: "{{ context.run_id }}\n{{ steps.resolve-spec.output.stdout }}"
+
+  - id: triage-verdict
+    type: shell
+    run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-triage.sh "{{ context.run_id }}"
+
+  - id: dispatch
+    type: switch
+    expression: "{{ inputs.flow | default(steps.triage-verdict.output.stdout) }}"
+    cases:
+      feature:
+        - id: feature-create-branch
+          type: if
+          condition: "{{ inputs.issue != '' }}"
+          then:
+            - id: feature-branch
+              type: shell
+              run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+
+        - id: feature-specify
+          command: speckit.specify
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "{{ steps.resolve-spec.output.stdout }}"
+
+        - id: feature-verify-spec
+          type: shell
+          run: bash .specify/presets/spec-kit-extended-flow/scripts/verify-spec.sh
+
+        - id: feature-spec-gate
+          type: gate
+          message: "Review the generated specification. Approve to continue to planning, or reject to stop and edit the spec."
+          options: [approve, reject]
+          on_reject: abort
+
+        - id: feature-plan
+          command: speckit.plan
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
+
+        - id: feature-plan-gate
+          type: gate
+          message: "Review the generated implementation plan. Approve to create tasks, or reject to stop and edit the plan."
+          options: [approve, reject]
+          on_reject: abort
+
+        - id: feature-tasks
+          command: speckit.tasks
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+        - id: feature-analyze
+          command: speckit.analyze
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+        - id: feature-implement
+          command: speckit.implement
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+        - id: feature-converge-loop
+          type: do-while
+          condition: "{{ steps.feature-converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+          max_iterations: 5
+          steps:
+            - id: feature-converge-snapshot
+              type: shell
+              run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh snapshot "{{ context.run_id }}"
+            - id: feature-converge
+              command: speckit.converge
+              integration: "{{ inputs.integration }}"
+              model: ""
+            - id: feature-converge-check
+              type: shell
+              run: bash .specify/presets/spec-kit-extended-flow/scripts/check-converge.sh check "{{ context.run_id }}"
+            - id: feature-converge-implement
+              type: if
+              condition: "{{ steps.feature-converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+              then:
+                - id: feature-converge-implement-run
+                  command: speckit.implement
+                  integration: "{{ inputs.integration }}"
+                  model: ""
+
+        - id: feature-stop-on-not-converged
+          type: if
+          condition: "{{ steps.feature-converge-check.output.stdout | contains('TASKS_APPENDED') }}"
+          then:
+            - id: feature-not-converged
+              type: shell
+              run: "echo 'speckit.converge still reported remaining work after the maximum number of iterations. Inspect the appended tasks in tasks.md and run the Feature Flow again.' >&2; exit 1"
+
+        - id: feature-documentation
+          command: speckit.extendedflow.documentation
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+      bugfix:
+        - id: bugfix-create-branch
+          type: if
+          condition: "{{ inputs.issue != '' }}"
+          then:
+            - id: bugfix-branch
+              type: shell
+              run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}" "fix"
+
+        - id: bugfix-bug-assess
+          command: speckit.bug.assess
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "{{ steps.resolve-spec.output.stdout }}"
+
+        - id: bugfix-resolve-bug-context
+          type: shell
+          run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-bug-context.sh
+
+        - id: bugfix-assessment-gate
+          type: gate
+          message: "Review the generated bug assessment in .specify/bugs/<slug>/assessment.md. Approve to continue to the fix, or reject to stop."
+          options: [approve, reject]
+          on_reject: abort
+
+        - id: bugfix-bug-fix
+          command: speckit.bug.fix
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "slug={{ steps.bugfix-resolve-bug-context.output.stdout }}"
+
+        - id: bugfix-bug-test
+          command: speckit.bug.test
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "slug={{ steps.bugfix-resolve-bug-context.output.stdout }}"
+
+        - id: bugfix-verification
+          type: shell
+          run: bash .specify/presets/spec-kit-extended-flow/scripts/check-bug-verdict.sh
+
+      quick:
+        - id: quick-create-branch
+          type: if
+          condition: "{{ inputs.issue != '' }}"
+          then:
+            - id: quick-branch
+              type: shell
+              run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+
+        - id: quick-init
+          type: shell
+          run: bash .specify/presets/spec-kit-extended-flow/scripts/init-quick.sh "{{ inputs.issue }}" "{{ steps.resolve-spec.output.stdout }}"
+
+        - id: quick-implement
+          command: speckit.extendedflow.quick-implement
+          integration: "{{ inputs.integration }}"
+          model: ""
+          input:
+            args: "{{ steps.resolve-spec.output.stdout }}"
+
+        - id: quick-review
+          command: speckit.extendedflow.quick-review
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+        - id: quick-review-verdict
+          type: shell
+          run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
+
+        - id: quick-stop-on-review-fail
+          type: if
+          condition: "{{ steps.quick-review-verdict.output.stdout | contains('FAIL') }}"
+          then:
+            - id: quick-review-failed
+              type: shell
+              run: "echo 'Quick review could not self-correct all issues. This change is too complex for the Quick Flow — use the Feature Flow instead. See review-findings-1-FAIL.md inside the current feature directory for details.' >&2; exit 1"
+
+        - id: quick-doc-check
+          command: speckit.extendedflow.doc-check
+          integration: "{{ inputs.integration }}"
+          model: ""
+
+    default:
+      - id: unexpected-verdict
+        type: gate
+        message: "Unexpected triage verdict '{{ steps.triage-verdict.output.stdout }}'. Approve to abort, or use --input flow=<feature|bugfix|quick> to override."
+        options: [approve, reject]
+        on_reject: abort
+
+  - id: finish
+    command: speckit.extendedflow.finish
+    integration: "{{ inputs.integration }}"
+    model: ""
+    input:
+      args: "{{ context.run_id }}"
