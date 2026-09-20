@@ -41,7 +41,7 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/extract-verdict.py` | Extracts the Quick Flow review verdict from the review findings filename |
 | `scripts/resolve-bug-context.py` | Records the standard bug extension's active bug directory in `feature.json` |
 | `scripts/check-bug-verdict.py` | Validates the standard bug extension's `test.md` result |
-| `scripts/init-quick.py` | Initializes a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
+| `scripts/init-quick.py` | Creates or reuses a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
 | `scripts/resolve-pr-template.py` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
 | `scripts/package-preset.py` | Builds the preset ZIP package |
 | `scripts/build-catalog.py` | Builds deterministic project-owned HTTPS catalog archives under `catalog/artifacts/` and syncs catalog version pins |
