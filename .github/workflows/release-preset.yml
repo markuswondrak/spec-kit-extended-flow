@@ -17,29 +17,16 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build preset package
-        run: scripts/package-preset.sh
+        run: python3 scripts/package-preset.py
 
       - name: Verify preset package
-        run: |
-          unzip -t dist/spec-kit-extended-flow.zip
-          unzip -Z1 dist/spec-kit-extended-flow.zip
-
-      - name: Verify extension manifest
-        run: |
-          unzip -p dist/spec-kit-extended-flow.zip extension.yml > /dev/null
-          echo "extension.yml found in package"
-
-      - name: Verify bundle manifest
-        run: |
-          unzip -p dist/spec-kit-extended-flow.zip bundle.yml > /dev/null
-          echo "bundle.yml found in package"
+        run: python3 -c "import zipfile; archive=zipfile.ZipFile('dist/spec-kit-extended-flow.zip'); assert archive.testzip() is None; assert 'extension.yml' in archive.namelist(); assert 'bundle.yml' in archive.namelist()"
 
       - name: Build catalog artifacts
-        run: |
-          scripts/build-catalog.sh
-          for artifact in catalog/artifacts/*.zip; do
-            unzip -t "$artifact"
-          done
+        run: python3 scripts/build-catalog.py
+
+      - name: Verify catalog artifacts
+        run: python3 -c "import pathlib, zipfile; artifacts=list(pathlib.Path('catalog/artifacts').glob('*.zip')); assert artifacts; assert all(zipfile.ZipFile(artifact).testzip() is None for artifact in artifacts)"
 
       - name: Publish GitHub release assets
         env:

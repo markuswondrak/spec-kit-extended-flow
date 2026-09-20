@@ -80,7 +80,7 @@ You run **once** per project — after `specify init` but before the first `spec
 
 Before any analysis, resolve a hard incompatibility with spec-kit's built-in git extension.
 
-**Why this is required:** The git extension registers a mandatory `before_specify` hook (`speckit.git.feature`) that creates branches with sequential numbering. This workflow manages its own branch creation (issue-based naming: `feature/<issue>-<slug>` via `create-branch.sh`). On integrations that do not support the `EXECUTE_COMMAND` protocol (e.g., opencode), the mandatory hook causes the agent to hang waiting for a result that never arrives. Disabling the git extension eliminates the conflict.
+**Why this is required:** The git extension registers a mandatory `before_specify` hook (`speckit.git.feature`) that creates branches with sequential numbering. This workflow manages its own branch creation (issue-based naming: `feature/<issue>-<slug>` via `create-branch.py`). On integrations that do not support the `EXECUTE_COMMAND` protocol (e.g., opencode), the mandatory hook causes the agent to hang waiting for a result that never arrives. Disabling the git extension eliminates the conflict.
 
 **Action:** Run the following command and include the result in your final report:
 

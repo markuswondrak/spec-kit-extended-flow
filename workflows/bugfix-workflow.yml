@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-bugfix-flow"
   name: "Spec-Kit Extended Flow — Bugfix Flow"
-  version: "0.2.0"
+  version: "0.2.1"
   author: "Markus Wondrak"
   description: "The Bugfix Flow: Spec-Kit's standard bug assessment, fix, and verification commands with an assessment gate and issue-to-PR automation."
 
@@ -41,7 +41,7 @@ inputs:
 steps:
   - id: resolve-spec
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
 
   - id: create-branch
     type: if
@@ -49,7 +49,7 @@ steps:
     then:
       - id: branch
         type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}" "fix"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/create-branch.py "{{ inputs.issue }}" "fix"
 
   - id: bug-assess
     command: speckit.bug.assess
@@ -60,7 +60,7 @@ steps:
 
   - id: resolve-bug-context
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-bug-context.sh
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-bug-context.py
 
   - id: assessment-gate
     type: gate
@@ -84,7 +84,7 @@ steps:
 
   - id: bug-verification
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/check-bug-verdict.sh
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/check-bug-verdict.py
 
   - id: finish
     command: speckit.extendedflow.finish

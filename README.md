@@ -257,6 +257,8 @@ specify init
 
 The workflows assume your project is already initialized and has a constitution in place. The plan step infers tech stack/architecture from your existing project — no planning constraints input needed at runtime.
 
+The installed flows require `python3` on `PATH`, not Bash or Unix utilities such as `jq`, `zip`, `sed`, or `find`. Issue-based runs also require authenticated `gh`, and issue branch creation requires `git`. Windows runtime execution has not been verified, so Windows support is not claimed.
+
 `speckit.extendedflow.project-init` analyzes your codebase, generates project-specific template overrides, and **automatically disables spec-kit's git extension** to prevent the incompatibility described in [docs/troubleshooting.md](docs/troubleshooting.md#git-extension-compatibility).
 
 For common issues, installation notes, and the git extension compatibility details, see [docs/troubleshooting.md](docs/troubleshooting.md). For release instructions, see [docs/releasing.md](docs/releasing.md).

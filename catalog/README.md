@@ -23,7 +23,7 @@ mechanism for repository-local components (see
 Regenerate `artifacts/` and sync the catalog version pins after changing a component:
 
 ```bash
-scripts/build-catalog.sh
+python3 scripts/build-catalog.py
 ```
 
 The archives are build outputs and are **not committed** (see `.gitignore`). They are

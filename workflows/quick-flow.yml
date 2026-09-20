@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-quick-flow"
   name: "Spec-Kit Extended Flow — Quick Flow"
-  version: "0.1.0"
+  version: "0.1.1"
   author: "Markus Wondrak"
   description: "The Quick Flow: lightweight pipeline for trivial, well-defined changes (label renames, message additions, small tweaks). Implements directly from the instruction, runs a self-fixing review in a single pass, checks documentation impact, and ships a PR. No spec/plan/tasks generation."
 
@@ -41,7 +41,7 @@ inputs:
 steps:
   - id: resolve-spec
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.sh "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ inputs.spec }}" "{{ inputs.file }}" "{{ inputs.issue }}"
 
   - id: create-branch
     type: if
@@ -49,11 +49,11 @@ steps:
     then:
       - id: branch
         type: shell
-        run: bash .specify/presets/spec-kit-extended-flow/scripts/create-branch.sh "{{ inputs.issue }}"
+        run: python3 .specify/presets/spec-kit-extended-flow/scripts/create-branch.py "{{ inputs.issue }}"
 
   - id: init-quick
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/init-quick.sh "{{ inputs.issue }}" "{{ steps.resolve-spec.output.stdout }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/init-quick.py "{{ inputs.issue }}" "{{ steps.resolve-spec.output.stdout }}"
 
   - id: quick-implement
     command: speckit.extendedflow.quick-implement
@@ -69,7 +69,7 @@ steps:
 
   - id: quick-review-verdict
     type: shell
-    run: bash .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.sh "{{ context.run_id }}"
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/extract-verdict.py "{{ context.run_id }}"
 
   - id: stop-on-review-fail
     type: if

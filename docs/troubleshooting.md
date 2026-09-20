@@ -8,7 +8,7 @@ Extended Flow manages its own branch creation (issue-based naming: `feature/<iss
 
 **Why this is necessary:**
 - The git extension registers a mandatory `before_specify` hook (`speckit.git.feature`) that creates branches with sequential numbering
-- Our workflows create branches with issue-based naming via `create-branch.sh`
+- Our workflows create branches with issue-based naming via `create-branch.py`
 - On integrations that do not support the `EXECUTE_COMMAND` protocol (e.g., opencode), the mandatory hook causes the agent to hang waiting for a result that never comes
 - Disabling the git extension eliminates the conflict and allows the workflows to manage branching consistently
 
@@ -28,7 +28,7 @@ specify extension enable git
 
 ## Common Issues
 
-**Workflow fails with "still reported remaining work":** `speckit.converge` kept appending tasks after the 5-iteration cap. Inspect the appended `## Phase N: Convergence` tasks in the feature's `tasks.md`, fix the underlying spec/plan/tasks gap, and re-run the Feature Flow. `check-converge.sh` detects the append by hashing `tasks.md` before and after converge — see `scripts/check-converge.sh`.
+**Workflow fails with "still reported remaining work":** `speckit.converge` kept appending tasks after the 5-iteration cap. Inspect the appended `## Phase N: Convergence` tasks in the feature's `tasks.md`, fix the underlying spec/plan/tasks gap, and re-run the Feature Flow. `check-converge.py` detects the append by hashing `tasks.md` before and after converge — see `scripts/check-converge.py`.
 
 **Workflow stuck in loop:** Check `specify workflow status`. The cap of 5 iterations prevents infinite loops.
 
@@ -48,4 +48,4 @@ specify extension add extendedflow --from https://github.com/markuswondrak/spec-
 
 `specify preset add --from` expects a ZIP package URL. The same applies to `specify extension add --from`. Do not pass the GitHub repository landing page URL — that downloads HTML, not a preset package.
 
-Release packages are built as `dist/spec-kit-extended-flow.zip` by `scripts/package-preset.sh` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
+Release packages are built as `dist/spec-kit-extended-flow.zip` by `python3 scripts/package-preset.py` and published as GitHub Release assets by `.github/workflows/release-preset.yml`.
