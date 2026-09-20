@@ -35,14 +35,18 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
-| Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
-| Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
-| Init quick | `scripts/init-quick.sh` | Initializes Quick Flow feature directory |
-| Verify spec | `scripts/verify-spec.sh` | Validates spec file was created |
-| Check converge | `scripts/check-converge.sh` | Detects whether `speckit.converge` appended new tasks |
-| Extract verdict | `scripts/extract-verdict.sh` | Extracts the Quick Flow PASS/FAIL from the review filename |
-| Resolve bug context | `scripts/resolve-bug-context.sh` | Records the standard bug extension's active directory in `feature.json` |
-| Check bug verdict | `scripts/check-bug-verdict.sh` | Requires a `verified` result in the standard bug test report |
+| Resolve spec | `scripts/resolve-spec.py` | Resolves spec/file/issue inputs |
+| Create branch | `scripts/create-branch.py` | Creates feature branch from issue |
+| Init quick | `scripts/init-quick.py` | Initializes Quick Flow feature directory |
+| Verify spec | `scripts/verify-spec.py` | Validates spec file was created |
+| Check converge | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks |
+| Extract verdict | `scripts/extract-verdict.py` | Extracts the Quick Flow PASS/FAIL from the review filename |
+| Resolve bug context | `scripts/resolve-bug-context.py` | Records the standard bug extension's active directory in `feature.json` |
+| Check bug verdict | `scripts/check-bug-verdict.py` | Requires a `verified` result in the standard bug test report |
+
+### Downstream Runtime
+
+Downstream workflows invoke the installed runtime scripts with `python3`, so Python 3 must be available on the downstream project's `PATH`. Windows runtime execution has not been verified; this change does not claim Windows support.
 
 ## Customization
 

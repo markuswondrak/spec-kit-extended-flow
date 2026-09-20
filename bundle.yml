@@ -3,9 +3,9 @@ schema_version: "1.0"
 bundle:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow"
-  version: "0.13.0"
+  version: "0.15.0"
   role: "developer"
-  description: "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline. Installs preset (templates + scripts), extension (7 commands), and 3 workflows (feature, bugfix, quick) in one operation."
+  description: "A complete agentic engineering pipeline: SDD workflow with Python runtime scripts, the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline. Installs preset (templates + scripts), extension (7 commands), and 3 workflows (feature, bugfix, quick) in one operation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -20,23 +20,23 @@ requires:
 provides:
   extensions:
     - id: "extendedflow"
-      version: "0.13.0"
+      version: "0.15.0"
     - id: "bug"
       version: "1.0.0"
 
   presets:
     - id: "spec-kit-extended-flow"
-      version: "0.13.0"
+      version: "0.15.0"
       priority: 10
       strategy: "append"
 
   workflows:
     - id: "spec-kit-extended-flow"
-      version: "0.10.0"
+      version: "0.10.1"
     - id: "spec-kit-bugfix-flow"
-      version: "0.2.0"
+      version: "0.2.1"
     - id: "spec-kit-quick-flow"
-      version: "0.1.0"
+      version: "0.1.1"
 
 tags:
   - "qa"
