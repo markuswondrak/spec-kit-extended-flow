@@ -44,9 +44,8 @@ Extended Flow closes the loop. **Intent in, working software out — reviewed ag
 
 ### A family of flows
 
-Extended Flow ships a **family of composable flows** that share issue-to-PR automation and clear safety boundaries. The Feature Flow uses Spec-Kit's standard implement/converge loop; the Quick Flow adds a self-fixing review; the Bugfix Flow delegates bug handling to Spec-Kit's standard bug extension. Today the family has four members:
+Extended Flow ships a **family of composable flows** that share issue-to-PR automation and clear safety boundaries. The Feature Flow uses Spec-Kit's standard implement/converge loop; the Quick Flow adds a self-fixing review; the Bugfix Flow delegates bug handling to Spec-Kit's standard bug extension. The family has three members:
 
-- **Unified Flow** — the recommended entry point. Triage classifies the request and dispatches into the right pipeline below (`triage → {feature|bugfix|quick} → finish`).
 - **Feature Flow** — the SDD lifecycle for new features (`specify → plan → tasks → analyze → implement → converge → documentation → finish`).
 - **Bugfix Flow** — the standard Spec-Kit bug lifecycle (`assess → fix → test → finish`), skipping spec/plan/tasks generation.
 - **Quick Flow** — a lightweight pipeline for trivial, well-defined changes (`implement → review-fix → doc-check → finish`), no spec/plan/tasks, no human gates, self-fixing review in a single pass.
@@ -58,7 +57,7 @@ See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The
 ## Quickstart
 
 ```bash
-# 1. Install the complete bundle (preset + extension + 4 workflows)
+# 1. Install the complete bundle (preset + extension + 3 workflows)
 #
 # Option A — For users (remote, from this repo's HTTPS catalog)
 #   Register the project-owned catalog once, then install the bundle in one step.
@@ -78,16 +77,16 @@ specify preset add --dev .
 # `--from` expects a ZIP package URL; do not pass a bare repository URL.
 specify bundle install .
 
-# 2. Run the Unified Flow (recommended)
-specify workflow run spec-kit-unified-flow \
+# 2. Run the Feature Flow
+specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
 ```
 
-**What happens:** The Triage Agent estimates whether the request is a feature, bugfix, or quick change, then runs the matching pipeline end-to-end. You can override the triage with `--input flow=feature`, `--input flow=bugfix`, or `--input flow=quick`.
+**What happens:** The workflow generates a specification, plan, and tasks (with human approval gates), implements them through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
 
 ### Bugfix Quickstart
 
-The bundle installs all four workflows. Run the Bugfix Flow directly:
+The bundle installs all three workflows. Run the Bugfix Flow directly:
 
 ```bash
 specify workflow run spec-kit-bugfix-flow \
@@ -98,7 +97,7 @@ specify workflow run spec-kit-bugfix-flow \
 
 ### Quick Flow Quickstart
 
-The bundle installs all four workflows. Run the Quick Flow directly:
+The bundle installs all three workflows. Run the Quick Flow directly:
 
 ```bash
 # Run with a plain-text instruction
@@ -116,24 +115,11 @@ specify workflow run spec-kit-quick-flow \
 <summary><strong>Other input modes</strong></summary>
 
 ```bash
-# Unified Flow from a spec file
-specify workflow run spec-kit-unified-flow \
-  --input file="./specs/todo-api.md"
-
-# Unified Flow from a GitHub issue (triage decides the branch)
-specify workflow run spec-kit-unified-flow \
-  --input issue="42"
-
-# Override triage explicitly
-specify workflow run spec-kit-unified-flow \
-  --input spec="Rename the login button label to Sign In" \
-  --input flow=quick
-
-# From a spec file
+# Feature Flow from a spec file
 specify workflow run spec-kit-extended-flow \
   --input file="./specs/todo-api.md"
 
-# From a GitHub issue
+# Feature Flow from a GitHub issue
 specify workflow run spec-kit-extended-flow \
   --input issue="42"
 
@@ -170,7 +156,6 @@ specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flo
 specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
 # 4. Install workflows
-specify workflow add .specify/presets/spec-kit-extended-flow/workflows/unified-flow.yml
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/bugfix-workflow.yml
 specify workflow add .specify/presets/spec-kit-extended-flow/workflows/quick-flow.yml
@@ -202,20 +187,6 @@ specify bundle install .
 
 Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps and gates — but all flows share the same guard rails, documentation model, and issue-to-PR automation.
 
-### Unified Flow
-
-The recommended entry point. A Triage Agent reads the request, estimates the change type, and the workflow dispatches into the Feature, Bugfix, or Quick Flow branch via a Spec-Kit `switch` step. Use it when you want the tooling to pick the right pipeline for you.
-
-```bash
-specify workflow run spec-kit-unified-flow --input spec="..."
-```
-
-Override the triage verdict when you already know the right pipeline:
-
-```bash
-specify workflow run spec-kit-unified-flow --input spec="..." --input flow=bugfix
-```
-
 ### Feature Flow
 
 The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a cross-artifact consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR. See [docs/flows.md](docs/flows.md#feature-flow) for the full diagram and step table.
@@ -234,7 +205,7 @@ A lightweight pipeline for trivial, well-defined changes. Skips spec/plan/tasks 
 
 ### Spec Input Parameters
 
-Both flows accept three input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
+Each flow accepts three input parameters. At least one must be provided. If multiple are provided, their contents are concatenated.
 
 | Parameter | Type | Example | How it works |
 |-----------|------|---------|--------------|
@@ -250,7 +221,6 @@ Run these standalone outside the workflows:
 
 | Command | Purpose |
 |---------|---------|
-| `/speckit.extendedflow.triage` | Estimate change type for the Unified Flow |
 | `/speckit.bug.assess` | Assess a bug report (provided by Spec-Kit's `bug` extension) |
 | `/speckit.bug.fix` | Apply an assessed bug remediation (provided by Spec-Kit's `bug` extension) |
 | `/speckit.bug.test` | Verify an assessed bug fix (provided by Spec-Kit's `bug` extension) |

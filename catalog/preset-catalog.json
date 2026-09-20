@@ -20,8 +20,8 @@
         ]
       },
       "provides": {
-        "commands": 15,
-        "templates": 3
+        "commands": 14,
+        "templates": 2
       },
       "tags": [
         "qa",

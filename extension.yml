@@ -14,10 +14,6 @@ requires:
 
 provides:
   commands:
-    - name: speckit.extendedflow.triage
-      file: commands/speckit.extendedflow.triage.md
-      description: "Triage agent — estimates change type (feature/bugfix/quick) for the Unified Flow"
-
     - name: speckit.extendedflow.documentation
       file: commands/speckit.extendedflow.documentation.md
       description: "Documentation agent — maintains layered documentation as truth of intent, flags code-vs-docs conflicts"

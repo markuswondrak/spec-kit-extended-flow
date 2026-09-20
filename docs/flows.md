@@ -2,38 +2,6 @@
 
 Extended Flow is a family of composable flows. Each flow is a self-contained pipeline with its own steps and gates, while issue-to-PR automation and safety boundaries are shared across the family.
 
-## Unified Flow
-
-The recommended entry point. It triages the request into Feature, Bugfix, or Quick, then dispatches to the matching inline branch. You can override the triage with `--input flow=<feature|bugfix|quick>`.
-
-```mermaid
-flowchart TD
-    A[resolve-spec] --> B[triage]
-    B --> C[extract-triage]
-    C --> D{flow override?}
-    D -->|yes| E[use override]
-    D -->|no| F[use triage verdict]
-    E --> G{switch}
-    F --> G
-    G -->|feature| H[Feature Flow steps]
-    G -->|bugfix| I[Bugfix Flow steps]
-    G -->|quick| J[Quick Flow steps]
-    H --> K[finish]
-    I --> K
-    J --> K
-    K --> L[✅ done]
-```
-
-| Step | Type | Description |
-|------|------|-------------|
-| `resolve-spec` | shell | Resolves file paths and GitHub issues to request content |
-| `triage` | command | Triage Agent estimates change type and writes `triage-{VERDICT}.md` |
-| `triage-verdict` | shell | Extracts `feature`/`bugfix`/`quick` from the triage filename |
-| `dispatch` | switch | Routes to the Feature, Bugfix, or Quick branch |
-| `finish` | command | Cleans up, commits, opens PR when issue provided |
-
-**Safety caps:** The triage verdict is encoded in the filename and extracted deterministically. An explicit `--input flow=...` overrides the agent. If the verdict is somehow invalid, the workflow pauses at a gate.
-
 ## Feature Flow
 
 The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.

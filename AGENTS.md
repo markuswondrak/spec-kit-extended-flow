@@ -20,7 +20,6 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 
 | Path | Role |
 |------|------|
-| `workflows/unified-flow.yml` | Orchestration: triage + dispatch into Feature/Bugfix/Quick branches |
 | `workflows/workflow.yml` | Orchestration: inputs, steps, gates, loops for feature development |
 | `workflows/bugfix-workflow.yml` | Orchestration: standard bug commands, assessment gate, and issue-to-PR finish |
 | `workflows/quick-flow.yml` | Orchestration: lightweight pipeline for trivial changes (no spec/plan/tasks) |
@@ -28,8 +27,8 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `extension.yml` | Extension manifest: commands, version, tags |
 | `bundle.yml` | Bundle manifest: composes preset + extension + workflows into a single install unit |
 | `scripts/` | Executable shell scripts called by workflow steps |
-| `commands/` | Agent system prompts (triage, documentation, documentation-init, finish, quick-implement, quick-review, doc-check) |
-| `templates/` | Structured output templates (triage, review-findings, documentation) |
+| `commands/` | Agent system prompts (documentation, documentation-init, finish, quick-implement, quick-review, doc-check) |
+| `templates/` | Structured output templates (review-findings, documentation) |
 | `tests/` | Bash test suites for shell scripts and workflow structure |
 
 ### Scripts
@@ -40,7 +39,6 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/create-branch.sh` | Creates a `<prefix>/<issue>-<slug>` branch from a GitHub issue (default prefix: `feature`, bugfix prefix: `fix`) |
 | `scripts/check-converge.sh` | Detects whether `speckit.converge` appended new tasks (standard Spec-Kit convergence loop) |
 | `scripts/extract-verdict.sh` | Extracts the Quick Flow review verdict from the review findings filename |
-| `scripts/extract-triage.sh` | Extracts the triage verdict (`feature`/`bugfix`/`quick`) from the triage filename |
 | `scripts/resolve-bug-context.sh` | Records the standard bug extension's active bug directory in `feature.json` |
 | `scripts/check-bug-verdict.sh` | Validates the standard bug extension's `test.md` result |
 | `scripts/init-quick.sh` | Initializes a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
@@ -114,7 +112,6 @@ Must preserve:
 - **Convergence Loop**: The `do-while` iteration of `speckit.converge → check → speckit.implement` in the Feature Flow that runs until converge appends no new tasks or max 5 iterations. Built entirely on the standard Spec-Kit `speckit.converge` command.
 - **Doc Reconciliation**: The post-implementation step that updates layered documentation and flags code-vs-docs conflicts.
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
-- **Unified Flow**: A triage-first workflow (`resolve → triage → dispatch → {feature|bugfix|quick} → finish`) that selects the right pipeline automatically. Override via `--input flow=<feature|bugfix|quick>`.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
 - **Quick Flow**: A lightweight workflow (`resolve → init-quick → implement → review-fix → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). No spec/plan/tasks generation, no human gates, self-fixing review in a single pass.
 
@@ -124,11 +121,11 @@ Must preserve:
 
 ## Pointers to Depth
 
-- **Workflow steps & gates**: See `workflows/unified-flow.yml` (unified flow), `workflows/workflow.yml` (feature flow), `workflows/bugfix-workflow.yml` (bugfix flow), and `workflows/quick-flow.yml` (quick flow)
-- **Agent behaviors**: See `commands/speckit.extendedflow.triage.md`, `commands/speckit.extendedflow.documentation.md`, `commands/speckit.extendedflow.finish.md`, `commands/speckit.extendedflow.quick-implement.md`, `commands/speckit.extendedflow.quick-review.md`, `commands/speckit.extendedflow.doc-check.md`, plus the standard `speckit.bug.assess`, `speckit.bug.fix`, and `speckit.bug.test` commands from Spec-Kit's `bug` extension. The Feature Flow's QA loop uses the standard `speckit.analyze` and `speckit.implement`/`speckit.converge` commands.
-- **Output templates**: See `templates/triage.md`, `templates/review-findings.md`, `templates/documentation.md`
+- **Workflow steps & gates**: See `workflows/workflow.yml` (feature flow), `workflows/bugfix-workflow.yml` (bugfix flow), and `workflows/quick-flow.yml` (quick flow)
+- **Agent behaviors**: See `commands/speckit.extendedflow.documentation.md`, `commands/speckit.extendedflow.finish.md`, `commands/speckit.extendedflow.quick-implement.md`, `commands/speckit.extendedflow.quick-review.md`, `commands/speckit.extendedflow.doc-check.md`, plus the standard `speckit.bug.assess`, `speckit.bug.fix`, and `speckit.bug.test` commands from Spec-Kit's `bug` extension. The Feature Flow's QA loop uses the standard `speckit.analyze` and `speckit.implement`/`speckit.converge` commands.
+- **Output templates**: See `templates/review-findings.md`, `templates/documentation.md`
 - **Input resolution logic**: See `scripts/resolve-spec.sh`
-- **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/check-converge.sh`, `scripts/extract-verdict.sh`, `scripts/extract-triage.sh`, `scripts/resolve-bug-context.sh`, `scripts/check-bug-verdict.sh`
+- **Branch creation and verdict extraction**: See `scripts/create-branch.sh`, `scripts/check-converge.sh`, `scripts/extract-verdict.sh`, `scripts/resolve-bug-context.sh`, `scripts/check-bug-verdict.sh`
 - **PR template resolution**: See `scripts/resolve-pr-template.sh`
 - **Bundle composition**: See `bundle.yml`
 - **Architecture & design rationale**: See `README.md`

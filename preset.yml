@@ -15,11 +15,6 @@ requires:
 provides:
   templates:
     - type: "template"
-      name: "triage"
-      file: "templates/triage.md"
-      description: "Structured template for triage assessment (verdict, reasoning, signals, confidence)"
-
-    - type: "template"
       name: "review-findings"
       file: "templates/review-findings.md"
       description: "Structured template for the Reviewer to log bugs, edge-case failures, or spec deviations"
@@ -92,12 +87,6 @@ provides:
     # preamble so every agent stays inside the project and never blocks on a
     # question. Interactive bootstrap commands (project-init, documentation-init)
     # are intentionally excluded — they are run by a human before the flows.
-    - type: "command"
-      name: "speckit.extendedflow.triage"
-      file: "commands/workflow-runtime.md"
-      strategy: "prepend"
-      description: "Unattended runtime context for triage"
-
     - type: "command"
       name: "speckit.extendedflow.documentation"
       file: "commands/workflow-runtime.md"

@@ -5,7 +5,7 @@ bundle:
   name: "Spec-Kit Extended Flow"
   version: "0.13.0"
   role: "developer"
-  description: "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, quick-change pipeline, and a Unified Flow with triage dispatch. Installs preset (templates + scripts), extension (8 commands), and 4 workflows (unified, feature, bugfix, quick) in one operation."
+  description: "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline. Installs preset (templates + scripts), extension (7 commands), and 3 workflows (feature, bugfix, quick) in one operation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -31,8 +31,6 @@ provides:
       strategy: "append"
 
   workflows:
-    - id: "spec-kit-unified-flow"
-      version: "0.2.0"
     - id: "spec-kit-extended-flow"
       version: "0.10.0"
     - id: "spec-kit-bugfix-flow"

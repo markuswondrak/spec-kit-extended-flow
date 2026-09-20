@@ -13,8 +13,6 @@ Extended Flow is delivered as **three artifacts bundled together** — a preset 
 
 The bundle installs the `bug` dependency automatically. For a standalone workflow install, add it first with `specify extension add bug`.
 
-The Unified Flow uses Spec-Kit's built-in `switch` step type to dispatch between the three inline flow branches. There is no sub-workflow mechanism in Spec-Kit, so the branches are composed inline while the standalone Feature, Bugfix, and Quick Flows remain available for direct execution.
-
 This split exists because Spec-Kit's architecture reserves commands for extensions. Presets provide output formats; extensions provide agent behaviors. The bundle acts as a **facade** that composes all three into a single install operation while preserving the ability to install them individually for granular control.
 
 ### Key Design Principles
@@ -28,7 +26,6 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 
 | Component | File | Role |
 |-----------|------|------|
-| Triage agent | `commands/speckit.extendedflow.triage.md` | Routes requests to feature/bugfix/quick |
 | Documentation agent | `commands/speckit.extendedflow.documentation.md` | Doc reconciliation agent prompt |
 | Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent prompt |
 | Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis + template tailoring agent prompt |
@@ -36,11 +33,9 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Quick implement | `commands/speckit.extendedflow.quick-implement.md` | Direct implementation agent for trivial changes |
 | Quick review | `commands/speckit.extendedflow.quick-review.md` | Self-fixing review agent (review + fix in one pass) |
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
-| Triage template | `templates/triage.md` | Structured triage assessment format |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
 | Resolve spec | `scripts/resolve-spec.sh` | Resolves spec/file/issue inputs |
-| Extract triage | `scripts/extract-triage.sh` | Extracts feature/bugfix/quick from triage filename |
 | Create branch | `scripts/create-branch.sh` | Creates feature branch from issue |
 | Init quick | `scripts/init-quick.sh` | Initializes Quick Flow feature directory |
 | Verify spec | `scripts/verify-spec.sh` | Validates spec file was created |

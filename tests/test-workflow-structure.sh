@@ -211,7 +211,6 @@ assert_contains "$PRESET_FILE" 'file: "commands/workflow-runtime.md"' "Preset re
 assert_contains "$PRESET_FILE" 'strategy: "prepend"' "Preset runtime command entries use prepend"
 assert_not_contains "$PRESET_FILE" 'replaces:' "Preset does not replace commands"
 for runtime_cmd in \
-    speckit.extendedflow.triage \
     speckit.extendedflow.documentation \
     speckit.extendedflow.finish \
     speckit.extendedflow.quick-implement \

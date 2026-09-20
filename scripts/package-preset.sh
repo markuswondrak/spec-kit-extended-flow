@@ -18,7 +18,6 @@ required_paths=(
     "preset.yml"
     "extension.yml"
     "bundle.yml"
-    "workflows/unified-flow.yml"
     "workflows/workflow.yml"
     "workflows/bugfix-workflow.yml"
     "workflows/quick-flow.yml"
@@ -32,7 +31,6 @@ required_paths=(
     "scripts/create-branch.sh"
     "scripts/check-converge.sh"
     "scripts/extract-verdict.sh"
-    "scripts/extract-triage.sh"
     "scripts/resolve-bug-context.sh"
     "scripts/check-bug-verdict.sh"
     "scripts/verify-spec.sh"
@@ -44,7 +42,7 @@ for path in "${required_paths[@]}"; do
     [ -e "$PROJECT_DIR/$path" ] || error "Required package path missing: $path"
 done
 
-for script in scripts/resolve-spec.sh scripts/create-branch.sh scripts/check-converge.sh scripts/extract-verdict.sh scripts/extract-triage.sh scripts/resolve-bug-context.sh scripts/check-bug-verdict.sh scripts/verify-spec.sh scripts/init-quick.sh scripts/resolve-pr-template.sh; do
+for script in scripts/resolve-spec.sh scripts/create-branch.sh scripts/check-converge.sh scripts/extract-verdict.sh scripts/resolve-bug-context.sh scripts/check-bug-verdict.sh scripts/verify-spec.sh scripts/init-quick.sh scripts/resolve-pr-template.sh; do
     [ -x "$PROJECT_DIR/$script" ] || error "Required script is not executable: $script"
 done
 
@@ -58,7 +56,6 @@ mkdir -p "$stage_dir/commands" "$stage_dir/templates" "$stage_dir/scripts" "$sta
 cp -p "$PROJECT_DIR/preset.yml" "$stage_dir/preset.yml"
 cp -p "$PROJECT_DIR/extension.yml" "$stage_dir/extension.yml"
 cp -p "$PROJECT_DIR/bundle.yml" "$stage_dir/bundle.yml"
-cp -p "$PROJECT_DIR/workflows/unified-flow.yml" "$stage_dir/workflows/unified-flow.yml"
 cp -p "$PROJECT_DIR/workflows/workflow.yml" "$stage_dir/workflows/workflow.yml"
 cp -p "$PROJECT_DIR/workflows/bugfix-workflow.yml" "$stage_dir/workflows/bugfix-workflow.yml"
 cp -p "$PROJECT_DIR/workflows/quick-flow.yml" "$stage_dir/workflows/quick-flow.yml"
@@ -69,7 +66,6 @@ cp -p "$PROJECT_DIR/scripts/resolve-spec.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/create-branch.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/check-converge.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/extract-verdict.sh" "$stage_dir/scripts/"
-cp -p "$PROJECT_DIR/scripts/extract-triage.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/resolve-bug-context.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/check-bug-verdict.sh" "$stage_dir/scripts/"
 cp -p "$PROJECT_DIR/scripts/verify-spec.sh" "$stage_dir/scripts/"

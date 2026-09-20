@@ -3,19 +3,6 @@
   "updated_at": "2026-09-20T00:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/catalog/workflow-catalog.json",
   "workflows": {
-    "spec-kit-unified-flow": {
-      "id": "spec-kit-unified-flow",
-      "name": "Spec-Kit Extended Flow — Unified Flow",
-      "description": "Single entry point that triages the request into Feature, Bugfix, or Quick Flow and runs the matching pipeline end-to-end.",
-      "author": "Markus Wondrak",
-      "version": "0.2.0",
-      "url": "https://raw.githubusercontent.com/markuswondrak/spec-kit-extended-flow/main/workflows/unified-flow.yml",
-      "tags": [
-        "workflow",
-        "triage",
-        "sdd"
-      ]
-    },
     "spec-kit-extended-flow": {
       "id": "spec-kit-extended-flow",
       "name": "Spec-Kit Extended Flow — Feature Flow",

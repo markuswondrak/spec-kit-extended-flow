@@ -8,7 +8,7 @@
       "id": "spec-kit-extended-flow",
       "version": "0.13.0",
       "role": "developer",
-      "description": "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, quick-change pipeline, and a Unified Flow with triage dispatch.",
+      "description": "A complete agentic engineering pipeline: SDD workflow with the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline.",
       "author": "Markus Wondrak",
       "license": "MIT",
       "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.13.0/spec-kit-extended-flow-bundle-0.13.0.zip",
@@ -19,7 +19,7 @@
         "extensions": 2,
         "presets": 1,
         "steps": 0,
-        "workflows": 4
+        "workflows": 3
       },
       "tags": [
         "qa",

@@ -50,7 +50,6 @@ RUNTIME_SCRIPTS=(
     create-branch.sh
     check-converge.sh
     extract-verdict.sh
-    extract-triage.sh
     resolve-bug-context.sh
     check-bug-verdict.sh
     verify-spec.sh
