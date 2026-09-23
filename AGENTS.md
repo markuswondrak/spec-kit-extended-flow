@@ -45,8 +45,9 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/resolve-pr-template.py` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
 | `scripts/package-preset.py` | Builds the preset ZIP package |
 | `scripts/build-catalog.py` | Builds deterministic project-owned HTTPS catalog archives under `catalog/artifacts/` and syncs catalog version pins |
-| `scripts/release-version.py` | Bumps version, commits, and tags a release |
+| `scripts/release-version.py` | Bumps every component (manifests, `bundle.yml` pins, `workflows/*.yml`) to one version, regenerates the catalog, commits, and tags |
 | `scripts/release.py` | Merges a release branch, bumps the minor version, tags, and pushes |
+| `scripts/check-release.py` | Validates that one version is consistent across manifests, workflows, catalogs, and (with `--artifacts`) built archives |
 
 ## Downstream Project Layout
 

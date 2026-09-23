@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-extended-flow"
   name: "Spec-Kit Extended Flow — Feature Flow"
-  version: "0.10.1"
+  version: "0.16.0"
   author: "Markus Wondrak"
   description: "The Feature Flow: SDD lifecycle with a Spec-Kit convergence loop and documentation reconciliation. Runs specification, planning, tasks, a consistency analysis, implementation, implement/converge iterations until converged, and documentation reconciliation. When started from a GitHub issue, automatically creates a feature branch, cleans up temporary files, and opens a pull request."
 

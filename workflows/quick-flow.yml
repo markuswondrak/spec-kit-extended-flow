@@ -3,7 +3,7 @@ schema_version: "1.0"
 workflow:
   id: "spec-kit-quick-flow"
   name: "Spec-Kit Extended Flow — Quick Flow"
-  version: "0.1.1"
+  version: "0.16.0"
   author: "Markus Wondrak"
   description: "The Quick Flow: lightweight pipeline for trivial, well-defined changes (label renames, message additions, small tweaks). Implements directly from the instruction, runs a self-fixing review in a single pass, checks documentation impact, and ships a PR. No spec/plan/tasks generation."
 
