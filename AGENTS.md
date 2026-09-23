@@ -1,6 +1,6 @@
 # Spec-Kit Extended Flow — Global Constraints
 
-This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), a preset manifest (`preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and Python runtime scripts plus shell tooling (`scripts/`). All changes must preserve the Spec-Kit contract.
+This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), preset manifests (`preset.yml` and `presets/sub-agent-delegation/preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and Python runtime scripts plus shell tooling (`scripts/`). All changes must preserve the Spec-Kit contract.
 
 ## Hard Prohibitions
 
@@ -23,7 +23,8 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `workflows/workflow.yml` | Orchestration: inputs, steps, gates, loops for feature development |
 | `workflows/bugfix-workflow.yml` | Orchestration: standard bug commands, assessment gate, and issue-to-PR finish |
 | `workflows/quick-flow.yml` | Orchestration: lightweight pipeline for trivial changes (no spec/plan/tasks) |
-| `preset.yml` | Preset manifest: templates, scripts, version, tags |
+| `preset.yml` | Main preset manifest: templates, scripts, version, tags |
+| `presets/sub-agent-delegation/preset.yml` | Delegation preset manifest: the single prepend preamble registered across parallelizable commands |
 | `extension.yml` | Extension manifest: commands, version, tags |
 | `bundle.yml` | Bundle manifest: composes preset + extension + workflows into a single install unit |
 | `scripts/` | Python 3 stdlib runtime and repository-maintenance scripts |
@@ -91,7 +92,7 @@ specs/                       ← Feature directories, one per feature item
 | `feature.json` | Run artifact | Current feature directory pointer |
 | `init-options.json` | Installed config | Init configuration (AI, numbering, integration) |
 | `memory/constitution.md` | Persistent | Project constitution |
-| `presets/` | Installed config | Installed presets (including this one; ships `model.config.json`) |
+| `presets/` | Installed config | Installed presets: the main preset (ships `model.config.json`) and `sub-agent-delegation` (ships the delegation preamble) |
 | `scripts/bash/` | Installed config | Core spec-kit scripts |
 | `templates/` | Installed config | Core templates (spec, plan, tasks, etc.) |
 | `workflows/<id>/workflow.yml` | Installed config | Workflow definitions |
@@ -120,6 +121,7 @@ Must preserve:
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
 - **Quick Flow**: A lightweight workflow (`resolve → init-quick → implement → review-fix → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). No spec/plan/tasks generation, no human gates, self-fixing review in a single pass.
+- **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It maps the active integration (read from `.specify/integration.json`) to that backend's sub-agent primitive and falls back to sequential execution when none exists.
 
 ## Known Issues
 

@@ -11,7 +11,12 @@ from pathlib import Path
 SEMVER_PATTERN = re.compile(r"^v?([0-9]+)\.([0-9]+)\.([0-9]+)$")
 TOP_LEVEL_VERSION_PATTERN = re.compile(r'^  version:.*"([^"]+)"')
 BUNDLE_SECTIONS = ("extensions", "presets", "workflows")
-MANIFEST_FILES = ("preset.yml", "extension.yml", "bundle.yml")
+MANIFEST_FILES = (
+    "preset.yml",
+    "extension.yml",
+    "bundle.yml",
+    "presets/sub-agent-delegation/preset.yml",
+)
 WORKFLOW_FILES = {
     "workflows/workflow.yml": "spec-kit-extended-flow",
     "workflows/bugfix-workflow.yml": "spec-kit-bugfix-flow",
@@ -19,12 +24,13 @@ WORKFLOW_FILES = {
 }
 BUNDLE_PINS = {
     "extensions": ("extendedflow",),
-    "presets": ("spec-kit-extended-flow",),
+    "presets": ("spec-kit-extended-flow", "sub-agent-delegation"),
     "workflows": ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow"),
 }
 CATALOG_ENTRIES = (
     ("catalog/extension-catalog.json", "extensions", "extendedflow"),
     ("catalog/preset-catalog.json", "presets", "spec-kit-extended-flow"),
+    ("catalog/preset-catalog.json", "presets", "sub-agent-delegation"),
     ("catalog/bundle-catalog.json", "bundles", "spec-kit-extended-flow"),
 )
 WORKFLOW_CATALOG_IDS = ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow")
@@ -140,6 +146,7 @@ def check_artifacts(root: Path, version: str, failures: list[str]) -> None:
     expected = (
         root / "catalog" / "artifacts" / f"extendedflow-{version}.zip",
         root / "catalog" / "artifacts" / f"spec-kit-extended-flow-{version}.zip",
+        root / "catalog" / "artifacts" / f"sub-agent-delegation-{version}.zip",
         root / "catalog" / "artifacts" / f"spec-kit-extended-flow-bundle-{version}.zip",
         root / "dist" / "spec-kit-extended-flow.zip",
     )

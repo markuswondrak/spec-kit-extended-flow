@@ -5,7 +5,7 @@ bundle:
   name: "Spec-Kit Extended Flow"
   version: "0.16.0"
   role: "developer"
-  description: "A complete agentic engineering pipeline: SDD workflow with Python runtime scripts, the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline. Installs preset (templates + scripts), extension (7 commands), and 3 workflows (feature, bugfix, quick) in one operation."
+  description: "A complete agentic engineering pipeline: SDD workflow with Python runtime scripts, the standard implement/converge loop, living documentation reconciliation, standard Spec-Kit bug flow, and a quick-change pipeline. Installs the main preset (templates + scripts), the integration-agnostic sub-agent delegation preset, the extension (7 commands), and 3 workflows (feature, bugfix, quick) in one operation."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -28,6 +28,10 @@ provides:
     - id: "spec-kit-extended-flow"
       version: "0.16.0"
       priority: 10
+      strategy: "append"
+    - id: "sub-agent-delegation"
+      version: "0.16.0"
+      priority: 20
       strategy: "append"
 
   workflows:

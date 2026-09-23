@@ -1,0 +1,74 @@
+schema_version: "1.0"
+
+preset:
+  id: "sub-agent-delegation"
+  name: "Sub-Agent Delegation"
+  version: "0.16.0"
+  description: "Integration-agnostic sub-agent delegation. Prepends one mechanism-neutral preamble to the parallelizable core commands so independent work is dispatched as delegated sub-agents, with a deterministic per-integration primitive map and a sequential fallback for backends without sub-agents."
+  author: "Markus Wondrak"
+  repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.11.2"
+
+provides:
+  templates:
+    # The delegation preamble is defined once and composed (prepend) onto every
+    # parallelizable command. A single source file keeps context small and the
+    # preset maintainable. This preset is intentionally separate from
+    # spec-kit-extended-flow: a preset may declare a given command only once, so
+    # two prepend layers for the same command require two presets.
+    - type: "command"
+      name: "speckit.specify"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel spec quality validation"
+
+    - type: "command"
+      name: "speckit.plan"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel research and design artifact generation"
+
+    - type: "command"
+      name: "speckit.tasks"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel document loading and task generation"
+
+    - type: "command"
+      name: "speckit.analyze"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel detection passes"
+
+    - type: "command"
+      name: "speckit.implement"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel [P] task execution"
+
+    - type: "command"
+      name: "speckit.checklist"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel context loading"
+
+    - type: "command"
+      name: "speckit.clarify"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel ambiguity scan categories"
+
+    - type: "command"
+      name: "speckit.taskstoissues"
+      file: "commands/sub-agent-delegation.md"
+      strategy: "prepend"
+      description: "Sub-agent delegation for parallel issue creation"
+
+tags:
+  - "sub-agents"
+  - "delegation"
+  - "parallelism"
+  - "performance"

@@ -128,3 +128,63 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
             )
         )
         self.assertNotIn("bash .specify/presets/spec-kit-extended-flow/scripts/", call_sites)
+
+
+class SubAgentDelegationStaticContracts(unittest.TestCase):
+    PRESET_DIR = ROOT / "presets" / "sub-agent-delegation"
+    PREAMBLE = PRESET_DIR / "commands" / "sub-agent-delegation.md"
+    REGISTERED_COMMANDS = (
+        "speckit.specify",
+        "speckit.plan",
+        "speckit.tasks",
+        "speckit.analyze",
+        "speckit.implement",
+        "speckit.checklist",
+        "speckit.clarify",
+        "speckit.taskstoissues",
+    )
+
+    def preamble_text(self) -> str:
+        return self.PREAMBLE.read_text(encoding="utf-8")
+
+    def test_preset_registers_one_shared_preamble_via_prepend(self):
+        manifest = (self.PRESET_DIR / "preset.yml").read_text(encoding="utf-8")
+        self.assertEqual(manifest.count('file: "commands/sub-agent-delegation.md"'), len(self.REGISTERED_COMMANDS))
+        self.assertEqual(manifest.count('strategy: "prepend"'), len(self.REGISTERED_COMMANDS))
+        for command in self.REGISTERED_COMMANDS:
+            with self.subTest(command=command):
+                self.assertIn(f'name: "{command}"', manifest)
+        command_files = sorted(path.name for path in (self.PRESET_DIR / "commands").glob("*.md"))
+        self.assertEqual(command_files, ["sub-agent-delegation.md"])
+
+    def test_preset_version_matches_the_bundle(self):
+        delegation = (self.PRESET_DIR / "preset.yml").read_text(encoding="utf-8")
+        bundle = (ROOT / "bundle.yml").read_text(encoding="utf-8")
+        self.assertIn('id: "sub-agent-delegation"', bundle)
+        delegation_version = re.search(r'^  version: "([^"]+)"', delegation, re.MULTILINE)
+        bundle_version = re.search(r'^  version: "([^"]+)"', bundle, re.MULTILINE)
+        self.assertIsNotNone(delegation_version)
+        self.assertIsNotNone(bundle_version)
+        self.assertEqual(delegation_version.group(1), bundle_version.group(1))
+
+    def test_preamble_selects_the_integration_deterministically(self):
+        text = self.preamble_text()
+        self.assertIn(".specify/integration.json", text)
+        self.assertIn("default_integration", text)
+
+    def test_mapping_covers_verified_integrations_and_sequential_fallback(self):
+        text = self.preamble_text()
+        for key in ("claude", "copilot", "opencode"):
+            with self.subTest(integration=key):
+                self.assertIn(f"`{key}`", text)
+        self.assertIn("sequentially", text)
+
+    def test_preamble_is_mechanism_neutral_outside_the_mapping_table(self):
+        """Backend-specific tool names and paths may only appear on map rows."""
+        text = self.preamble_text()
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if "runSubagent" in line or ".github/agents/" in line:
+                with self.subTest(line=line_number):
+                    self.assertIn("|", line, f"line {line_number} leaks a backend mechanism outside the map")
+        self.assertNotIn("~/.copilot", text)
+        self.assertNotIn("~/.claude", text)

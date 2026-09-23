@@ -17,7 +17,7 @@
       },
       "provides": {
         "extensions": 2,
-        "presets": 1,
+        "presets": 2,
         "steps": 0,
         "workflows": 3
       },
