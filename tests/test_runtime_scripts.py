@@ -475,53 +475,27 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
 
 
 class LoadModelsTests(RuntimeScriptTestCase):
-    KNOWN_STEP_IDS = {
-        "specify",
-        "plan",
-        "tasks",
-        "analyze",
-        "implement",
-        "converge",
-        "converge-implement-run",
-        "documentation",
-        "finish",
-        "bug-assess",
-        "bug-fix",
-        "bug-test",
-        "quick-implement",
-        "quick-review",
-        "doc-check",
-    }
-
-    def models(self, result):
+    def config(self, result):
         self.assertEqual((result.returncode, result.stderr), (0, b""))
-        document = json.loads(result.stdout.decode())
-        return {step_id: entry["model"] for step_id, entry in document.items()}
+        return json.loads(result.stdout.decode())
 
-    def test_all_steps_default_to_agent_model_without_an_override(self):
+    def test_no_override_exposes_an_empty_mapping(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
             self.write_run_inputs(root)
             result = self.run_script("load-models.py", "run-1", cwd=root)
 
-        models = self.models(result)
-        self.assertEqual(set(models), self.KNOWN_STEP_IDS)
-        self.assertEqual(set(models.values()), {""})
+        self.assertEqual(self.config(result), {})
 
-    def test_project_root_override_wins_over_the_preset_default(self):
+    def test_project_root_override_is_passed_through_verbatim(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            (root / "model.config.json").write_text(
-                json.dumps({"plan": {"model": "glm"}, "implement": {"model": "kimi"}}),
-                encoding="utf-8",
-            )
+            document = {"plan": {"model": "glm"}, "implement": {"model": "kimi"}}
+            (root / "model.config.json").write_text(json.dumps(document), encoding="utf-8")
             self.write_run_inputs(root)
             result = self.run_script("load-models.py", "run-1", cwd=root)
 
-        models = self.models(result)
-        self.assertEqual(models["plan"], "glm")
-        self.assertEqual(models["implement"], "kimi")
-        self.assertEqual(models["specify"], "")
+        self.assertEqual(self.config(result), document)
 
     def test_explicit_input_wins_over_the_project_root_override(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -534,7 +508,7 @@ class LoadModelsTests(RuntimeScriptTestCase):
             self.write_run_inputs(root, model_config=str(custom))
             result = self.run_script("load-models.py", "run-1", cwd=root)
 
-        self.assertEqual(self.models(result)["specify"], "custom-model")
+        self.assertEqual(self.config(result), {"specify": {"model": "custom-model"}})
 
     def test_missing_explicit_config_is_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -591,19 +565,15 @@ class LoadModelsTests(RuntimeScriptTestCase):
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"ERROR: Model config entry 'plan'.model must be a string:", result.stderr)
 
-    def test_unknown_step_ids_are_ignored(self):
+    def test_unknown_step_ids_are_passed_through(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            (root / "model.config.json").write_text(
-                json.dumps({"not-a-step": {"model": "glm"}, "plan": {"model": "glm"}}),
-                encoding="utf-8",
-            )
+            document = {"not-a-step": {"model": "glm"}, "plan": {"model": "glm"}}
+            (root / "model.config.json").write_text(json.dumps(document), encoding="utf-8")
             self.write_run_inputs(root)
             result = self.run_script("load-models.py", "run-1", cwd=root)
 
-        models = self.models(result)
-        self.assertNotIn("not-a-step", models)
-        self.assertEqual(models["plan"], "glm")
+        self.assertEqual(self.config(result), document)
 
     def test_missing_run_inputs_is_a_stderr_error(self):
         with tempfile.TemporaryDirectory() as temporary_directory:

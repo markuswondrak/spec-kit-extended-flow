@@ -65,7 +65,7 @@ specify workflow run spec-kit-extended-flow --input integration=claude
 
 #### Per-step models
 
-Each command step binds its `model` from a `load-models` shell step, which reads a JSON config file and exposes it as `load-models.output.data.<step-id>.model`. An empty model (`""`) means "use the agent default", so the flows work unchanged with no config.
+Each command step binds its `model` from a `load-models` shell step, which reads a JSON config file and exposes it as `load-models.output.data.<step-id>.model`. The config is passed through as-is — a step id that is absent resolves to no model, so the command step uses the agent default. No fixed step list is maintained; keys are simply the step ids in the flow.
 
 The config is a flat object keyed by workflow step id, each value an object with a `model`:
 
@@ -77,13 +77,13 @@ The config is a flat object keyed by workflow step id, each value an object with
 }
 ```
 
-The keys are the step ids used in the flows: `specify`, `plan`, `tasks`, `analyze`, `implement`, `converge`, `converge-implement-run`, `documentation`, `finish` (Feature Flow); `bug-assess`, `bug-fix`, `bug-test` (Bugfix Flow); `quick-implement`, `quick-review`, `doc-check` (Quick Flow). Unknown keys are ignored and any key you omit falls back to the agent default.
+The keys are the step ids used in the flow (see the workflow YAML for the exact ids, e.g. `specify`, `plan`, `implement`, `finish`). Any step you omit — and any extra key you add — is harmless: only ids a step actually reads have an effect, and everything else uses the agent default.
 
 `load-models.py` resolves the file in this order:
 
 1. The `model_config` input, when set (per-run override).
 2. `./model.config.json` at the project root (permanent override that survives reinstall/update).
-3. `model.config.json` shipped inside the installed preset (all defaults).
+3. `model.config.json` shipped inside the installed preset (empty by default).
 
 **To override per-run**, point `model_config` at your file:
 
@@ -91,7 +91,7 @@ The keys are the step ids used in the flows: `specify`, `plan`, `tasks`, `analyz
 specify workflow run spec-kit-extended-flow --input model_config=./my-models.json
 ```
 
-**To customize permanently**, create `model.config.json` at your project root with just the steps you want to change. Do not edit the copy under `.specify/presets/` — reinstall overwrites it. A config that is missing entirely falls back to the agent default; a config that exists but is invalid JSON, not an object, or holds a non-string `model` fails the `load-models` step with a clear error rather than silently misrouting.
+**To customize permanently**, create `model.config.json` at your project root with just the steps you want to change. Do not edit the copy under `.specify/presets/` — reinstall overwrites it. A config that is missing entirely, or that omits a step, falls back to the agent default; a config that exists but is invalid JSON, not an object, or holds a non-string `model` fails the `load-models` step with a clear error rather than silently misrouting.
 
 > **Security:** `load-models.py` reads the config path in Python; it is never spliced into a shell command. Values in the config are passed to the agent CLI as data.
 

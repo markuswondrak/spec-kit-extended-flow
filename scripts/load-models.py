@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Resolve per-step model overrides for a workflow run.
+"""Expose per-step model overrides for a workflow run.
 
 The optional ``model_config`` input points at a JSON document mapping step ids
 to ``{"model": "..."}`` objects. The document is read here rather than through
 a shell ``run:`` line so the path is never interpreted as shell syntax (issue
-#11). Every known step id is emitted, defaulting to ``""`` (agent default), so
-``steps.load-models.output.data.<id>.model`` always resolves to a string.
+#11). Whatever the document contains is passed through as ``output.data``; a
+step id that is absent resolves to ``None`` and the command step falls back to
+the agent default, so no fixed step list is needed.
 """
 
 import json
@@ -16,26 +17,6 @@ from pathlib import Path
 
 RUNS_DIR = Path(".specify") / "workflows" / "runs"
 RUN_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
-
-# Step ids that carry a ``model`` in the Feature, Bugfix, and Quick flows.
-# Emitting every id keeps the absent-key behavior explicit and deterministic.
-KNOWN_STEP_IDS = (
-    "specify",
-    "plan",
-    "tasks",
-    "analyze",
-    "implement",
-    "converge",
-    "converge-implement-run",
-    "documentation",
-    "finish",
-    "bug-assess",
-    "bug-fix",
-    "bug-test",
-    "quick-implement",
-    "quick-review",
-    "doc-check",
-)
 
 PRESET_DEFAULT_PATH = Path(__file__).resolve().parent.parent / "model.config.json"
 PROJECT_OVERRIDE_PATH = Path("model.config.json")
@@ -94,6 +75,11 @@ def resolve_config_path(explicit: str) -> Path | None:
 
 
 def load_config(path: Path) -> dict:
+    """Read *path* and return its parsed contents unchanged.
+
+    The shape is validated so a malformed config fails here with a clear error
+    instead of silently falling back to the agent default at a later step.
+    """
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
     except OSError:
@@ -103,19 +89,13 @@ def load_config(path: Path) -> dict:
     if not isinstance(document, dict):
         raise InputError(f"Model config must be a JSON object: {path}")
 
-    models: dict[str, str] = {step_id: "" for step_id in KNOWN_STEP_IDS}
     for step_id, entry in document.items():
-        if step_id not in models:
-            continue
         if not isinstance(entry, dict):
             raise InputError(f"Model config entry {step_id!r} must be an object: {path}")
         model = entry.get("model", "")
-        if model is None:
-            model = ""
-        if not isinstance(model, str):
+        if model is not None and not isinstance(model, str):
             raise InputError(f"Model config entry {step_id!r}.model must be a string: {path}")
-        models[step_id] = model
-    return models
+    return document
 
 
 def main() -> int:
@@ -127,13 +107,11 @@ def main() -> int:
         inputs = load_run_inputs(run_id)
         explicit = read_input(inputs, "model_config")
         config_path = resolve_config_path(explicit)
-        models = load_config(config_path) if config_path is not None else {
-            step_id: "" for step_id in KNOWN_STEP_IDS
-        }
+        models = load_config(config_path) if config_path is not None else {}
     except InputError as exc:
         return error(str(exc))
 
-    sys.stdout.write(json.dumps({step_id: {"model": models[step_id]} for step_id in KNOWN_STEP_IDS}))
+    sys.stdout.write(json.dumps(models))
     sys.stdout.write("\n")
     return 0
 

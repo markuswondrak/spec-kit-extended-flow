@@ -1,7 +1,6 @@
 """Target-state static contracts for Python runtime migration."""
 
 from pathlib import Path
-import json
 import re
 import unittest
 
@@ -45,7 +44,6 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                     self.assertIn(f"python3 {PRESET_PATH}/{script}", content)
 
     def test_every_command_step_binds_model_from_the_load_models_step(self):
-        bound_ids = set()
         for workflow in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml"):
             content = (ROOT / "workflows" / workflow).read_text(encoding="utf-8")
             with self.subTest(workflow=workflow):
@@ -72,16 +70,9 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                         )
                         expected = f"{{{{ steps.load-models.output.data.{current_id}.model }}}}"
                         self.assertEqual(stripped[len("model:"):].strip(), f'"{expected}"')
-                        bound_ids.add(current_id)
                     expecting_model = False
             with self.subTest(workflow=workflow):
                 self.assertFalse(expecting_model, f"{workflow} has a command step without a model")
-
-        config = json.loads((ROOT / "model.config.json").read_text(encoding="utf-8"))
-        self.assertEqual(set(config), bound_ids)
-        for step_id, entry in config.items():
-            with self.subTest(step_id=step_id):
-                self.assertEqual(entry, {"model": ""})
 
     def test_shell_steps_never_interpolate_user_input_or_step_output(self):
         """Shell `run:` lines may only interpolate the engine-validated run id.
