@@ -21,6 +21,7 @@ RUNTIME_SCRIPTS = (
     "verify-spec.py",
     "init-quick.py",
     "resolve-pr-template.py",
+    "load-models.py",
 )
 
 ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
@@ -158,6 +159,7 @@ def main() -> int:
         extension_entries[f"commands/{command.name}"] = command
 
     preset_entries = {"preset.yml": root / "preset.yml"}
+    preset_entries["model.config.json"] = root / "model.config.json"
     for template in sorted((root / "templates").glob("*.md")):
         preset_entries[f"templates/{template.name}"] = template
     for script in RUNTIME_SCRIPTS:

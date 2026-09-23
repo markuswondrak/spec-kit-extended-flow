@@ -1,6 +1,7 @@
 """Target-state static contracts for Python runtime migration."""
 
 from pathlib import Path
+import json
 import re
 import unittest
 
@@ -17,6 +18,7 @@ RUNTIME_SCRIPTS = (
     "verify-spec.py",
     "init-quick.py",
     "resolve-pr-template.py",
+    "load-models.py",
 )
 
 
@@ -30,9 +32,9 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
 
     def test_workflows_invoke_python_runtime_scripts_and_preserve_resolve_stdout_contract(self):
         expected = {
-            "workflow.yml": ("resolve-spec.py", "create-branch.py", "verify-spec.py", "check-converge.py"),
-            "bugfix-workflow.yml": ("resolve-spec.py", "create-branch.py", "resolve-bug-context.py", "check-bug-verdict.py"),
-            "quick-flow.yml": ("resolve-spec.py", "create-branch.py", "init-quick.py", "extract-verdict.py"),
+            "workflow.yml": ("resolve-spec.py", "create-branch.py", "verify-spec.py", "check-converge.py", "load-models.py"),
+            "bugfix-workflow.yml": ("resolve-spec.py", "create-branch.py", "resolve-bug-context.py", "check-bug-verdict.py", "load-models.py"),
+            "quick-flow.yml": ("resolve-spec.py", "create-branch.py", "init-quick.py", "extract-verdict.py", "load-models.py"),
         }
         for workflow, scripts in expected.items():
             with self.subTest(workflow=workflow):
@@ -41,6 +43,45 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                 self.assertNotIn(".sh", content)
                 for script in scripts:
                     self.assertIn(f"python3 {PRESET_PATH}/{script}", content)
+
+    def test_every_command_step_binds_model_from_the_load_models_step(self):
+        bound_ids = set()
+        for workflow in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml"):
+            content = (ROOT / "workflows" / workflow).read_text(encoding="utf-8")
+            with self.subTest(workflow=workflow):
+                self.assertIn("id: load-models", content)
+                self.assertIn("load-models.py", content)
+                self.assertIn("output_format: json", content)
+
+            current_id = ""
+            expecting_model = False
+            for line_number, line in enumerate(content.splitlines(), start=1):
+                stripped = line.strip()
+                id_match = re.match(r"-?\s*id:\s*(\S+)", stripped)
+                if id_match:
+                    current_id = id_match.group(1)
+                    continue
+                if stripped.startswith("command:"):
+                    expecting_model = True
+                    continue
+                if stripped.startswith("model:"):
+                    with self.subTest(workflow=workflow, line=line_number):
+                        self.assertTrue(
+                            expecting_model,
+                            f"{workflow}:{line_number} has a model without a command step",
+                        )
+                        expected = f"{{{{ steps.load-models.output.data.{current_id}.model }}}}"
+                        self.assertEqual(stripped[len("model:"):].strip(), f'"{expected}"')
+                        bound_ids.add(current_id)
+                    expecting_model = False
+            with self.subTest(workflow=workflow):
+                self.assertFalse(expecting_model, f"{workflow} has a command step without a model")
+
+        config = json.loads((ROOT / "model.config.json").read_text(encoding="utf-8"))
+        self.assertEqual(set(config), bound_ids)
+        for step_id, entry in config.items():
+            with self.subTest(step_id=step_id):
+                self.assertEqual(entry, {"model": ""})
 
     def test_shell_steps_never_interpolate_user_input_or_step_output(self):
         """Shell `run:` lines may only interpolate the engine-validated run id.

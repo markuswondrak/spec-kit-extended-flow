@@ -1,0 +1,17 @@
+{
+  "specify": { "model": "" },
+  "plan": { "model": "" },
+  "tasks": { "model": "" },
+  "analyze": { "model": "" },
+  "implement": { "model": "" },
+  "converge": { "model": "" },
+  "converge-implement-run": { "model": "" },
+  "documentation": { "model": "" },
+  "finish": { "model": "" },
+  "bug-assess": { "model": "" },
+  "bug-fix": { "model": "" },
+  "bug-test": { "model": "" },
+  "quick-implement": { "model": "" },
+  "quick-review": { "model": "" },
+  "doc-check": { "model": "" }
+}

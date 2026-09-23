@@ -19,12 +19,14 @@ RUNTIME_SCRIPTS = (
     "verify-spec.py",
     "init-quick.py",
     "resolve-pr-template.py",
+    "load-models.py",
 )
 
 REQUIRED_PATHS = (
     "preset.yml",
     "extension.yml",
     "bundle.yml",
+    "model.config.json",
     "workflows/workflow.yml",
     "workflows/bugfix-workflow.yml",
     "workflows/quick-flow.yml",
@@ -103,6 +105,7 @@ def main() -> int:
             "preset.yml",
             "extension.yml",
             "bundle.yml",
+            "model.config.json",
             "workflows/workflow.yml",
             "workflows/bugfix-workflow.yml",
             "workflows/quick-flow.yml",

@@ -472,3 +472,152 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             result = self.run_script("resolve-pr-template.py", cwd=root)
 
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, f"{fallback}\n".encode(), b""))
+
+
+class LoadModelsTests(RuntimeScriptTestCase):
+    KNOWN_STEP_IDS = {
+        "specify",
+        "plan",
+        "tasks",
+        "analyze",
+        "implement",
+        "converge",
+        "converge-implement-run",
+        "documentation",
+        "finish",
+        "bug-assess",
+        "bug-fix",
+        "bug-test",
+        "quick-implement",
+        "quick-review",
+        "doc-check",
+    }
+
+    def models(self, result):
+        self.assertEqual((result.returncode, result.stderr), (0, b""))
+        document = json.loads(result.stdout.decode())
+        return {step_id: entry["model"] for step_id, entry in document.items()}
+
+    def test_all_steps_default_to_agent_model_without_an_override(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        models = self.models(result)
+        self.assertEqual(set(models), self.KNOWN_STEP_IDS)
+        self.assertEqual(set(models.values()), {""})
+
+    def test_project_root_override_wins_over_the_preset_default(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text(
+                json.dumps({"plan": {"model": "glm"}, "implement": {"model": "kimi"}}),
+                encoding="utf-8",
+            )
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        models = self.models(result)
+        self.assertEqual(models["plan"], "glm")
+        self.assertEqual(models["implement"], "kimi")
+        self.assertEqual(models["specify"], "")
+
+    def test_explicit_input_wins_over_the_project_root_override(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text(
+                json.dumps({"specify": {"model": "project-model"}}), encoding="utf-8"
+            )
+            custom = root / "custom.json"
+            custom.write_text(json.dumps({"specify": {"model": "custom-model"}}), encoding="utf-8")
+            self.write_run_inputs(root, model_config=str(custom))
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(self.models(result)["specify"], "custom-model")
+
+    def test_missing_explicit_config_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            missing = root / "missing.json"
+            self.write_run_inputs(root, model_config=str(missing))
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, f"ERROR: Model config file not found: {missing}\n".encode())
+
+    def test_invalid_json_config_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text("{not json", encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Model config is not valid JSON:", result.stderr)
+
+    def test_non_object_config_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text("[]", encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Model config must be a JSON object:", result.stderr)
+
+    def test_non_object_entry_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text('{"plan": "glm"}', encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Model config entry 'plan' must be an object:", result.stderr)
+
+    def test_non_string_model_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text('{"plan": {"model": 7}}', encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Model config entry 'plan'.model must be a string:", result.stderr)
+
+    def test_unknown_step_ids_are_ignored(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text(
+                json.dumps({"not-a-step": {"model": "glm"}, "plan": {"model": "glm"}}),
+                encoding="utf-8",
+            )
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        models = self.models(result)
+        self.assertNotIn("not-a-step", models)
+        self.assertEqual(models["plan"], "glm")
+
+    def test_missing_run_inputs_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = self.run_script("load-models.py", "run-1", cwd=temporary_directory)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Workflow inputs not found:", result.stderr)
+
+    def test_invalid_run_id_is_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            result = self.run_script("load-models.py", "run 1", cwd=temporary_directory)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertEqual(result.stderr, b"ERROR: Invalid run id: 'run 1'.\n")
+

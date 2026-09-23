@@ -37,11 +37,21 @@ inputs:
     required: false
     default: "auto"
     prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
+  model_config:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a per-step model config JSON (defaults to ./model.config.json, then the preset default)"
 
 steps:
   - id: resolve-spec
     type: shell
     run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ context.run_id }}"
+
+  - id: load-models
+    type: shell
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/load-models.py "{{ context.run_id }}"
+    output_format: json
 
   - id: create-branch
     type: if
@@ -58,14 +68,14 @@ steps:
   - id: quick-implement
     command: speckit.extendedflow.quick-implement
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.quick-implement.model }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
   - id: quick-review
     command: speckit.extendedflow.quick-review
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.quick-review.model }}"
 
   - id: quick-review-verdict
     type: shell
@@ -82,11 +92,11 @@ steps:
   - id: doc-check
     command: speckit.extendedflow.doc-check
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.doc-check.model }}"
 
   - id: finish
     command: speckit.extendedflow.finish
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.finish.model }}"
     input:
       args: "{{ context.run_id }}"
