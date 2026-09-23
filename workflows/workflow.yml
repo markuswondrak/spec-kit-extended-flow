@@ -37,10 +37,20 @@ inputs:
     required: false
     default: "auto"
     prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
+  model_config:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a per-step model config JSON (defaults to ./model.config.json, then the preset default)"
 steps:
   - id: resolve-spec
     type: shell
     run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ context.run_id }}"
+
+  - id: load-models
+    type: shell
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/load-models.py "{{ context.run_id }}"
+    output_format: json
 
   - id: create-branch
     type: if
@@ -53,7 +63,7 @@ steps:
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.specify.model }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
@@ -70,7 +80,7 @@ steps:
   - id: plan
     command: speckit.plan
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.plan.model }}"
     input:
       args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
 
@@ -83,17 +93,17 @@ steps:
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.tasks.model }}"
 
   - id: analyze
     command: speckit.analyze
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.analyze.model }}"
 
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.implement.model }}"
 
   - id: converge-loop
     type: do-while
@@ -106,7 +116,7 @@ steps:
       - id: converge
         command: speckit.converge
         integration: "{{ inputs.integration }}"
-        model: ""
+        model: "{{ steps.load-models.output.data.converge.model }}"
       - id: converge-check
         type: shell
         run: python3 .specify/presets/spec-kit-extended-flow/scripts/check-converge.py check "{{ context.run_id }}"
@@ -117,7 +127,7 @@ steps:
           - id: converge-implement-run
             command: speckit.implement
             integration: "{{ inputs.integration }}"
-            model: ""
+            model: "{{ steps.load-models.output.data.converge-implement-run.model }}"
 
   - id: stop-on-not-converged
     type: if
@@ -130,11 +140,11 @@ steps:
   - id: documentation
     command: speckit.extendedflow.documentation
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.documentation.model }}"
 
   - id: finish
     command: speckit.extendedflow.finish
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.finish.model }}"
     input:
       args: "{{ context.run_id }}"

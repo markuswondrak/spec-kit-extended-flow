@@ -43,6 +43,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Extract verdict | `scripts/extract-verdict.py` | Extracts the Quick Flow PASS/FAIL from the review filename |
 | Resolve bug context | `scripts/resolve-bug-context.py` | Records the standard bug extension's active directory in `feature.json` |
 | Check bug verdict | `scripts/check-bug-verdict.py` | Requires a `verified` result in the standard bug test report |
+| Load models | `scripts/load-models.py` | Resolves the per-step model config into `load-models.output.data` |
 
 ### Downstream Runtime
 
@@ -54,33 +55,48 @@ Shell steps pass only the engine-validated run id (`{{ context.run_id }}`) on th
 
 ### Model and integration configuration
 
-Every command step references the `integration` workflow input, which defaults to `"auto"`. Spec-Kit resolves `"auto"` automatically from `.specify/integration.json` (created by `specify init`), so the workflow dispatches to the AI the project was initialized with — no manual configuration needed. Each step also has a `model` attribute that defaults to `""` (agent default).
+Every command step references the `integration` workflow input, which defaults to `"auto"`. Spec-Kit resolves `"auto"` automatically from `.specify/integration.json` (created by `specify init`), so the workflow dispatches to the AI the project was initialized with — no manual configuration needed.
 
-**To override per-run**, pass `--input integration=<key>`:
+**To override the integration per-run**, pass `--input integration=<key>`:
 
 ```bash
 specify workflow run spec-kit-extended-flow --input integration=claude
 ```
 
-**To customize permanently**, edit the installed workflow directly. Open `.specify/workflows/<id>/workflow.yml` and replace `{{ inputs.integration }}` with a literal integration key on the steps you want to configure:
+#### Per-step models
 
-```yaml
-  - id: plan
-    command: speckit.plan
-    integration: "opencode"
-    model: "glm"
-    # ...
+Each command step binds its `model` from a `load-models` shell step, which reads a JSON config file and exposes it as `load-models.output.data.<step-id>.model`. The config is passed through as-is — a step id that is absent resolves to no model, so the command step uses the agent default. No fixed step list is maintained; keys are simply the step ids in the flow.
 
-  - id: implement
-    command: speckit.implement
-    integration: "opencode"
-    model: "kimi"
-    # ...
+The config is a flat object keyed by workflow step id, each value an object with a `model`:
+
+```json
+{
+  "specify": { "model": "openai/gpt-5" },
+  "plan":    { "model": "anthropic/claude-opus-4" },
+  "tasks":   { "model": "openai/gpt-5-mini" }
+}
 ```
 
-This lets you pair agents and models to their strengths — for example, a reasoning-focused model for planning and a coding-focused model for implementation — without passing inputs on every run.
+The keys are the step ids used in the flow (see the workflow YAML for the exact ids, e.g. `specify`, `plan`, `implement`, `finish`). Any step you omit — and any extra key you add — is harmless: only ids a step actually reads have an effect, and everything else uses the agent default.
+
+`load-models.py` resolves the file in this order:
+
+1. The `model_config` input, when set (per-run override).
+2. `./model.config.json` at the project root (permanent override that survives reinstall/update).
+3. `model.config.json` shipped inside the installed preset (empty by default).
+
+**To override per-run**, point `model_config` at your file:
+
+```bash
+specify workflow run spec-kit-extended-flow --input model_config=./my-models.json
+```
+
+**To customize permanently**, create `model.config.json` at your project root with just the steps you want to change. Do not edit the copy under `.specify/presets/` — reinstall overwrites it. A config that is missing entirely, or that omits a step, falls back to the agent default; a config that exists but is invalid JSON, not an object, or holds a non-string `model` fails the `load-models` step with a clear error rather than silently misrouting.
+
+> **Security:** `load-models.py` reads the config path in Python; it is never spliced into a shell command. Values in the config are passed to the agent CLI as data.
 
 > **Note:** Model overrides are passed through to the agent CLI (e.g. `opencode run -m <model>`). Support depends on the integration. The opencode integration forwards `-m` automatically; other integrations may ignore the model field.
+
 
 ### Template overrides and stacking
 

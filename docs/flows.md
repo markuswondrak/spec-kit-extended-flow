@@ -4,6 +4,8 @@ Extended Flow is a family of composable flows. Each flow is a self-contained pip
 
 Shell steps only interpolate the engine-validated `context.run_id`. User-provided `spec`, `file`, and `issue` text and step stdout are read from the engine-owned run directory (`.specify/workflows/runs/<run_id>/`) instead of being spliced into the command line, so backticks, `$(...)`, and other shell metacharacters in issue bodies can never be executed as shell syntax.
 
+Every flow starts with a `load-models` shell step that resolves per-step model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step binds its `model` from that step's `output.data`.
+
 ## Feature Flow
 
 The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
@@ -33,6 +35,7 @@ flowchart TD
 | Step | Type | Description |
 |------|------|-------------|
 | `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to spec content |
+| `load-models` | shell | Loads per-step model overrides from `model.config.json` |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `specify` | command | Generates the specification from your input |
 | `verify-spec` | shell | Confirms the specification was actually written |
@@ -106,6 +109,7 @@ flowchart TD
 | Step | Type | Description |
 |------|------|-------------|
 | `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to instruction content |
+| `load-models` | shell | Loads per-step model overrides from `model.config.json` |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `init-quick` | shell | Creates or reuses the feature directory and writes `feature.json` with `type: "quick"` |
 | `quick-implement` | command | Implements the change directly from the instruction |

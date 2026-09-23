@@ -25,6 +25,7 @@ RUNTIME_SCRIPTS = {
     "verify-spec.py",
     "init-quick.py",
     "resolve-pr-template.py",
+    "load-models.py",
 }
 
 
@@ -76,6 +77,7 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertEqual(set(contents) & {"tests/", "scripts/package-preset.py"}, set())
         self.assertTrue(RUNTIME_SCRIPTS <= set(path.removeprefix("scripts/") for path in contents if path.startswith("scripts/")))
         self.assertFalse(any(name.endswith(".sh") for name in contents))
+        self.assertIn("model.config.json", contents)
         for script in RUNTIME_SCRIPTS:
             self.assertTrue((ROOT / "scripts" / script).stat().st_mode & stat.S_IXUSR)
             timestamp, mode, is_directory = contents[f"scripts/{script}"]
@@ -104,6 +106,7 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertIn("extension.yml", archive_contents[next(name for name in archive_contents if name.startswith("extendedflow-"))])
         preset_archive = next(name for name in archive_contents if name.startswith("spec-kit-extended-flow-") and "bundle" not in name)
         self.assertTrue({f"scripts/{script}" for script in RUNTIME_SCRIPTS} <= set(archive_contents[preset_archive]))
+        self.assertIn("model.config.json", archive_contents[preset_archive])
         self.assertNotIn("scripts/build-catalog.py", archive_contents[preset_archive])
         for catalog, section, identifier in (
             (extension_catalog, "extensions", "extendedflow"),

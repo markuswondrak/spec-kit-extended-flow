@@ -37,11 +37,21 @@ inputs:
     required: false
     default: "auto"
     prompt: "AI integration to dispatch commands to (auto = detect from .specify/integration.json)"
+  model_config:
+    type: string
+    required: false
+    default: ""
+    prompt: "Path to a per-step model config JSON (defaults to ./model.config.json, then the preset default)"
 
 steps:
   - id: resolve-spec
     type: shell
     run: python3 .specify/presets/spec-kit-extended-flow/scripts/resolve-spec.py "{{ context.run_id }}"
+
+  - id: load-models
+    type: shell
+    run: python3 .specify/presets/spec-kit-extended-flow/scripts/load-models.py "{{ context.run_id }}"
+    output_format: json
 
   - id: create-branch
     type: if
@@ -54,7 +64,7 @@ steps:
   - id: bug-assess
     command: speckit.bug.assess
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.bug-assess.model }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
@@ -71,14 +81,14 @@ steps:
   - id: bug-fix
     command: speckit.bug.fix
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.bug-fix.model }}"
     input:
       args: "slug={{ steps.resolve-bug-context.output.stdout }}"
 
   - id: bug-test
     command: speckit.bug.test
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.bug-test.model }}"
     input:
       args: "slug={{ steps.resolve-bug-context.output.stdout }}"
 
@@ -89,6 +99,6 @@ steps:
   - id: finish
     command: speckit.extendedflow.finish
     integration: "{{ inputs.integration }}"
-    model: ""
+    model: "{{ steps.load-models.output.data.finish.model }}"
     input:
       args: "{{ context.run_id }}"
