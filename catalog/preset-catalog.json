@@ -29,6 +29,29 @@
         "documentation",
         "workflow"
       ]
+    },
+    "sub-agent-delegation": {
+      "name": "Sub-Agent Delegation",
+      "id": "sub-agent-delegation",
+      "version": "0.16.0",
+      "description": "Integration-agnostic sub-agent delegation. Prepends one mechanism-neutral preamble to the parallelizable core commands, with a deterministic per-integration primitive map and a sequential fallback for backends without sub-agents.",
+      "author": "Markus Wondrak",
+      "repository": "https://github.com/markuswondrak/spec-kit-extended-flow",
+      "license": "MIT",
+      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.16.0/sub-agent-delegation-0.16.0.zip",
+      "requires": {
+        "speckit_version": ">=0.11.2"
+      },
+      "provides": {
+        "commands": 8,
+        "templates": 0
+      },
+      "tags": [
+        "sub-agents",
+        "delegation",
+        "parallelism",
+        "performance"
+      ]
     }
   }
 }

@@ -41,6 +41,7 @@ Extended Flow closes the loop. **Intent in, working software out — reviewed ag
 - **Convergence Loop.** After implementation, Spec-Kit's standard `speckit.converge` command assesses the codebase against the spec, plan, and tasks. If it finds remaining work, it appends new tasks and `speckit.implement` runs again. This loops until converge reports no remaining tasks — up to 5 iterations max. Built entirely on standard Spec-Kit commands.
 - **Documentation Reconciliation.** After a passing review, a Documentation agent scans all implementation diffs and updates every documentation layer (global constraints, architecture decisions, interface contracts, AI debt register). **Code-vs-docs conflicts are flagged for human resolution — never auto-resolved.** This is a core invariant.
 - **Issue → PR automation.** When started from a GitHub issue, the workflow automatically creates a feature branch, cleans up temporary files, commits all changes, and opens a pull request that closes the issue.
+- **Sub-agent delegation.** The bundle also installs `sub-agent-delegation`, an integration-agnostic preset that lets agents run independent work in parallel using their backend's sub-agent primitive. It reads the active integration from `.specify/integration.json`, maps it to a dispatch primitive (Claude `Task`, Copilot `runSubagent`, opencode `task`), and falls back to sequential execution for backends without sub-agents. See [Reference](docs/reference.md#sub-agent-delegation).
 
 ### A family of flows
 
@@ -57,7 +58,7 @@ See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The
 ## Quickstart
 
 ```bash
-# 1. Install the complete bundle (preset + extension + 3 workflows)
+# 1. Install the complete bundle (2 presets + extension + 3 workflows)
 #
 # Option A — For users (remote, from this repo's HTTPS catalog)
 #   Register the project-owned catalog once, then install the bundle in one step.
@@ -151,6 +152,11 @@ specify extension add bug
 
 # 2. Install preset (templates + scripts)
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
+
+# 2b. Install the sub-agent delegation preset (needs the project-owned catalog
+#     registered, as in the Quickstart; it is a separate preset because Spec-Kit
+#     allows only one command entry per preset)
+specify preset add sub-agent-delegation
 
 # 3. Install extension (commands)
 specify extension add extendedflow --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip

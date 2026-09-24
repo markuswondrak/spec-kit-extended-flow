@@ -102,15 +102,19 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertEqual((first.returncode, first.stderr), (0, ""))
         self.assertEqual((second.returncode, second.stderr), (0, ""))
         self.assertEqual(first_digests, second_digests)
-        self.assertEqual(len(artifacts), 3)
+        self.assertEqual(len(artifacts), 4)
         self.assertIn("extension.yml", archive_contents[next(name for name in archive_contents if name.startswith("extendedflow-"))])
         preset_archive = next(name for name in archive_contents if name.startswith("spec-kit-extended-flow-") and "bundle" not in name)
         self.assertTrue({f"scripts/{script}" for script in RUNTIME_SCRIPTS} <= set(archive_contents[preset_archive]))
         self.assertIn("model.config.json", archive_contents[preset_archive])
         self.assertNotIn("scripts/build-catalog.py", archive_contents[preset_archive])
+        delegation_archive = next(name for name in archive_contents if name.startswith("sub-agent-delegation-"))
+        self.assertIn("preset.yml", archive_contents[delegation_archive])
+        self.assertIn("commands/sub-agent-delegation.md", archive_contents[delegation_archive])
         for catalog, section, identifier in (
             (extension_catalog, "extensions", "extendedflow"),
             (preset_catalog, "presets", "spec-kit-extended-flow"),
+            (preset_catalog, "presets", "sub-agent-delegation"),
             (bundle_catalog, "bundles", "spec-kit-extended-flow"),
         ):
             entry = catalog[section][identifier]
@@ -133,6 +137,9 @@ class MaintenanceScriptTests(unittest.TestCase):
                 name: (project / name).read_text(encoding="utf-8")
                 for name in ("preset.yml", "extension.yml", "bundle.yml")
             }
+            delegation_manifest = (
+                project / "presets" / "sub-agent-delegation" / "preset.yml"
+            ).read_text(encoding="utf-8")
             workflows = {
                 name: (project / "workflows" / name).read_text(encoding="utf-8")
                 for name in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml")
@@ -157,12 +164,14 @@ class MaintenanceScriptTests(unittest.TestCase):
         self.assertIn("Released version 1.2.3", result.stdout)
         self.assertIn('version: "1.2.3"', manifests["preset.yml"])
         self.assertIn('version: "1.2.3"', manifests["extension.yml"])
-        self.assertEqual(manifests["bundle.yml"].count('version: "1.2.3"'), 6)
+        self.assertIn('version: "1.2.3"', delegation_manifest)
+        self.assertEqual(manifests["bundle.yml"].count('version: "1.2.3"'), 7)
         self.assertIn('version: "1.0.0"', manifests["bundle.yml"])
         for name, contents in workflows.items():
             self.assertIn('version: "1.2.3"', contents)
         self.assertEqual(catalogs["extension-catalog.json"]["extensions"]["extendedflow"]["version"], "1.2.3")
         self.assertEqual(catalogs["preset-catalog.json"]["presets"]["spec-kit-extended-flow"]["version"], "1.2.3")
+        self.assertEqual(catalogs["preset-catalog.json"]["presets"]["sub-agent-delegation"]["version"], "1.2.3")
         self.assertEqual(catalogs["bundle-catalog.json"]["bundles"]["spec-kit-extended-flow"]["version"], "1.2.3")
         for workflow_id in ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow"):
             self.assertEqual(catalogs["workflow-catalog.json"]["workflows"][workflow_id]["version"], "1.2.3")

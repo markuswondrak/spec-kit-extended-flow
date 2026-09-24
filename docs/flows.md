@@ -6,6 +6,8 @@ Shell steps only interpolate the engine-validated `context.run_id`. User-provide
 
 Every flow starts with a `load-models` shell step that resolves per-step model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step binds its `model` from that step's `output.data`.
 
+The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using their backend's sub-agent primitive, and falls back to sequential execution when the backend has none. See [Reference](reference.md#sub-agent-delegation).
+
 ## Feature Flow
 
 The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.

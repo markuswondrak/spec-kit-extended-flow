@@ -6,10 +6,13 @@ Extended Flow is delivered as **three artifacts bundled together** — a preset 
 
 | Package | Manifest | Delivers | Installed via |
 |---------|----------|----------|---------------|
-| **Bundle** | `bundle.yml` | Preset + Extension + `bug` extension + Workflows (meta-manifest) | `specify bundle install` |
+| **Bundle** | `bundle.yml` | Two presets + Extension + `bug` extension + Workflows (meta-manifest) | `specify bundle install` |
 | Preset | `preset.yml` | Templates, scripts, unattended runtime preamble | `specify preset add` |
+| Preset | `presets/sub-agent-delegation/preset.yml` | Integration-agnostic sub-agent delegation preamble | `specify preset add` |
 | Extension | `extension.yml` | Commands (agent prompts) | `specify extension add` |
 | Workflow | `workflows/*.yml` | Step orchestration | `specify workflow add` |
+
+Two presets are shipped because Spec-Kit allows a preset to declare a given command only once. The main preset prepends the unattended runtime preamble; the delegation preset prepends its own preamble to the same commands. Spec-Kit layers the two by preset priority (`spec-kit-extended-flow` = 10, `sub-agent-delegation` = 20), so the runtime preamble lands first and delegation second. This is the reason delegation is a separate preset rather than a second file in the main preset.
 
 The bundle installs the `bug` dependency automatically. For a standalone workflow install, add it first with `specify extension add bug`.
 
@@ -33,6 +36,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Quick implement | `commands/speckit.extendedflow.quick-implement.md` | Direct implementation agent for trivial changes |
 | Quick review | `commands/speckit.extendedflow.quick-review.md` | Self-fixing review agent (review + fix in one pass) |
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
+| Delegation preamble | `presets/sub-agent-delegation/commands/sub-agent-delegation.md` | Mechanism-neutral sub-agent delegation guidance, prepended to the parallelizable core commands |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
 | Resolve spec | `scripts/resolve-spec.py` | Resolves `spec`/`file`/`issue` inputs from the run directory and persists the result |
@@ -97,6 +101,22 @@ specify workflow run spec-kit-extended-flow --input model_config=./my-models.jso
 
 > **Note:** Model overrides are passed through to the agent CLI (e.g. `opencode run -m <model>`). Support depends on the integration. The opencode integration forwards `-m` automatically; other integrations may ignore the model field.
 
+
+### Sub-agent delegation
+
+The `sub-agent-delegation` preset prepends one mechanism-neutral preamble to the parallelizable core commands (`specify`, `plan`, `tasks`, `analyze`, `implement`, `checklist`, `clarify`, `taskstoissues`). When a command has independent work items, the preamble instructs the agent to dispatch each as a delegated sub-agent in an isolated context and collect the results before continuing.
+
+The preset is **integration-agnostic**. The preamble determines the backend deterministically from `.specify/integration.json` (the `default_integration` key, then `integration`) and maps it to a dispatch primitive:
+
+| integration | dispatch primitive |
+|-------------|--------------------|
+| `claude` | `Task` tool |
+| `copilot` | `runSubagent` (VS Code) / Copilot CLI sub-agent |
+| `opencode` | `task` tool with `subagent_type` |
+
+If the integration is not listed, or has no sub-agent primitive, the preamble falls back to **sequential execution in the same context**. Sequential execution is always correct, so an unknown backend degrades gracefully rather than emitting a mechanism it cannot perform. Delegation changes only *how* existing steps execute — the core command logic is unchanged, and sub-agents are never mandatory.
+
+The preset is always-on once installed and self-degrading; there is no flag to enable it. To opt out, remove the preset (`specify preset remove sub-agent-delegation`) or omit it from the bundle install.
 
 ### Template overrides and stacking
 
