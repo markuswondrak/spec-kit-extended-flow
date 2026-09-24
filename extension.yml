@@ -3,7 +3,7 @@ schema_version: "1.0"
 extension:
   id: extendedflow
   name: "Spec-Kit Extended Flow"
-  version: "0.17.0"
+  version: "0.18.0"
   description: "A complete agentic engineering pipeline that turns intent into working, reviewed, documented software. Extends Spec-Kit's SDD workflow with the standard implement/converge loop, living documentation reconciliation, issue-to-PR automation, and the standard Spec-Kit bug extension."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
