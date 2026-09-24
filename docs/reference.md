@@ -33,6 +33,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Documentation init | `commands/speckit.extendedflow.documentation-init.md` | Doc bootstrap agent prompt |
 | Project init | `commands/speckit.extendedflow.project-init.md` | Project analysis + template tailoring agent prompt |
 | Finish agent | `commands/speckit.extendedflow.finish.md` | Cleanup, commit, PR agent prompt |
+| Quick plan | `commands/speckit.extendedflow.quick-plan.md` | Minimal plan agent for trivial changes, reviewed at a human gate |
 | Quick implement | `commands/speckit.extendedflow.quick-implement.md` | Direct implementation agent for trivial changes |
 | Quick review | `commands/speckit.extendedflow.quick-review.md` | Self-fixing review agent (review + fix in one pass) |
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |

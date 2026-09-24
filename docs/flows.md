@@ -85,7 +85,7 @@ When started from a GitHub issue, the Bugfix Flow creates a `fix/<issue>-<slug>`
 
 ## Quick Flow
 
-A lightweight pipeline for trivial, well-defined changes. It skips spec/plan/tasks generation entirely and uses a **self-fixing review** in a single pass — the reviewer finds issues and fixes them in one step.
+A lightweight pipeline for trivial, well-defined changes. It skips spec and task-list generation; instead it produces a **minimal plan** that a human approves at a gate before implementation. It uses a **self-fixing review** in a single pass — the reviewer finds issues and fixes them in one step.
 
 ```mermaid
 flowchart TD
@@ -93,20 +93,25 @@ flowchart TD
     B -->|yes| C[create-branch]
     B -->|no| D[init-quick]
     C --> D
-    D --> E[quick-implement]
-    E --> F[quick-review]
-    F --> G{PASS?}
-    G -->|yes| H[doc-check]
-    G -->|no| I[❌ abort]
-    H --> J[finish]
-    J --> K[✅ done]
+    D --> E[quick-plan]
+    E --> F{plan gate}
+    F -->|approve| G[quick-implement]
+    F -->|reject| H[❌ abort]
+    G --> I[quick-review]
+    I --> J{PASS?}
+    J -->|yes| K[doc-check]
+    J -->|no| H
+    K --> L[finish]
+    L --> M[✅ done]
 ```
 
 1. **Init** — Create or reuse the feature directory and `feature.json` pointer
-2. **Implement** — Direct implementation from the instruction (no tasks.md)
-3. **Review + Fix** — Self-fixing review in a single pass
-4. **Doc Check** — Lightweight documentation impact check
-5. **Finish** — Cleanup, commit, PR
+2. **Plan** — Produce a minimal plan from the instruction (no tasks.md)
+3. **Plan Gate** — Human reviews `plan.md`; approve to implement, reject to stop
+4. **Implement** — Direct implementation from the instruction and approved plan
+5. **Review + Fix** — Self-fixing review in a single pass
+6. **Doc Check** — Lightweight documentation impact check
+7. **Finish** — Cleanup, commit, PR
 
 | Step | Type | Description |
 |------|------|-------------|
@@ -114,7 +119,9 @@ flowchart TD
 | `load-models` | shell | Loads per-step model overrides from `model.config.json` |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `init-quick` | shell | Creates or reuses the feature directory and writes `feature.json` with `type: "quick"` |
-| `quick-implement` | command | Implements the change directly from the instruction |
+| `quick-plan` | command | Produces a minimal `plan.md` from the instruction |
+| `quick-plan-gate` | gate | Human approves or rejects the plan |
+| `quick-implement` | command | Implements the change from the instruction and approved plan |
 | `quick-review` | command | Self-fixing review: reviews and corrects in one pass → PASS or FAIL |
 | `doc-check` | command | Lightweight documentation impact check, flags conflicts |
 | `finish` | command | Cleans up, commits (`chore:` prefix), opens PR when issue provided |

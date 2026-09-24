@@ -336,6 +336,8 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             feature.mkdir(parents=True)
             (feature / "review-findings-1-FAIL.md").write_text("# stale verdict\n", encoding="utf-8")
             (feature / "doc-check.md").write_text("# stale doc check\n", encoding="utf-8")
+            (feature / "instruction.md").write_text("# stale instruction\n", encoding="utf-8")
+            (feature / "plan.md").write_text("# stale plan\n", encoding="utf-8")
             foreign = feature / "notes.txt"
             foreign.write_text("keep me\n", encoding="utf-8")
             run_directory = self.write_run_inputs(root)

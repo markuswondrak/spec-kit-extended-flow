@@ -32,7 +32,7 @@ specify extension enable git
 
 **Workflow stuck in loop:** Check `specify workflow status`. The cap of 5 iterations prevents infinite loops.
 
-**Quick Flow fails after an interrupted run (`Feature directory already exists`):** `init-quick` is idempotent as of v0.16.1. Re-running Quick Flow for the same issue and title reuses the existing feature directory, rewrites `.specify/feature.json`, and clears stale `review-findings-*.md` and `doc-check.md` from the interrupted run. If you still see this error, upgrade the installed preset and extension. See `scripts/init-quick.py`.
+**Quick Flow fails after an interrupted run (`Feature directory already exists`):** `init-quick` is idempotent as of v0.16.1. Re-running Quick Flow for the same issue and title reuses the existing feature directory, rewrites `.specify/feature.json`, and clears stale `instruction.md`, `plan.md`, `review-findings-*.md`, and `doc-check.md` from the interrupted run. If you still see this error, upgrade the installed preset and extension. See `scripts/init-quick.py`.
 
 **Workflow not found by ID:** Install it: `specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml`
 

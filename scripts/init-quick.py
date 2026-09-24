@@ -111,9 +111,10 @@ def main() -> int:
     if feature_dir.is_dir():
         for stale in feature_dir.glob("review-findings-*.md"):
             stale.unlink()
-        stale_doc_check = feature_dir / "doc-check.md"
-        if stale_doc_check.is_file():
-            stale_doc_check.unlink()
+        for generated in ("instruction.md", "plan.md", "doc-check.md"):
+            stale = feature_dir / generated
+            if stale.is_file():
+                stale.unlink()
     else:
         feature_dir.mkdir(parents=True)
     Path(".specify").mkdir(parents=True, exist_ok=True)

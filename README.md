@@ -49,7 +49,7 @@ Extended Flow ships a **family of composable flows** that share issue-to-PR auto
 
 - **Feature Flow** — the SDD lifecycle for new features (`specify → plan → tasks → analyze → implement → converge → documentation → finish`).
 - **Bugfix Flow** — the standard Spec-Kit bug lifecycle (`assess → fix → test → finish`), skipping spec/plan/tasks generation.
-- **Quick Flow** — a lightweight pipeline for trivial, well-defined changes (`implement → review-fix → doc-check → finish`), no spec/plan/tasks, no human gates, self-fixing review in a single pass.
+- **Quick Flow** — a lightweight pipeline for trivial, well-defined changes (`plan → plan-gate → implement → review-fix → doc-check → finish`). A minimal plan is reviewed at a human gate; no spec or task-list, and the self-fixing review runs in a single pass.
 
 See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The family is designed to grow — future flows slot in as peers.
 
@@ -110,7 +110,7 @@ specify workflow run spec-kit-quick-flow \
   --input issue="42"
 ```
 
-**What happens:** The workflow implements the change directly from your instruction, runs a self-fixing review in a single pass, checks documentation impact, then commits and opens a PR. No spec/plan/tasks generation — ideal for label changes, message additions, and other trivial tweaks.
+**What happens:** The workflow writes a minimal plan from your instruction and pauses at a plan gate for your approval, then implements the change, runs a self-fixing review in a single pass, checks documentation impact, and commits and opens a PR. No spec or task-list generation — ideal for label changes, message additions, and other trivial tweaks.
 
 <details>
 <summary><strong>Other input modes</strong></summary>
@@ -203,7 +203,7 @@ A standard Spec-Kit bug lifecycle for surgical bugfixes. It uses `speckit.bug.as
 
 ### Quick Flow
 
-A lightweight pipeline for trivial, well-defined changes. Skips spec/plan/tasks entirely and uses a **self-fixing review** in a single pass. See [docs/flows.md](docs/flows.md#quick-flow) for the full diagram and step table.
+A lightweight pipeline for trivial, well-defined changes. Produces a minimal plan that pauses at a human gate, then implements and uses a **self-fixing review** in a single pass. No spec or task-list. See [docs/flows.md](docs/flows.md#quick-flow) for the full diagram and step table.
 
 ---
 
@@ -233,6 +233,7 @@ Run these standalone outside the workflows:
 | `/speckit.extendedflow.documentation` | Documentation reconciliation only |
 | `/speckit.extendedflow.documentation-init` | Bootstrap documentation for an existing project |
 | `/speckit.extendedflow.finish` | Cleanup, commit, and PR (post-implementation) |
+| `/speckit.extendedflow.quick-plan` | Minimal plan for a trivial change (human-gated) |
 | `/speckit.extendedflow.quick-implement` | Direct implementation for trivial changes |
 | `/speckit.extendedflow.quick-review` | Self-fixing review (review + fix in one pass) |
 | `/speckit.extendedflow.doc-check` | Lightweight documentation impact check |
