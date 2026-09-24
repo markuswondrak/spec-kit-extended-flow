@@ -5,7 +5,7 @@ workflow:
   name: "Spec-Kit Extended Flow — Quick Flow"
   version: "0.17.0"
   author: "Markus Wondrak"
-  description: "The Quick Flow: lightweight pipeline for trivial, well-defined changes (label renames, message additions, small tweaks). Implements directly from the instruction, runs a self-fixing review in a single pass, checks documentation impact, and ships a PR. No spec/plan/tasks generation."
+  description: "The Quick Flow: lightweight pipeline for trivial, well-defined changes (label renames, message additions, small tweaks). Produces a minimal plan (reviewed at a human gate), implements directly from the instruction, runs a self-fixing review in a single pass, checks documentation impact, and ships a PR. No spec or task-list generation."
 
 requires:
   speckit_version: ">=0.8.5"
@@ -64,6 +64,19 @@ steps:
   - id: init-quick
     type: shell
     run: python3 .specify/presets/spec-kit-extended-flow/scripts/init-quick.py "{{ context.run_id }}"
+
+  - id: quick-plan
+    command: speckit.extendedflow.quick-plan
+    integration: "{{ inputs.integration }}"
+    model: "{{ steps.load-models.output.data.quick-plan.model }}"
+    input:
+      args: "{{ steps.resolve-spec.output.stdout }}"
+
+  - id: quick-plan-gate
+    type: gate
+    message: "Review the generated quick plan in specs/<feature-dir>/plan.md. Approve to implement, or reject to stop and edit the plan."
+    options: [approve, reject]
+    on_reject: abort
 
   - id: quick-implement
     command: speckit.extendedflow.quick-implement

@@ -74,6 +74,16 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
             with self.subTest(workflow=workflow):
                 self.assertFalse(expecting_model, f"{workflow} has a command step without a model")
 
+    def test_quick_flow_plans_and_gates_before_implementing(self):
+        content = (ROOT / "workflows" / "quick-flow.yml").read_text(encoding="utf-8")
+        self.assertIn("command: speckit.extendedflow.quick-plan", content)
+        plan_index = content.index("command: speckit.extendedflow.quick-plan")
+        gate_index = content.index("id: quick-plan-gate")
+        implement_index = content.index("command: speckit.extendedflow.quick-implement")
+        self.assertLess(plan_index, gate_index)
+        self.assertLess(gate_index, implement_index)
+        self.assertIn("on_reject: abort", content)
+
     def test_shell_steps_never_interpolate_user_input_or_step_output(self):
         """Shell `run:` lines may only interpolate the engine-validated run id.
 

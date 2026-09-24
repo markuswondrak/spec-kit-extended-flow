@@ -100,6 +100,12 @@ provides:
       description: "Unattended runtime context for finish"
 
     - type: "command"
+      name: "speckit.extendedflow.quick-plan"
+      file: "commands/workflow-runtime.md"
+      strategy: "prepend"
+      description: "Unattended runtime context for quick plan"
+
+    - type: "command"
       name: "speckit.extendedflow.quick-implement"
       file: "commands/workflow-runtime.md"
       strategy: "prepend"
