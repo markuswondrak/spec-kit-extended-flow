@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "sub-agent-delegation"
   name: "Sub-Agent Delegation"
-  version: "0.16.0"
+  version: "0.17.0"
   description: "Integration-agnostic sub-agent delegation. Prepends one mechanism-neutral preamble to the parallelizable core commands so independent work is dispatched as delegated sub-agents, with a deterministic per-integration primitive map and a sequential fallback for backends without sub-agents."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
