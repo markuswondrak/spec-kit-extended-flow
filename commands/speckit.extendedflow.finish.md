@@ -81,6 +81,7 @@ Read the following files from the feature directory (use `feature_directory` fro
 
 **For quick flows (`type` IS `"quick"`):**
 - `instruction.md` — Extract the original change instruction (1-2 sentences).
+- `plan.md` — Extract the approved in-scope work plus any deferred work.
 - `doc-check.md` — Extract the documentation check summary (1 sentence).
 
 If any of these files do not exist, skip them silently.
@@ -91,9 +92,11 @@ For feature flows, read `tasks.md` from the feature directory. The workflow has 
 - If no unchecked tasks remain, note "Converged against spec, plan, and tasks".
 - If unchecked tasks remain, note "Implementation not fully converged".
 
-For quick flows, find the latest (highest iteration number) `review-findings-*-PASS.md` file inside the feature directory.
-- If found, extract the verdict (`PASS`) and the `## Summary` section (2-3 sentences).
-- If no PASS review findings exist, note "Quick review not yet recorded".
+For quick flows, find the latest (highest iteration number) `review-findings-*-{PASS|FAIL}.md` file inside the feature directory.
+- If it is PASS, extract the verdict and the `## Summary` section (2-3 sentences).
+- If it is FAIL, read `.specify/workflows/runs/<run_id>/state.json`. Continue only when `steps.quick-review-resolution.output.choice` is `ship-partial`; otherwise stop without cleanup, commit, or PR creation because the unresolved work must be escalated or aborted.
+- For an approved partial shipment, state that the Quick Flow review reported unresolved in-scope work, the operator explicitly selected `ship-partial`, and summarize the deferred work from `plan.md`.
+- If no review findings exist, stop without cleanup, commit, or PR creation.
 
 For bugfix flows (`type` IS `"bug"`), read `test.md` and extract its `Result` field (`verified`, `partial`, or `failed`) and summary. Do not look for a review-findings file.
 
@@ -176,7 +179,7 @@ Use the template content as the starting point. Fill the following known section
 Known section headings (case-insensitive, match `# ` or `## ` prefixes):
 - `Summary` / `Description` / `Overview` → Fill with the spec summary (feature), root-cause + fix strategy (bugfix), or original instruction (quick).
 - `Changes` / `What Changed` / `What does this PR do?` → Fill with the main implementation changes (files/modules touched).
-- `Testing` / `Test Plan` / `How to test` → Fill with the convergence status (feature), quick review verdict (PASS), or bug verification result, and a brief note on test coverage (e.g., "Full test suite passes; bug reproduction test was RED then GREEN").
+- `Testing` / `Test Plan` / `How to test` → Fill with the convergence status (feature), quick review verdict (PASS or explicitly approved partial shipment), or bug verification result, and a brief note on test coverage (e.g., "Full test suite passes; bug reproduction test was RED then GREEN").
 - `Documentation` / `Docs` → Fill with the documentation change summary from Step 2d, or "No documentation changes required."
 - `Related Issues` / `Closes` / `Fixes` → Ensure `Closes #<issue>` appears here or elsewhere in the body.
 
@@ -194,7 +197,7 @@ Generate a structured body with these sections:
 <Brief list of main implementation changes and files touched>
 
 ## Testing
-<Convergence status (feature), quick review verdict (PASS), or bug verification result. Notes on test coverage.>
+<Convergence status (feature), quick review verdict (PASS or explicitly approved partial shipment), or bug verification result. Notes on test coverage.>
 
 ## Documentation
 <Summary of doc updates, or "No documentation changes required.">`

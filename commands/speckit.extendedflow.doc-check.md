@@ -9,7 +9,7 @@ You are the documentation safety net for simple changes. Full documentation reco
 ## Inputs
 
 1. **Feature Directory** — read `.specify/feature.json` to determine the current feature directory.
-2. **Instruction** — read `specs/<feature-dir>/instruction.md` for context on what was changed.
+2. **Approved Scope** — read `specs/<feature-dir>/plan.md` and `approved-scope.json` for context on what was changed, including an explicitly approved partial shipment.
 3. **Code changes** — analyze the git diff to identify modified files.
 
 ## Steps

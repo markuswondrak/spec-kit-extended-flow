@@ -16,6 +16,8 @@ RUNTIME_SCRIPTS = (
     "check-bug-verdict.py",
     "verify-spec.py",
     "init-quick.py",
+    "record-quick-scope.py",
+    "preserve-quick-review.py",
     "resolve-pr-template.py",
     "load-models.py",
 )
@@ -83,6 +85,29 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
         self.assertLess(plan_index, gate_index)
         self.assertLess(gate_index, implement_index)
         self.assertIn("on_reject: abort", content)
+
+    def test_quick_flow_records_approved_scope_and_routes_review_failures_to_a_gate(self):
+        workflow = (ROOT / "workflows" / "quick-flow.yml").read_text(encoding="utf-8")
+        review = (ROOT / "commands" / "speckit.extendedflow.quick-review.md").read_text(encoding="utf-8")
+        plan = (ROOT / "commands" / "speckit.extendedflow.quick-plan.md").read_text(encoding="utf-8")
+
+        self.assertIn("record-quick-scope.py", workflow)
+        self.assertLess(workflow.index("id: quick-plan-gate"), workflow.index("id: record-quick-scope"))
+        self.assertLess(workflow.index("id: record-quick-scope"), workflow.index("id: quick-implement"))
+        self.assertIn("preserve-quick-review.py", workflow)
+        self.assertIn("id: quick-review-resolution", workflow)
+        for option in ("ship-partial", "escalate", "abort"):
+            with self.subTest(option=option):
+                self.assertIn(option, workflow)
+        self.assertNotIn("stop-on-review-fail", workflow)
+        self.assertNotIn("review-failed", workflow)
+        self.assertIn("approved-scope.json", review)
+        self.assertIn("Deferred", review)
+        self.assertIn("Out of Scope", review)
+        self.assertIn("Never exit nonzero solely because the verdict is FAIL", review)
+        for heading in ("## In Scope", "## Deferred", "## Out of Scope"):
+            with self.subTest(heading=heading):
+                self.assertIn(heading, plan)
 
     def test_shell_steps_never_interpolate_user_input_or_step_output(self):
         """Shell `run:` lines may only interpolate the engine-validated run id.

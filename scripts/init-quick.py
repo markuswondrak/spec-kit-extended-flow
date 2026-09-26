@@ -111,7 +111,7 @@ def main() -> int:
     if feature_dir.is_dir():
         for stale in feature_dir.glob("review-findings-*.md"):
             stale.unlink()
-        for generated in ("instruction.md", "plan.md", "doc-check.md"):
+        for generated in ("instruction.md", "plan.md", "approved-scope.json", "doc-check.md"):
             stale = feature_dir / generated
             if stale.is_file():
                 stale.unlink()

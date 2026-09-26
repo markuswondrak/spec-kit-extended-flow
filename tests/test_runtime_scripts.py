@@ -338,6 +338,7 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
             (feature / "doc-check.md").write_text("# stale doc check\n", encoding="utf-8")
             (feature / "instruction.md").write_text("# stale instruction\n", encoding="utf-8")
             (feature / "plan.md").write_text("# stale plan\n", encoding="utf-8")
+            (feature / "approved-scope.json").write_text("{}\n", encoding="utf-8")
             foreign = feature / "notes.txt"
             foreign.write_text("keep me\n", encoding="utf-8")
             run_directory = self.write_run_inputs(root)
@@ -388,6 +389,88 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
 
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/42-quick-add-user-auth\n", b""))
         self.assertEqual(pointer, {"feature_directory": "specs/42-quick-add-user-auth", "type": "quick"})
+
+    def test_record_quick_scope_requires_an_approved_plan_gate_and_hashes_the_plan(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            feature = self.make_feature(root)
+            (root / ".specify/feature.json").write_text(
+                '{"feature_directory": "specs/001-test", "type": "quick"}\n', encoding="utf-8"
+            )
+            plan = feature / "plan.md"
+            plan.write_text("# Quick Plan\n", encoding="utf-8")
+            state = root / ".specify/workflows/runs/run-1/state.json"
+            state.write_text(
+                json.dumps({"step_results": {"quick-plan-gate": {"output": {"choice": "approve"}}}}),
+                encoding="utf-8",
+            )
+            result = self.run_script("record-quick-scope.py", "run-1", cwd=root)
+            artifact = json.loads((feature / "approved-scope.json").read_text(encoding="utf-8"))
+
+        self.assertEqual((result.returncode, result.stderr), (0, b""))
+        self.assertEqual(artifact["approved_by"], "quick-plan-gate")
+        self.assertEqual(artifact["choice"], "approve")
+        self.assertEqual(artifact["plan"], "plan.md")
+        self.assertEqual(len(artifact["plan_sha256"]), 64)
+
+    def test_record_quick_scope_rejects_an_unapproved_gate(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            feature = self.make_feature(root)
+            (root / ".specify/feature.json").write_text(
+                '{"feature_directory": "specs/001-test", "type": "quick"}\n', encoding="utf-8"
+            )
+            (feature / "plan.md").touch()
+            (root / ".specify/workflows/runs/run-1/state.json").write_text(
+                json.dumps({"step_results": {"quick-plan-gate": {"output": {"choice": "reject"}}}}),
+                encoding="utf-8",
+            )
+            result = self.run_script("record-quick-scope.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Quick plan gate has not been approved.", result.stderr)
+
+    def test_preserve_quick_review_commits_staged_work_and_handles_no_changes(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            calls = root / "git-calls.txt"
+            self.write_command(
+                bin_directory,
+                "git",
+                """
+                import pathlib
+                import sys
+                calls = pathlib.Path("git-calls.txt")
+                calls.write_text(calls.read_text() + " ".join(sys.argv[1:]) + "\\n" if calls.exists() else " ".join(sys.argv[1:]) + "\\n")
+                if sys.argv[1:4] == ["diff", "--cached", "--quiet"]:
+                    raise SystemExit(1)
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            (root / ".specify/feature.json").write_text(
+                '{"feature_directory": "specs/quick-test", "type": "quick"}\n', encoding="utf-8"
+            )
+            env = {"PATH": f"{bin_directory}:{os.environ['PATH']}"}
+            committed = self.run_script("preserve-quick-review.py", "run-1", cwd=root, env=env)
+            call_log = calls.read_text(encoding="utf-8")
+
+            self.write_command(
+                bin_directory,
+                "git",
+                """
+                import sys
+                if sys.argv[1:4] == ["diff", "--cached", "--quiet"]:
+                    raise SystemExit(0)
+                """,
+            )
+            unchanged = self.run_script("preserve-quick-review.py", "run-1", cwd=root, env=env)
+
+        self.assertEqual((committed.returncode, committed.stdout, committed.stderr), (0, b"PRESERVED\n", b""))
+        self.assertIn("commit -m chore: preserve Quick Flow review failure (#42)", call_log)
+        self.assertEqual((unchanged.returncode, unchanged.stdout, unchanged.stderr), (0, b"NO_CHANGES\n", b""))
 
     def test_verify_spec_accepts_alternate_feature_pointer_keys(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
@@ -592,4 +675,3 @@ class LoadModelsTests(RuntimeScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
         self.assertEqual(result.stderr, b"ERROR: Invalid run id: 'run 1'.\n")
-
