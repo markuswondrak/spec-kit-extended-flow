@@ -43,6 +43,8 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Resolve spec | `scripts/resolve-spec.py` | Resolves `spec`/`file`/`issue` inputs from the run directory and persists the result |
 | Create branch | `scripts/create-branch.py` | Creates feature branch from the run's issue |
 | Init quick | `scripts/init-quick.py` | Creates or reuses the Quick Flow feature directory and pointer |
+| Record quick scope | `scripts/record-quick-scope.py` | Hashes the gate-approved `plan.md` into `approved-scope.json` |
+| Preserve quick review | `scripts/preserve-quick-review.py` | Creates a WIP commit before a failed-review resolution choice |
 | Verify spec | `scripts/verify-spec.py` | Validates spec file was created |
 | Check converge | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks |
 | Extract verdict | `scripts/extract-verdict.py` | Extracts the Quick Flow PASS/FAIL from the review filename |

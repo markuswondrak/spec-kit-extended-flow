@@ -34,6 +34,10 @@ specify extension enable git
 
 **Quick Flow fails after an interrupted run (`Feature directory already exists`):** `init-quick` is idempotent as of v0.16.1. Re-running Quick Flow for the same issue and title reuses the existing feature directory, rewrites `.specify/feature.json`, and clears stale `instruction.md`, `plan.md`, `review-findings-*.md`, and `doc-check.md` from the interrupted run. If you still see this error, upgrade the installed preset and extension. See `scripts/init-quick.py`.
 
+**Quick Flow review returns FAIL:** The review agent writes its verdict and completes successfully, allowing the workflow to record it deterministically. Before the resolution gate, the flow creates a WIP commit so no choice strands an uncommitted diff. Choose `ship-partial` only when the remaining work is explicitly acceptable; it continues through doc-check and finish. Choose `escalate` to keep the committed branch and artifacts for Feature Flow. Choose `abort` to stop cleanly after preserving the work.
+
+**Quick Flow review rejects an approved deferral:** Upgrade to a release that writes `approved-scope.json` after `quick-plan-gate`. The reviewer validates the hash-bound approved `plan.md` and treats its `Deferred` and `Out of Scope` sections as context rather than missing implementation.
+
 **Workflow not found by ID:** Install it: `specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml`
 
 **GitHub issue not resolving:** Ensure `gh` CLI is installed and authenticated (`gh auth status`). The `issue` parameter only supports issues from the current repository (bare number, e.g., `42`). Cross-repo references and full URLs are not supported.
