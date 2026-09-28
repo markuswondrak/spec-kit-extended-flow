@@ -36,7 +36,7 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 
 | Script | Purpose |
 |--------|---------|
-| `scripts/resolve-spec.py` | Reads `spec`, `file`, and `issue` from the run's `inputs.json` and resolves them into specification/bug-report content (persisted to `resolved-spec.txt`) |
+| `scripts/resolve-spec.py` | Reads `spec`, `file`, and `issue` from the run's `inputs.json` and resolves them into specification/bug-report content (issue title, body, and comments; persisted to `resolved-spec.txt`) |
 | `scripts/create-branch.py` | Reads the issue from the run's `inputs.json` and creates a `<prefix>/<issue>-<slug>` branch (default prefix: `feature`, bugfix prefix: `fix`) |
 | `scripts/check-converge.py` | Detects whether `speckit.converge` appended new tasks (standard Spec-Kit convergence loop) |
 | `scripts/extract-verdict.py` | Extracts the Quick Flow review verdict from the review findings filename |

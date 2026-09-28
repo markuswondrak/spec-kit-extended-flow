@@ -40,7 +40,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Delegation preamble | `presets/sub-agent-delegation/commands/sub-agent-delegation.md` | Mechanism-neutral sub-agent delegation guidance, prepended to the parallelizable core commands |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
-| Resolve spec | `scripts/resolve-spec.py` | Resolves `spec`/`file`/`issue` inputs from the run directory and persists the result |
+| Resolve spec | `scripts/resolve-spec.py` | Resolves `spec`/`file`/`issue` inputs (issue title, body, and comments) from the run directory and persists the result |
 | Create branch | `scripts/create-branch.py` | Creates feature branch from the run's issue |
 | Init quick | `scripts/init-quick.py` | Creates or reuses the Quick Flow feature directory and pointer |
 | Verify spec | `scripts/verify-spec.py` | Validates spec file was created |

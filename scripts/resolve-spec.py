@@ -53,6 +53,29 @@ def read_input(inputs: dict, key: str) -> str:
     return value
 
 
+def format_issue(document: dict) -> bytes:
+    """Render an issue's title, body, and comments as markdown bytes.
+
+    Comments are ordered by their ``createdAt`` timestamp so the resolved
+    output is deterministic. Each comment is prefixed with its author handle
+    and timestamp.
+    """
+    lines = [f"# {document.get('title') or ''}", "", document.get("body") or ""]
+    comments = document.get("comments")
+    if isinstance(comments, list) and comments:
+        lines += ["", "## Issue Comments"]
+        ordered = sorted(comments, key=lambda comment: (comment.get("createdAt") or ""))
+        for comment in ordered:
+            if not isinstance(comment, dict):
+                continue
+            author = comment.get("author")
+            login = author.get("login") if isinstance(author, dict) else ""
+            created = comment.get("createdAt") or ""
+            lines += ["", f"### @{login or 'unknown'} — {created}", comment.get("body") or ""]
+    text = "\n".join(lines).rstrip("\n")
+    return (text + "\n").encode(errors="surrogateescape")
+
+
 def main() -> int:
     run_id = sys.argv[1] if len(sys.argv) > 1 else ""
     if not run_id:
@@ -90,7 +113,7 @@ def main() -> int:
             )
         try:
             result = subprocess.run(
-                ["gh", "issue", "view", issue, "--json", "title,body", "--jq", '"# " + .title + "\\n\\n" + .body'],
+                ["gh", "issue", "view", issue, "--json", "title,body,comments"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 check=False,
@@ -104,7 +127,13 @@ def main() -> int:
             return error(
                 f"Failed to fetch issue #{issue}. Ensure the issue exists and gh is authenticated."
             )
-        output += result.stdout.rstrip(b"\n") + b"\n"
+        try:
+            document = json.loads(result.stdout.decode("utf-8", errors="surrogateescape"))
+        except json.JSONDecodeError:
+            return error(f"Failed to parse issue #{issue} from gh output.")
+        if not isinstance(document, dict):
+            return error(f"Failed to parse issue #{issue} from gh output.")
+        output += format_issue(document)
 
     if spec:
         output += spec.encode(errors="surrogateescape") + b"\n"

@@ -75,8 +75,9 @@ class ResolveSpecTests(RuntimeScriptTestCase):
                 bin_directory,
                 "gh",
                 """
+                import json
                 import sys
-                sys.stdout.write("# Issue title\\n\\nIssue body\\n")
+                sys.stdout.write(json.dumps({"title": "Issue title", "body": "Issue body", "comments": []}))
                 """,
             )
             self.write_run_inputs(root, spec="Plain request", file=str(spec_file), issue="42")
@@ -184,6 +185,106 @@ class ResolveSpecTests(RuntimeScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"ERROR: GitHub CLI (gh) is required", result.stderr)
+
+    def test_issue_comments_are_appended_in_chronological_order(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            self.write_command(
+                bin_directory,
+                "gh",
+                """
+                import json
+                import sys
+                assert sys.argv[1:6] == ["issue", "view", "42", "--json", "title,body,comments"]
+                document = {
+                    "title": "Issue title",
+                    "body": "Issue body",
+                    "comments": [
+                        {"author": {"login": "bob"}, "createdAt": "2024-02-01T00:00:00Z", "body": "Second"},
+                        {"author": {"login": "alice"}, "createdAt": "2024-01-01T00:00:00Z", "body": "First"},
+                    ],
+                }
+                sys.stdout.write(json.dumps(document))
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            result = self.run_script(
+                "resolve-spec.py",
+                "run-1",
+                cwd=root,
+                env={"PATH": f"{bin_directory}:{os.environ['PATH']}"},
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(
+            result.stdout,
+            (
+                "# Issue title\n\nIssue body\n\n## Issue Comments\n\n"
+                "### @alice — 2024-01-01T00:00:00Z\nFirst\n\n"
+                "### @bob — 2024-02-01T00:00:00Z\nSecond\n\n"
+            ).encode(),
+        )
+        self.assertEqual(result.stderr, b"")
+
+    def test_issue_comment_with_missing_author_uses_placeholder(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            self.write_command(
+                bin_directory,
+                "gh",
+                """
+                import json
+                import sys
+                document = {
+                    "title": "Issue title",
+                    "body": "Issue body",
+                    "comments": [
+                        {"author": None, "createdAt": "2024-01-01T00:00:00Z", "body": "Orphan"},
+                    ],
+                }
+                sys.stdout.write(json.dumps(document))
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            result = self.run_script(
+                "resolve-spec.py",
+                "run-1",
+                cwd=root,
+                env={"PATH": f"{bin_directory}:{os.environ['PATH']}"},
+            )
+
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("### @unknown — 2024-01-01T00:00:00Z\nOrphan\n".encode(), result.stdout)
+        self.assertEqual(result.stderr, b"")
+
+    def test_invalid_issue_json_reports_only_a_stderr_error(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            self.write_command(
+                bin_directory,
+                "gh",
+                """
+                import sys
+                sys.stdout.write("not json")
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            result = self.run_script(
+                "resolve-spec.py",
+                "run-1",
+                cwd=root,
+                env={"PATH": f"{bin_directory}:{os.environ['PATH']}"},
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Failed to parse issue #42", result.stderr)
 
 
 class RuntimeHelperTests(RuntimeScriptTestCase):

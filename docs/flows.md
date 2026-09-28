@@ -36,7 +36,7 @@ flowchart TD
 
 | Step | Type | Description |
 |------|------|-------------|
-| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to spec content |
+| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs (issue title, body, and comments) to spec content |
 | `load-models` | shell | Loads per-step model overrides from `model.config.json` |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `specify` | command | Generates the specification from your input |
@@ -115,7 +115,7 @@ flowchart TD
 
 | Step | Type | Description |
 |------|------|-------------|
-| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs to instruction content |
+| `resolve-spec` | shell | Resolves the run's `spec`/`file`/`issue` inputs (issue title, body, and comments) to instruction content |
 | `load-models` | shell | Loads per-step model overrides from `model.config.json` |
 | `create-branch` | shell | *(issue only)* Creates `feature/<issue>-<slug>` branch |
 | `init-quick` | shell | Creates or reuses the feature directory and writes `feature.json` with `type: "quick"` |
