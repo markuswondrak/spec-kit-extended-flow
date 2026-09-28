@@ -490,6 +490,47 @@ class RuntimeHelperTests(RuntimeScriptTestCase):
         self.assertEqual((result.returncode, result.stdout, result.stderr), (0, b"specs/42-quick-add-user-auth\n", b""))
         self.assertEqual(pointer, {"feature_directory": "specs/42-quick-add-user-auth", "type": "quick"})
 
+    def test_preserve_quick_review_commits_staged_work_and_handles_no_changes(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            bin_directory = root / "bin"
+            bin_directory.mkdir()
+            calls = root / "git-calls.txt"
+            self.write_command(
+                bin_directory,
+                "git",
+                """
+                import pathlib
+                import sys
+                calls = pathlib.Path("git-calls.txt")
+                calls.write_text(calls.read_text() + " ".join(sys.argv[1:]) + "\\n" if calls.exists() else " ".join(sys.argv[1:]) + "\\n")
+                if sys.argv[1:4] == ["diff", "--cached", "--quiet"]:
+                    raise SystemExit(1)
+                """,
+            )
+            self.write_run_inputs(root, issue="42")
+            (root / ".specify/feature.json").write_text(
+                '{"feature_directory": "specs/quick-test", "type": "quick"}\n', encoding="utf-8"
+            )
+            env = {"PATH": f"{bin_directory}:{os.environ['PATH']}"}
+            committed = self.run_script("preserve-quick-review.py", "run-1", cwd=root, env=env)
+            call_log = calls.read_text(encoding="utf-8")
+
+            self.write_command(
+                bin_directory,
+                "git",
+                """
+                import sys
+                if sys.argv[1:4] == ["diff", "--cached", "--quiet"]:
+                    raise SystemExit(0)
+                """,
+            )
+            unchanged = self.run_script("preserve-quick-review.py", "run-1", cwd=root, env=env)
+
+        self.assertEqual((committed.returncode, committed.stdout, committed.stderr), (0, b"PRESERVED\n", b""))
+        self.assertIn("commit -m chore: preserve Quick Flow review failure (#42)", call_log)
+        self.assertEqual((unchanged.returncode, unchanged.stdout, unchanged.stderr), (0, b"NO_CHANGES\n", b""))
+
     def test_verify_spec_accepts_alternate_feature_pointer_keys(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
@@ -693,4 +734,3 @@ class LoadModelsTests(RuntimeScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(result.stdout, b"")
         self.assertEqual(result.stderr, b"ERROR: Invalid run id: 'run 1'.\n")
-

@@ -85,7 +85,7 @@ When started from a GitHub issue, the Bugfix Flow creates a `fix/<issue>-<slug>`
 
 ## Quick Flow
 
-A lightweight pipeline for trivial, well-defined changes. It skips spec and task-list generation; instead it produces a **minimal plan** that a human approves at a gate before implementation. It uses a **self-fixing review** in a single pass — the reviewer finds issues and fixes them in one step.
+A lightweight pipeline for trivial, well-defined changes. It skips spec and task-list generation; instead it produces a **minimal plan** that a human approves at a gate before implementation. That approved plan is also the review baseline. It uses a **self-fixing review** in a single pass — the reviewer finds issues and fixes them in one step.
 
 ```mermaid
 flowchart TD
@@ -100,7 +100,11 @@ flowchart TD
     G --> I[quick-review]
     I --> J{PASS?}
     J -->|yes| K[doc-check]
-    J -->|no| H
+    J -->|no| N[preserve WIP commit]
+    N --> O{review resolution}
+    O -->|ship-partial| K
+    O -->|escalate| P[Feature Flow handoff]
+    O -->|abort| H
     K --> L[finish]
     L --> M[✅ done]
 ```
@@ -109,9 +113,10 @@ flowchart TD
 2. **Plan** — Produce a minimal plan from the instruction (no tasks.md)
 3. **Plan Gate** — Human reviews `plan.md`; approve to implement, reject to stop
 4. **Implement** — Direct implementation from the instruction and approved plan
-5. **Review + Fix** — Self-fixing review in a single pass
-6. **Doc Check** — Lightweight documentation impact check
-7. **Finish** — Cleanup, commit, PR
+5. **Review + Fix** — Self-fixing review against the approved plan in a single pass
+6. **Review Resolution** — A FAIL first preserves a WIP commit, then offers partial ship, Feature Flow escalation, or abort
+7. **Doc Check** — Lightweight documentation impact check
+8. **Finish** — Cleanup, commit, PR
 
 | Step | Type | Description |
 |------|------|-------------|
@@ -122,8 +127,10 @@ flowchart TD
 | `quick-plan` | command | Produces a minimal `plan.md` from the instruction |
 | `quick-plan-gate` | gate | Human approves or rejects the plan |
 | `quick-implement` | command | Implements the change from the instruction and approved plan |
-| `quick-review` | command | Self-fixing review: reviews and corrects in one pass → PASS or FAIL |
+| `quick-review` | command | Self-fixing review against the approved plan: reviews and corrects in one pass → PASS or FAIL |
+| `preserve-quick-review` | shell | On FAIL, commits the current work before a human decision |
+| `quick-review-resolution` | gate | On FAIL, choose partial ship, Feature Flow handoff, or abort |
 | `doc-check` | command | Lightweight documentation impact check, flags conflicts |
 | `finish` | command | Cleans up, commits (`chore:` prefix), opens PR when issue provided |
 
-**When to use Quick Flow:** Label renames, message additions, small tweaks — changes that are unambiguous, localized, and need no design decisions. If the self-fixing review returns FAIL, the change is too complex for Quick Flow and belongs in the Feature Flow.
+**When to use Quick Flow:** Label renames, message additions, small tweaks — changes that are unambiguous, localized, and need no design decisions. Explicitly deferred or out-of-scope plan items do not fail review. If an in-scope issue remains after the self-fixing review, Quick Flow preserves the work and lets the operator ship the reviewed partial change, escalate the branch to Feature Flow, or abort.

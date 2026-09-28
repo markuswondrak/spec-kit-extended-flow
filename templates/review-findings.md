@@ -12,7 +12,7 @@ The verdict is encoded in the filename for machine consumption.
 |------------------|----------------------|
 | **Date**         | {{date}}             |
 | **Iteration**    | {{iteration}}        |
-| **Spec Ref**     | {{spec_reference}}   |
+| **Scope Ref**    | {{spec_reference}}   |
 | **Reviewer**     | Spec-Kit Extended Flow Reviewer |
 
 ---
@@ -50,7 +50,7 @@ The verdict is encoded in the filename for machine consumption.
 **Description**:
 {{detailed_description}}
 
-**Expected Behavior** (per spec):
+**Expected Behavior** (per approved scope):
 {{expected}}
 
 **Actual Behavior**:

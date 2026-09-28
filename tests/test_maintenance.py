@@ -24,6 +24,7 @@ RUNTIME_SCRIPTS = {
     "check-bug-verdict.py",
     "verify-spec.py",
     "init-quick.py",
+    "preserve-quick-review.py",
     "resolve-pr-template.py",
     "load-models.py",
 }
