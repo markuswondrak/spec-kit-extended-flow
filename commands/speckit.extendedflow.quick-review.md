@@ -10,14 +10,14 @@ You are both reviewer and fixer, combined into one step. For trivial changes (la
 
 1. **Feature Directory** — read `.specify/feature.json` to determine the current feature directory.
 2. **Instruction** — read `specs/<feature-dir>/instruction.md` for the original change request.
-3. **Approved Scope** — read `plan.md` and `approved-scope.json`. Verify the plan's SHA-256 hash matches the artifact before trusting the plan.
+3. **Approved Plan** — read `plan.md`, which was approved at the preceding gate.
 4. **Implementation** — analyze all code changes made by the quick-implement agent.
 
 ## Steps
 
 1. Read `.specify/feature.json` to determine the feature directory.
-2. Read `instruction.md`, `plan.md`, and `approved-scope.json`. If the approval artifact is missing, malformed, unapproved, or its plan hash differs, write `review-findings-1-FAIL.md` explaining that the approved scope cannot be verified.
-3. Treat `plan.md`'s `In Scope` section and verification requirements as the authoritative review baseline. `Deferred` and `Out of Scope` sections are context, not failures.
+2. Read `instruction.md` and `plan.md`.
+3. Treat `plan.md`'s `In Scope` section and verification requirements as the review baseline. `Deferred` and `Out of Scope` sections are context, not failures.
 4. Analyze the code changes against the approved scope:
    - Does the implementation satisfy all in-scope outcomes?
    - Are there logic errors, typos, or missed locations?

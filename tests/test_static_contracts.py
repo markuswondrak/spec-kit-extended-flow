@@ -16,7 +16,6 @@ RUNTIME_SCRIPTS = (
     "check-bug-verdict.py",
     "verify-spec.py",
     "init-quick.py",
-    "record-quick-scope.py",
     "preserve-quick-review.py",
     "resolve-pr-template.py",
     "load-models.py",
@@ -86,14 +85,12 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
         self.assertLess(gate_index, implement_index)
         self.assertIn("on_reject: abort", content)
 
-    def test_quick_flow_records_approved_scope_and_routes_review_failures_to_a_gate(self):
+    def test_quick_flow_uses_the_approved_plan_and_routes_review_failures_to_a_gate(self):
         workflow = (ROOT / "workflows" / "quick-flow.yml").read_text(encoding="utf-8")
         review = (ROOT / "commands" / "speckit.extendedflow.quick-review.md").read_text(encoding="utf-8")
         plan = (ROOT / "commands" / "speckit.extendedflow.quick-plan.md").read_text(encoding="utf-8")
 
-        self.assertIn("record-quick-scope.py", workflow)
-        self.assertLess(workflow.index("id: quick-plan-gate"), workflow.index("id: record-quick-scope"))
-        self.assertLess(workflow.index("id: record-quick-scope"), workflow.index("id: quick-implement"))
+        self.assertNotIn("record-quick-scope.py", workflow)
         self.assertIn("preserve-quick-review.py", workflow)
         self.assertIn("id: quick-review-resolution", workflow)
         for option in ("ship-partial", "escalate", "abort"):
@@ -101,7 +98,10 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                 self.assertIn(option, workflow)
         self.assertNotIn("stop-on-review-fail", workflow)
         self.assertNotIn("review-failed", workflow)
-        self.assertIn("approved-scope.json", review)
+        self.assertIn("approved plan", review.lower())
+        self.assertNotIn("approved-scope.json", review)
+        self.assertNotIn("sha-256", review.lower())
+        self.assertNotIn("record-quick-scope.py", plan)
         self.assertIn("Deferred", review)
         self.assertIn("Out of Scope", review)
         self.assertIn("Never exit nonzero solely because the verdict is FAIL", review)

@@ -78,10 +78,6 @@ steps:
     options: [approve, reject]
     on_reject: abort
 
-  - id: record-quick-scope
-    type: shell
-    run: python3 .specify/presets/spec-kit-extended-flow/scripts/record-quick-scope.py "{{ context.run_id }}"
-
   - id: quick-implement
     command: speckit.extendedflow.quick-implement
     integration: "{{ inputs.integration }}"
@@ -107,7 +103,7 @@ steps:
         run: python3 .specify/presets/spec-kit-extended-flow/scripts/preserve-quick-review.py "{{ context.run_id }}"
       - id: quick-review-resolution
         type: gate
-        message: "Quick review found unresolved approved-scope work. Choose ship-partial to continue with the committed partial change, escalate to preserve the branch for Feature Flow, or abort."
+        message: "Quick review found unresolved in-scope work. Choose ship-partial to continue with the committed partial change, escalate to preserve the branch for Feature Flow, or abort."
         options: [ship-partial, escalate, abort]
         on_reject: abort
       - id: ship-partial

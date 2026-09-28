@@ -36,7 +36,7 @@ specify extension enable git
 
 **Quick Flow review returns FAIL:** The review agent writes its verdict and completes successfully, allowing the workflow to record it deterministically. Before the resolution gate, the flow creates a WIP commit so no choice strands an uncommitted diff. Choose `ship-partial` only when the remaining work is explicitly acceptable; it continues through doc-check and finish. Choose `escalate` to keep the committed branch and artifacts for Feature Flow. Choose `abort` to stop cleanly after preserving the work.
 
-**Quick Flow review rejects an approved deferral:** Upgrade to a release that writes `approved-scope.json` after `quick-plan-gate`. The reviewer validates the hash-bound approved `plan.md` and treats its `Deferred` and `Out of Scope` sections as context rather than missing implementation.
+**Quick Flow review rejects an approved deferral:** Make sure the deferral is listed in the plan's `Deferred` or `Out of Scope` section. The reviewer uses the plan approved at the gate as its baseline, so those items do not count as missing implementation.
 
 **Workflow not found by ID:** Install it: `specify workflow add .specify/presets/spec-kit-extended-flow/workflows/workflow.yml`
 
