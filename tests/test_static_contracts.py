@@ -44,7 +44,13 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                 for script in scripts:
                     self.assertIn(f"python3 {PRESET_PATH}/{script}", content)
 
-    def test_every_command_step_binds_model_from_the_load_models_step(self):
+    def test_every_command_step_prefers_its_model_entry_then_falls_back_to_default(self):
+        """The workflow binding expresses step entry > default > agent default.
+
+        The workflow engine applies the ``default`` filter. Omitting any
+        additional fallback deliberately leaves the integration's agent default
+        in effect when neither config entry supplies a model.
+        """
         for workflow in ("workflow.yml", "bugfix-workflow.yml", "quick-flow.yml"):
             content = (ROOT / "workflows" / workflow).read_text(encoding="utf-8")
             with self.subTest(workflow=workflow):
@@ -69,7 +75,9 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
                             expecting_model,
                             f"{workflow}:{line_number} has a model without a command step",
                         )
-                        expected = f"{{{{ steps.load-models.output.data.{current_id}.model }}}}"
+                        step_model = f"steps.load-models.output.data.{current_id}.model"
+                        default_model = "steps.load-models.output.data.default.model"
+                        expected = f"{{{{ {step_model} | default({default_model}) }}}}"
                         self.assertEqual(stripped[len("model:"):].strip(), f'"{expected}"')
                     expecting_model = False
             with self.subTest(workflow=workflow):

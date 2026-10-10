@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Expose per-step model overrides for a workflow run.
+"""Expose workflow model overrides for a workflow run.
 
-The optional ``model_config`` input points at a JSON document mapping step ids
-to ``{"model": "..."}`` objects. The document is read here rather than through
-a shell ``run:`` line so the path is never interpreted as shell syntax (issue
-#11). Whatever the document contains is passed through as ``output.data``; a
-step id that is absent resolves to ``None`` and the command step falls back to
-the agent default, so no fixed step list is needed.
+The optional ``model_config`` input points at a JSON document mapping step ids,
+and the reserved ``default`` key, to ``{"model": "..."}`` objects. The document
+is read here rather than through a shell ``run:`` line so the path is never
+interpreted as shell syntax (issue #11). Whatever the document contains is
+passed through as ``output.data``; command steps use their own entry first,
+then ``default``, then the agent default. No fixed step list is needed.
 """
 
 import json

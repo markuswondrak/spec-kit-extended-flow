@@ -68,7 +68,7 @@ steps:
   - id: quick-plan
     command: speckit.extendedflow.quick-plan
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.quick-plan.model }}"
+    model: "{{ steps.load-models.output.data.quick-plan.model | default(steps.load-models.output.data.default.model) }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
@@ -81,14 +81,14 @@ steps:
   - id: quick-implement
     command: speckit.extendedflow.quick-implement
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.quick-implement.model }}"
+    model: "{{ steps.load-models.output.data.quick-implement.model | default(steps.load-models.output.data.default.model) }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
   - id: quick-review
     command: speckit.extendedflow.quick-review
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.quick-review.model }}"
+    model: "{{ steps.load-models.output.data.quick-review.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: quick-review-verdict
     type: shell
@@ -113,11 +113,11 @@ steps:
           - id: doc-check-partial
             command: speckit.extendedflow.doc-check
             integration: "{{ inputs.integration }}"
-            model: "{{ steps.load-models.output.data.doc-check-partial.model }}"
+            model: "{{ steps.load-models.output.data.doc-check-partial.model | default(steps.load-models.output.data.default.model) }}"
           - id: finish-partial
             command: speckit.extendedflow.finish
             integration: "{{ inputs.integration }}"
-            model: "{{ steps.load-models.output.data.finish-partial.model }}"
+            model: "{{ steps.load-models.output.data.finish-partial.model | default(steps.load-models.output.data.default.model) }}"
             input:
               args: "{{ context.run_id }}"
         else:
@@ -128,10 +128,10 @@ steps:
       - id: doc-check
         command: speckit.extendedflow.doc-check
         integration: "{{ inputs.integration }}"
-        model: "{{ steps.load-models.output.data.doc-check.model }}"
+        model: "{{ steps.load-models.output.data.doc-check.model | default(steps.load-models.output.data.default.model) }}"
       - id: finish
         command: speckit.extendedflow.finish
         integration: "{{ inputs.integration }}"
-        model: "{{ steps.load-models.output.data.finish.model }}"
+        model: "{{ steps.load-models.output.data.finish.model | default(steps.load-models.output.data.default.model) }}"
         input:
           args: "{{ context.run_id }}"
