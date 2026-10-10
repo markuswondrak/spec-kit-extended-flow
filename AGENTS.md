@@ -43,6 +43,7 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/resolve-bug-context.py` | Records the standard bug extension's active bug directory in `feature.json` |
 | `scripts/check-bug-verdict.py` | Validates the standard bug extension's `test.md` result |
 | `scripts/init-quick.py` | Reads the run's `inputs.json`/`resolved-spec.txt` and creates or reuses a Quick Flow feature directory and `feature.json` pointer (`type: "quick"`) |
+| `scripts/preserve-quick-review.py` | Commits Quick Flow work before a failed review's resolution gate |
 | `scripts/resolve-pr-template.py` | Discovers a pull-request template in the downstream project using GitHub-standard search paths |
 | `scripts/load-models.py` | Resolves the per-step model config (`model.config.json`) into `load-models.output.data` for each flow |
 | `scripts/package-preset.py` | Builds the preset ZIP package |
@@ -121,7 +122,7 @@ Must preserve:
 - **Doc Reconciliation**: The post-implementation step that updates layered documentation and flags code-vs-docs conflicts.
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
-- **Quick Flow**: A lightweight workflow (`resolve → init-quick → quick-plan → plan-gate → implement → review-fix → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). Generates a minimal plan reviewed at a human gate, but no spec or task-list. Self-fixing review in a single pass.
+- **Quick Flow**: A lightweight workflow (`resolve → init-quick → quick-plan → plan-gate → record-scope → implement → review-fix → resolution → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). The reviewer validates the gate-approved plan scope, and a FAIL routes to explicit partial-ship, Feature Flow handoff, or abort choices.
 - **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It maps the active integration (read from `.specify/integration.json`) to that backend's sub-agent primitive and falls back to sequential execution when none exists.
 
 ## Known Issues
@@ -134,7 +135,7 @@ Must preserve:
 - **Agent behaviors**: See `commands/speckit.extendedflow.documentation.md`, `commands/speckit.extendedflow.finish.md`, `commands/speckit.extendedflow.quick-plan.md`, `commands/speckit.extendedflow.quick-implement.md`, `commands/speckit.extendedflow.quick-review.md`, `commands/speckit.extendedflow.doc-check.md`, plus the standard `speckit.bug.assess`, `speckit.bug.fix`, and `speckit.bug.test` commands from Spec-Kit's `bug` extension. The Feature Flow's QA loop uses the standard `speckit.analyze` and `speckit.implement`/`speckit.converge` commands.
 - **Output templates**: See `templates/review-findings.md`, `templates/documentation.md`
 - **Input resolution logic**: See `scripts/resolve-spec.py`
-- **Branch creation and verdict extraction**: See `scripts/create-branch.py`, `scripts/check-converge.py`, `scripts/extract-verdict.py`, `scripts/resolve-bug-context.py`, `scripts/check-bug-verdict.py`
+- **Branch creation and verdict extraction**: See `scripts/create-branch.py`, `scripts/check-converge.py`, `scripts/extract-verdict.py`, `scripts/preserve-quick-review.py`, `scripts/resolve-bug-context.py`, `scripts/check-bug-verdict.py`
 - **PR template resolution**: See `scripts/resolve-pr-template.py`
 - **Bundle composition**: See `bundle.yml`
 - **Architecture & design rationale**: See `README.md`
