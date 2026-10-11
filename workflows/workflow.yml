@@ -63,7 +63,7 @@ steps:
   - id: specify
     command: speckit.specify
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.specify.model }}"
+    model: "{{ steps.load-models.output.data.specify.model | default(steps.load-models.output.data.default.model) }}"
     input:
       args: "{{ steps.resolve-spec.output.stdout }}"
 
@@ -80,7 +80,7 @@ steps:
   - id: plan
     command: speckit.plan
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.plan.model }}"
+    model: "{{ steps.load-models.output.data.plan.model | default(steps.load-models.output.data.default.model) }}"
     input:
       args: "Infer the technical approach from the existing project. Reuse the current stack, architecture, test strategy, and quality constraints. Only introduce new dependencies, services, or infrastructure when required by the spec; document unresolved decisions as NEEDS CLARIFICATION."
 
@@ -93,17 +93,17 @@ steps:
   - id: tasks
     command: speckit.tasks
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.tasks.model }}"
+    model: "{{ steps.load-models.output.data.tasks.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: analyze
     command: speckit.analyze
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.analyze.model }}"
+    model: "{{ steps.load-models.output.data.analyze.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.implement.model }}"
+    model: "{{ steps.load-models.output.data.implement.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: converge-loop
     type: do-while
@@ -116,7 +116,7 @@ steps:
       - id: converge
         command: speckit.converge
         integration: "{{ inputs.integration }}"
-        model: "{{ steps.load-models.output.data.converge.model }}"
+        model: "{{ steps.load-models.output.data.converge.model | default(steps.load-models.output.data.default.model) }}"
       - id: converge-check
         type: shell
         run: python3 .specify/presets/spec-kit-extended-flow/scripts/check-converge.py check "{{ context.run_id }}"
@@ -127,7 +127,7 @@ steps:
           - id: converge-implement-run
             command: speckit.implement
             integration: "{{ inputs.integration }}"
-            model: "{{ steps.load-models.output.data.converge-implement-run.model }}"
+            model: "{{ steps.load-models.output.data.converge-implement-run.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: stop-on-not-converged
     type: if
@@ -140,11 +140,11 @@ steps:
   - id: documentation
     command: speckit.extendedflow.documentation
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.documentation.model }}"
+    model: "{{ steps.load-models.output.data.documentation.model | default(steps.load-models.output.data.default.model) }}"
 
   - id: finish
     command: speckit.extendedflow.finish
     integration: "{{ inputs.integration }}"
-    model: "{{ steps.load-models.output.data.finish.model }}"
+    model: "{{ steps.load-models.output.data.finish.model | default(steps.load-models.output.data.default.model) }}"
     input:
       args: "{{ context.run_id }}"

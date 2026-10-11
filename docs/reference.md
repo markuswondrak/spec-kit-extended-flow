@@ -85,6 +85,17 @@ The config is a flat object keyed by workflow step id, each value an object with
 
 The keys are the step ids used in the flow (see the workflow YAML for the exact ids, e.g. `specify`, `plan`, `implement`, `finish`). Any step you omit — and any extra key you add — is harmless: only ids a step actually reads have an effect, and everything else uses the agent default.
 
+A top-level `default` entry applies one model to every command step that has no entry of its own. A step entry overrides it:
+
+```json
+{
+  "default": { "model": "github-copilot/claude-haiku-5.5" },
+  "plan":    { "model": "github-copilot/claude-opus-4.8" }
+}
+```
+
+Precedence per command step: its own entry, then `default`, then the agent default. A `default` entry with an empty `model` counts as unset.
+
 `load-models.py` resolves the file in this order:
 
 1. The `model_config` input, when set (per-run override).

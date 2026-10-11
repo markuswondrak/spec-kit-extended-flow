@@ -709,6 +709,27 @@ class LoadModelsTests(RuntimeScriptTestCase):
         self.assertEqual(result.stdout, b"")
         self.assertIn(b"ERROR: Model config entry 'plan'.model must be a string:", result.stderr)
 
+    def test_default_entry_is_passed_through_verbatim(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            document = {"default": {"model": "github-copilot/claude-haiku-5.5"}}
+            (root / "model.config.json").write_text(json.dumps(document), encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(self.config(result), document)
+
+    def test_default_entry_is_validated_like_a_step_entry(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "model.config.json").write_text('{"default": {"model": 7}}', encoding="utf-8")
+            self.write_run_inputs(root)
+            result = self.run_script("load-models.py", "run-1", cwd=root)
+
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, b"")
+        self.assertIn(b"ERROR: Model config entry 'default'.model must be a string:", result.stderr)
+
     def test_unknown_step_ids_are_passed_through(self):
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)

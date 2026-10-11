@@ -4,7 +4,7 @@ Extended Flow is a family of composable flows. Each flow is a self-contained pip
 
 Shell steps only interpolate the engine-validated `context.run_id`. User-provided `spec`, `file`, and `issue` text and step stdout are read from the engine-owned run directory (`.specify/workflows/runs/<run_id>/`) instead of being spliced into the command line, so backticks, `$(...)`, and other shell metacharacters in issue bodies can never be executed as shell syntax.
 
-Every flow starts with a `load-models` shell step that resolves per-step model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step binds its `model` from that step's `output.data`.
+Every flow starts with a `load-models` shell step that resolves model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step uses its own model entry first, then the top-level `default` entry, then its integration's agent default.
 
 The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using their backend's sub-agent primitive, and falls back to sequential execution when the backend has none. See [Reference](reference.md#sub-agent-delegation).
 
