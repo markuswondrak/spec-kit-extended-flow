@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version (semver, e.g. 1.2.3)"
-        required: true
+        description: "Release version (optional semver; defaults to the next minor version)"
+        required: false
         type: string
 
 permissions:
@@ -37,6 +37,9 @@ jobs:
         run: |
           set -euo pipefail
           version="${INPUT_VERSION#v}"
+          if [ -z "$version" ]; then
+            version="$(python3 -c 'import re, sys; from pathlib import Path; match = re.search(r"^  version: \"([0-9]+)\.([0-9]+)\.([0-9]+)\"$", Path("preset.yml").read_text(encoding="utf-8"), re.MULTILINE); print(f"{match.group(1)}.{int(match.group(2)) + 1}.0") if match else sys.exit("ERROR: could not extract semver from preset.yml")')"
+          fi
           if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
             echo "ERROR: invalid version '$INPUT_VERSION'. Expected semver: MAJOR.MINOR.PATCH" >&2
             exit 1

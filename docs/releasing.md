@@ -8,12 +8,21 @@ single version.
 ## Cut a release
 
 ```bash
+gh workflow run release-preset.yml
+```
+
+By default, the workflow releases the next minor version: `0.18.0` becomes
+`0.19.0`. To override that version for a major, patch, or specific release,
+provide an explicit semver:
+
+```bash
 gh workflow run release-preset.yml -f version=1.2.3
 ```
 
 The workflow, in order:
 
-1. Resolves and validates the requested semver (`v1.2.3` and `1.2.3` are equivalent).
+1. Resolves and validates the requested semver, or derives the next minor version
+   from `preset.yml` when it is omitted (`v1.2.3` and `1.2.3` are equivalent).
 2. Bumps **every** component to that version:
    - `preset.yml`, `extension.yml`, `bundle.yml`,
    - `bundle.yml` component pins (`extensions`, `presets`, `workflows`),
