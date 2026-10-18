@@ -30,6 +30,28 @@
         "workflow"
       ]
     },
+    "analysis-report": {
+      "name": "Analysis Report",
+      "id": "analysis-report",
+      "version": "0.20.0",
+      "description": "Persists the cross-artifact consistency analysis as analysis.md in the feature directory by wrapping the standard analyze command, so the Feature Flow's analysis gate has a report to review.",
+      "author": "Markus Wondrak",
+      "repository": "https://github.com/markuswondrak/spec-kit-extended-flow",
+      "license": "MIT",
+      "download_url": "https://github.com/markuswondrak/spec-kit-extended-flow/releases/download/v0.20.0/analysis-report-0.20.0.zip",
+      "requires": {
+        "speckit_version": ">=0.11.2"
+      },
+      "provides": {
+        "commands": 1,
+        "templates": 0
+      },
+      "tags": [
+        "analysis",
+        "qa",
+        "workflow"
+      ]
+    },
     "sub-agent-delegation": {
       "name": "Sub-Agent Delegation",
       "id": "sub-agent-delegation",

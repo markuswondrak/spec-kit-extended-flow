@@ -37,6 +37,7 @@ This split exists because Spec-Kit's architecture reserves commands for extensio
 | Quick implement | `commands/speckit.extendedflow.quick-implement.md` | Direct implementation agent for trivial changes |
 | Quick review | `commands/speckit.extendedflow.quick-review.md` | Self-fixing review agent (review + fix in one pass) |
 | Doc check | `commands/speckit.extendedflow.doc-check.md` | Lightweight documentation impact check agent |
+| Analysis report wrapper | `presets/analysis-report/commands/speckit.analyze.md` | Wraps `speckit.analyze` so its read-only report is persisted as `FEATURE_DIR/analysis.md` for the Feature Flow's analysis gate |
 | Delegation preamble | `presets/sub-agent-delegation/commands/sub-agent-delegation.md` | Mechanism-neutral sub-agent delegation guidance, prepended to the parallelizable core commands |
 | Review template | `templates/review-findings.md` | Structured review output format |
 | Doc template | `templates/documentation.md` | Structured doc reconciliation format |
@@ -114,6 +115,19 @@ specify workflow run spec-kit-extended-flow --input model_config=./my-models.jso
 
 > **Note:** Model overrides are passed through to the agent CLI (e.g. `opencode run -m <model>`). Support depends on the integration. The opencode integration forwards `-m` automatically; other integrations may ignore the model field.
 
+
+### Analysis report
+
+The `analysis-report` preset wraps Spec-Kit's standard `speckit.analyze` command so that its report is persisted to `FEATURE_DIR/analysis.md` — `FEATURE_DIR` being the feature directory the command already resolves, the one holding `spec.md`, `plan.md`, and `tasks.md`.
+
+Core `analyze` is **strictly read-only**: it writes no file and its report exists only as transient agent output. The Feature Flow's `analyze-gate` therefore had nothing to review, and the cross-artifact consistency check — the last safety net before code is written — could not stop a run. The wrapper overrides the read-only constraint for exactly one write; every other file stays untouched.
+
+The preset uses the **wrap** strategy rather than a third prepend layer, because the command's own contract has to change, and the wrap is composed as the outermost layer so the persistence instruction is the last thing the command reads. Two constraints follow:
+
+- It must be installed at a **lower priority number** than `spec-kit-extended-flow` (the bundle pins it at `5`, against `10` and `20`), so the wrap encloses the unattended runtime preamble and the delegation preamble rather than the reverse.
+- It is a **separate preset** because Spec-Kit allows a preset to declare a given command only once; `speckit.analyze` already carries prepend layers from the other two.
+
+`analysis.md` is a run artifact: `finish` removes it with the rest of the feature directory, like `review-findings.md` and `doc-check.md`. It exists to be read at the gate, not to outlive the run. To opt out, remove the preset (`specify preset remove analysis-report`).
 
 ### Sub-agent delegation
 

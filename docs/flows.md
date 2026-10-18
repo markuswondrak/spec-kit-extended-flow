@@ -6,11 +6,13 @@ Shell steps only interpolate the engine-validated `context.run_id`. User-provide
 
 Every flow starts with a `load-models` shell step that resolves model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step uses its own model entry first, then the top-level `default` entry, then its integration's agent default.
 
+The bundle also installs the `analysis-report` preset, which wraps the standard `speckit.analyze` command so its report is persisted to `FEATURE_DIR/analysis.md`. Core `analyze` is strictly read-only, so without it the consistency findings exist only as transient agent output and no gate can review them. See [Reference](reference.md#analysis-report).
+
 The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using whatever delegation capability the active backend exposes, falling back to sequential execution only when no sub-agent primitive exists. See [Reference](reference.md#sub-agent-delegation).
 
 ## Feature Flow
 
-The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis, implements them, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
+The SDD lifecycle for new features. Generates spec, plan, and tasks, runs a consistency analysis reviewed at a human gate, implements the tasks, iterates through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
 
 ```mermaid
 flowchart TD
@@ -24,7 +26,8 @@ flowchart TD
     G --> H[🛑 plan-gate]
     H -->|approve| I[tasks]
     I --> J[analyze]
-    J --> K[implement]
+    J --> J2[🛑 analyze-gate]
+    J2 --> K[implement]
     K --> L[converge]
     L --> M{converged?}
     M -->|no: tasks appended| N[implement]
@@ -45,13 +48,14 @@ flowchart TD
 | `plan` | command | Creates implementation plan (infers from project) |
 | `plan-gate` | gate | 🛑 Human approval before task generation |
 | `tasks` | command | Generates actionable task breakdown |
-| `analyze` | command | Cross-artifact consistency & coverage analysis (standard) |
+| `analyze` | command | Cross-artifact consistency & coverage analysis (standard); the `analysis-report` preset persists its report to `FEATURE_DIR/analysis.md` |
+| `analyze-gate` | gate | 🛑 Human approval after the consistency analysis, before implementation |
 | `implement` | command | Implements the tasks |
 | `converge` | command | Assesses code against spec/plan/tasks; appends remaining work (standard) |
 | `documentation` | command | Updates all documentation layers |
 | `finish` | command | Cleans up, commits, opens PR when issue provided |
 
-**Safety caps:** The implement/converge loop maxes out at 5 iterations — if converge still appends tasks after the cap, the workflow fails with a clear error. Human gates let you inspect and approve each phase. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
+**Safety caps:** The implement/converge loop maxes out at 5 iterations — if converge still appends tasks after the cap, the workflow fails with a clear error. Human gates let you inspect and approve each phase: the specification, the plan, and the consistency analysis before implementation. Workflow state is persisted — resume from any interruption with `specify workflow resume <run_id>`.
 
 ## Bugfix Flow
 

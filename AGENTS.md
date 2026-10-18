@@ -1,6 +1,6 @@
 # Spec-Kit Extended Flow — Global Constraints
 
-This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), preset manifests (`preset.yml` and `presets/sub-agent-delegation/preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and Python runtime scripts plus shell tooling (`scripts/`). All changes must preserve the Spec-Kit contract.
+This is a **Spec-Kit preset, extension, and bundle**, not an application. It defines workflows (`workflows/`), preset manifests (`preset.yml`, `presets/analysis-report/preset.yml`, and `presets/sub-agent-delegation/preset.yml`), an extension manifest (`extension.yml`), a bundle manifest (`bundle.yml`), agent commands (`commands/`), templates (`templates/`), and Python runtime scripts plus shell tooling (`scripts/`). All changes must preserve the Spec-Kit contract.
 
 ## Hard Prohibitions
 
@@ -24,6 +24,7 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `workflows/bugfix-workflow.yml` | Orchestration: standard bug commands, assessment gate, and issue-to-PR finish |
 | `workflows/quick-flow.yml` | Orchestration: lightweight pipeline for trivial changes (quick plan + approval gate, no spec/tasks) |
 | `preset.yml` | Main preset manifest: templates, scripts, version, tags |
+| `presets/analysis-report/preset.yml` | Analysis preset manifest: the `wrap` on `speckit.analyze` that persists `FEATURE_DIR/analysis.md` |
 | `presets/sub-agent-delegation/preset.yml` | Delegation preset manifest: the single prepend preamble registered across parallelizable commands |
 | `extension.yml` | Extension manifest: commands, version, tags |
 | `bundle.yml` | Bundle manifest: composes preset + extension + workflows into a single install unit |
@@ -131,6 +132,7 @@ Must preserve:
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
 - **Quick Flow**: A lightweight workflow (`resolve → init-quick → quick-plan → plan-gate → record-scope → implement → review-fix → resolution → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). The reviewer validates the gate-approved plan scope, and a FAIL routes to explicit partial-ship, Feature Flow handoff, or abort choices.
+- **Analysis Gate**: The `analyze-gate` in the Feature Flow, backed by the `analysis-report` preset. A preset cannot add a workflow step, so the two split: the preset wraps `speckit.analyze` to write `FEATURE_DIR/analysis.md` (the command is otherwise strictly read-only), and the gate pauses to review it. The preset must be installed at a lower priority number than the main preset so the wrap is the outermost layer.
 - **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It uses whatever delegation capability the session actually exposes (read from the agent's own tools, or a documented sub-agent subcommand), with `.specify/integration.json` consulted only for hint rows and reporting. The integration key never gates delegation, and work runs sequentially only when no primitive exists.
 
 ## Known Issues
