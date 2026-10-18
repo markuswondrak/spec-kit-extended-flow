@@ -271,8 +271,10 @@ class AnalysisReportStaticContracts(unittest.TestCase):
         text = self.WRAPPER.read_text(encoding="utf-8")
         self.assertIn("{CORE_TEMPLATE}", text)
         self.assertIn("FEATURE_DIR/analysis.md", text)
-        self.assertIn("read-only", text.lower())
-        self.assertIn("permitted file modification", text)
+        self.assertIn("supersedes the read-only", text.lower())
+        # The wrapper states the target and the override, nothing else: the
+        # command already defines FEATURE_DIR and its own read-only contract.
+        self.assertLessEqual(len([line for line in text.splitlines() if line.strip()]), 8)
 
     def test_bundle_installs_the_wrap_at_the_highest_precedence(self):
         """A wrap only encloses the layers below it, so it needs the lowest priority number."""

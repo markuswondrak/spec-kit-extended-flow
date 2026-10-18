@@ -6,7 +6,7 @@ Shell steps only interpolate the engine-validated `context.run_id`. User-provide
 
 Every flow starts with a `load-models` shell step that resolves model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step uses its own model entry first, then the top-level `default` entry, then its integration's agent default.
 
-The bundle also installs the `analysis-report` preset, which wraps the standard `speckit.analyze` command so its report is persisted to `FEATURE_DIR/analysis.md`. Core `analyze` is strictly read-only, so without it the consistency findings exist only as transient agent output and no gate can review them. See [Reference](reference.md#analysis-report).
+The bundle also installs the `analysis-report` preset, which wraps `speckit.analyze` so its report is persisted to `FEATURE_DIR/analysis.md` and the Feature Flow's analysis gate has something to review. See [Reference](reference.md#analysis-report).
 
 The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using whatever delegation capability the active backend exposes, falling back to sequential execution only when no sub-agent primitive exists. See [Reference](reference.md#sub-agent-delegation).
 
@@ -48,7 +48,7 @@ flowchart TD
 | `plan` | command | Creates implementation plan (infers from project) |
 | `plan-gate` | gate | 🛑 Human approval before task generation |
 | `tasks` | command | Generates actionable task breakdown |
-| `analyze` | command | Cross-artifact consistency & coverage analysis (standard); the `analysis-report` preset persists its report to `FEATURE_DIR/analysis.md` |
+| `analyze` | command | Cross-artifact consistency & coverage analysis (standard) |
 | `analyze-gate` | gate | 🛑 Human approval after the consistency analysis, before implementation |
 | `implement` | command | Implements the tasks |
 | `converge` | command | Assesses code against spec/plan/tasks; appends remaining work (standard) |

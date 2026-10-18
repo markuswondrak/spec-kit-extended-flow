@@ -4,7 +4,7 @@ preset:
   id: "analysis-report"
   name: "Analysis Report"
   version: "0.20.0"
-  description: "Persists the cross-artifact consistency analysis as a durable artifact. Wraps the standard analyze command so its report is written to FEATURE_DIR/analysis.md — the single write that overrides the command's read-only contract — giving the Feature Flow's analysis gate something to review."
+  description: "Wraps speckit.analyze so its report is persisted to FEATURE_DIR/analysis.md."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"
@@ -14,13 +14,8 @@ requires:
 
 provides:
   templates:
-    # The standard analyze command is strictly read-only, so it leaves no
-    # evidence for a human to review. This preset wraps it (rather than
-    # prepends to it) because the command's contract itself must change: one
-    # file write is permitted, and it comes last in the composed prompt. This
-    # preset is intentionally separate from spec-kit-extended-flow: a preset
-    # may declare a given command only once, so a third layer for
-    # speckit.analyze requires a third preset.
+    # Why a third preset, and why the wrap must be outermost:
+    # docs/reference.md#analysis-report.
     - type: "command"
       name: "speckit.analyze"
       file: "commands/speckit.analyze.md"
