@@ -52,6 +52,12 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/release.py` | Merges a release branch, bumps the minor version, tags, and pushes |
 | `scripts/check-release.py` | Validates that one version is consistent across manifests, workflows, catalogs, and (with `--artifacts`) built archives |
 
+## Releases & Versioning
+
+**Do not hand-edit version numbers in a feature PR.** The release workflow (`.github/workflows/release-preset.yml`) owns versioning: it derives the next minor version from `preset.yml`, bumps every component (manifests, `bundle.yml` pins, `workflows/*.yml`), regenerates the catalogs, commits, tags, and publishes. Leaving the version as it is in a PR is correct — the release run reconciles it.
+
+Consequence to be aware of: once a version is tagged, later source changes on `main` at that same version no longer match the published artifact, and the catalog pins the released `download_url`. `scripts/check-release.py` compares version strings only, so it does not flag this; the divergence clears at the next release, which rebuilds the catalogs from source. See `docs/releasing.md`.
+
 ## Downstream Project Layout
 
 This repo is a **preset, extension, and bundle**. The agents in `commands/` and the workflows in `workflows/` execute in **downstream projects** that install this bundle via `specify bundle install` (or the preset/extension individually via `specify preset add` / `specify extension add`). The downstream file layout is completely different from this repo.
