@@ -54,9 +54,11 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 
 ## Releases & Versioning
 
-**Do not hand-edit version numbers in a feature PR.** The release workflow (`.github/workflows/release-preset.yml`) owns versioning: it derives the next minor version from `preset.yml`, bumps every component (manifests, `bundle.yml` pins, `workflows/*.yml`), regenerates the catalogs, commits, tags, and publishes. Leaving the version as it is in a PR is correct — the release run reconciles it.
+Do not hand-edit versions in a feature PR — the release workflow bumps every component and rebuilds the catalogs. `check-release.py` compares version strings only, so post-tag source changes at a released version go unflagged until the next release. See `docs/releasing.md`.
 
-Consequence to be aware of: once a version is tagged, later source changes on `main` at that same version no longer match the published artifact, and the catalog pins the released `download_url`. `scripts/check-release.py` compares version strings only, so it does not flag this; the divergence clears at the next release, which rebuilds the catalogs from source. See `docs/releasing.md`.
+## Writing Style
+
+Keep instructions short. State the rule, not the rationale; rationale goes in `docs/`. One or two sentences beats a paragraph.
 
 ## Downstream Project Layout
 
