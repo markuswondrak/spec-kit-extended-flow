@@ -52,6 +52,14 @@ This is a **Spec-Kit preset, extension, and bundle**, not an application. It def
 | `scripts/release.py` | Merges a release branch, bumps the minor version, tags, and pushes |
 | `scripts/check-release.py` | Validates that one version is consistent across manifests, workflows, catalogs, and (with `--artifacts`) built archives |
 
+## Releases & Versioning
+
+Do not hand-edit versions in a feature PR — the release workflow bumps every component and rebuilds the catalogs. `check-release.py` compares version strings only, so post-tag source changes at a released version go unflagged until the next release. See `docs/releasing.md`.
+
+## Writing Style
+
+Keep instructions short. State the rule, not the rationale; rationale goes in `docs/`. One or two sentences beats a paragraph.
+
 ## Downstream Project Layout
 
 This repo is a **preset, extension, and bundle**. The agents in `commands/` and the workflows in `workflows/` execute in **downstream projects** that install this bundle via `specify bundle install` (or the preset/extension individually via `specify preset add` / `specify extension add`). The downstream file layout is completely different from this repo.
@@ -123,7 +131,7 @@ Must preserve:
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
 - **Quick Flow**: A lightweight workflow (`resolve → init-quick → quick-plan → plan-gate → record-scope → implement → review-fix → resolution → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). The reviewer validates the gate-approved plan scope, and a FAIL routes to explicit partial-ship, Feature Flow handoff, or abort choices.
-- **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It maps the active integration (read from `.specify/integration.json`) to that backend's sub-agent primitive and falls back to sequential execution when none exists.
+- **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It uses whatever delegation capability the session actually exposes (read from the agent's own tools, or a documented sub-agent subcommand), with `.specify/integration.json` consulted only for hint rows and reporting. The integration key never gates delegation, and work runs sequentially only when no primitive exists.
 
 ## Known Issues
 

@@ -9,12 +9,6 @@ workflow:
 
 requires:
   speckit_version: ">=0.8.5"
-  integrations:
-    any:
-      - "claude"
-      - "copilot"
-      - "gemini"
-      - "opencode"
 
 inputs:
   spec:
