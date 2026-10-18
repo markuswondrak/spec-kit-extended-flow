@@ -94,6 +94,12 @@ steps:
     integration: "{{ inputs.integration }}"
     model: "{{ steps.load-models.output.data.analyze.model | default(steps.load-models.output.data.default.model) }}"
 
+  - id: analyze-gate
+    type: gate
+    message: "Review the consistency analysis written to analysis.md in the feature directory. Approve to start implementation, or reject to stop and fix the spec, plan, or tasks first."
+    options: [approve, reject]
+    on_reject: abort
+
   - id: implement
     command: speckit.implement
     integration: "{{ inputs.integration }}"

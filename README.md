@@ -41,6 +41,7 @@ Extended Flow closes the loop. **Intent in, working software out — reviewed ag
 - **Convergence Loop.** After implementation, Spec-Kit's standard `speckit.converge` command assesses the codebase against the spec, plan, and tasks. If it finds remaining work, it appends new tasks and `speckit.implement` runs again. This loops until converge reports no remaining tasks — up to 5 iterations max. Built entirely on standard Spec-Kit commands.
 - **Documentation Reconciliation.** After a passing review, a Documentation agent scans all implementation diffs and updates every documentation layer (global constraints, architecture decisions, interface contracts, AI debt register). **Code-vs-docs conflicts are flagged for human resolution — never auto-resolved.** This is a core invariant.
 - **Issue → PR automation.** When started from a GitHub issue, the workflow automatically creates a feature branch, cleans up temporary files, commits all changes, and opens a pull request that closes the issue.
+- **Analysis Gate.** Spec-Kit's `speckit.analyze` is strictly read-only, so its cross-artifact consistency findings used to evaporate. The `analysis-report` preset wraps that command so the report is written to `FEATURE_DIR/analysis.md`, and the Feature Flow pauses at an analysis gate after it — the last safety net before code is written is now readable and can stop the run. See [Reference](docs/reference.md#analysis-report).
 - **Sub-agent delegation.** The bundle also installs `sub-agent-delegation`, a capability-first preset that lets agents run independent work in parallel using whatever delegation capability the active backend actually exposes. It reads the active integration from `.specify/integration.json` only to look up a hint row (Claude `Task`, Copilot `runSubagent`, opencode `task`, pi `subagent`) and to report which integration ran — the key never decides whether to delegate. Backends with no sub-agent primitive run the same items sequentially. See [Reference](docs/reference.md#sub-agent-delegation).
 
 ### A family of flows
@@ -58,7 +59,7 @@ See [Flows](docs/flows.md) for the full diagrams and step-by-step breakdown. The
 ## Quickstart
 
 ```bash
-# 1. Install the complete bundle (2 presets + extension + 3 workflows)
+# 1. Install the complete bundle (3 presets + extension + 3 workflows)
 #
 # Option A — For users (remote, from this repo's HTTPS catalog)
 #   Register the project-owned catalog once, then install the bundle in one step.
@@ -83,7 +84,7 @@ specify workflow run spec-kit-extended-flow \
   --input spec="Build a REST API for managing todos with CRUD operations"
 ```
 
-**What happens:** The workflow generates a specification, plan, and tasks (with human approval gates), implements them through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
+**What happens:** The workflow generates a specification, plan, and tasks (with human approval gates), runs a cross-artifact consistency analysis and pauses for review, implements the tasks through Spec-Kit's standard implement/converge loop, reconciles documentation, and ships a PR.
 
 ### Bugfix Quickstart
 
@@ -153,9 +154,14 @@ specify extension add bug
 # 2. Install preset (templates + scripts)
 specify preset add --from https://github.com/markuswondrak/spec-kit-extended-flow/releases/latest/download/spec-kit-extended-flow.zip
 
-# 2b. Install the sub-agent delegation preset (needs the project-owned catalog
-#     registered, as in the Quickstart; it is a separate preset because Spec-Kit
-#     allows only one command entry per preset)
+# 2b. Install the analysis report preset (needs the project-owned catalog
+#     registered, as in the Quickstart; it wraps speckit.analyze so the report is
+#     persisted, and is separate because Spec-Kit allows only one command entry
+#     per preset). Its priority must be lower than the main preset's so the wrap
+#     is the outermost layer.
+specify preset add analysis-report --priority 5
+
+# 2c. Install the sub-agent delegation preset (same catalog requirement)
 specify preset add sub-agent-delegation
 
 # 3. Install extension (commands)

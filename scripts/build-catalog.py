@@ -142,6 +142,8 @@ def main() -> int:
     preset_version = manifest_version(root / "preset.yml")
     delegation_manifest = root / "presets" / "sub-agent-delegation" / "preset.yml"
     delegation_version = manifest_version(delegation_manifest)
+    analysis_manifest = root / "presets" / "analysis-report" / "preset.yml"
+    analysis_version = manifest_version(analysis_manifest)
     bundle_version = manifest_version(root / "bundle.yml")
     if not extension_version:
         error("Could not read version from extension.yml")
@@ -149,12 +151,15 @@ def main() -> int:
         error("Could not read version from preset.yml")
     if not delegation_version:
         error("Could not read version from presets/sub-agent-delegation/preset.yml")
+    if not analysis_version:
+        error("Could not read version from presets/analysis-report/preset.yml")
     if not bundle_version:
         error("Could not read version from bundle.yml")
 
     extension_artifact = f"extendedflow-{extension_version}.zip"
     preset_artifact = f"spec-kit-extended-flow-{preset_version}.zip"
     delegation_artifact = f"sub-agent-delegation-{delegation_version}.zip"
+    analysis_artifact = f"analysis-report-{analysis_version}.zip"
     bundle_artifact = f"spec-kit-extended-flow-bundle-{bundle_version}.zip"
 
     extension_entries = {"extension.yml": root / "extension.yml"}
@@ -182,6 +187,13 @@ def main() -> int:
     for command in delegation_commands:
         delegation_entries[f"commands/{command.name}"] = command
 
+    analysis_entries = {"preset.yml": analysis_manifest}
+    analysis_commands = sorted((analysis_manifest.parent / "commands").glob("*.md"))
+    if not analysis_commands:
+        error("No commands found under presets/analysis-report/commands/")
+    for command in analysis_commands:
+        analysis_entries[f"commands/{command.name}"] = command
+
     bundle_entries = {
         "bundle.yml": root / "bundle.yml",
         "README.md": root / "README.md",
@@ -194,6 +206,7 @@ def main() -> int:
             ("extension", extension_artifact, extension_entries),
             ("preset", preset_artifact, preset_entries),
             ("sub-agent-delegation", delegation_artifact, delegation_entries),
+            ("analysis-report", analysis_artifact, analysis_entries),
             ("bundle", bundle_artifact, bundle_entries),
         )
         for component, artifact, entries in artifacts:
@@ -223,6 +236,13 @@ def main() -> int:
         "sub-agent-delegation",
         delegation_version,
         delegation_artifact,
+    )
+    update_catalog_entry(
+        root / "catalog" / "preset-catalog.json",
+        "presets",
+        "analysis-report",
+        analysis_version,
+        analysis_artifact,
     )
     update_catalog_entry(
         root / "catalog" / "bundle-catalog.json",

@@ -21,7 +21,14 @@ BUNDLE_WORKFLOW_IDS = (
     '    - id: "spec-kit-quick-flow"\n',
 )
 DELEGATION_PRESET_FILE = "presets/sub-agent-delegation/preset.yml"
-MANIFEST_FILES = ("preset.yml", "extension.yml", "bundle.yml", DELEGATION_PRESET_FILE)
+ANALYSIS_PRESET_FILE = "presets/analysis-report/preset.yml"
+MANIFEST_FILES = (
+    "preset.yml",
+    "extension.yml",
+    "bundle.yml",
+    DELEGATION_PRESET_FILE,
+    ANALYSIS_PRESET_FILE,
+)
 
 
 def error(message: str) -> None:
@@ -87,10 +94,13 @@ def update_bundle_component_versions(path: Path, version: str) -> None:
         if section == "presets" and line == '    - id: "sub-agent-delegation"\n':
             lines[index + 1] = f'      version: "{version}"\n'
             updates += 1
+        if section == "presets" and line == '    - id: "analysis-report"\n':
+            lines[index + 1] = f'      version: "{version}"\n'
+            updates += 1
         if section == "workflows" and line in BUNDLE_WORKFLOW_IDS:
             lines[index + 1] = f'      version: "{version}"\n'
             updates += 1
-    if updates != 6:
+    if updates != 7:
         error("Failed to update preset, extension, and workflow versions in bundle.yml")
     path.write_text("".join(lines), encoding="utf-8")
 
@@ -115,13 +125,22 @@ def main(arguments: list[str]) -> int:
     extension_file = project_dir / "extension.yml"
     bundle_file = project_dir / "bundle.yml"
     delegation_file = project_dir / DELEGATION_PRESET_FILE
+    analysis_file = project_dir / ANALYSIS_PRESET_FILE
     workflow_files = tuple(project_dir / name for name in WORKFLOW_FILES)
+    manifests = (
+        preset_file,
+        extension_file,
+        bundle_file,
+        delegation_file,
+        analysis_file,
+        *workflow_files,
+    )
 
     _, status = git_output(project_dir, "status", "--porcelain")
     if status:
         error("Working tree is not clean. Commit or stash changes before releasing.")
 
-    for manifest in (preset_file, extension_file, bundle_file, delegation_file, *workflow_files):
+    for manifest in manifests:
         if not manifest.is_file():
             error(f"Required release file not found at {manifest}")
 
@@ -136,7 +155,7 @@ def main(arguments: list[str]) -> int:
     if tag_status == 0:
         error(f"Tag already exists: {tag}")
 
-    for manifest in (preset_file, extension_file, bundle_file, delegation_file, *workflow_files):
+    for manifest in manifests:
         update_manifest_version(manifest, version)
     update_bundle_component_versions(bundle_file, version)
 
@@ -149,7 +168,7 @@ def main(arguments: list[str]) -> int:
     except subprocess.CalledProcessError:
         error("Failed to build catalog artifacts and synchronize catalog pins.")
 
-    for manifest in (preset_file, extension_file, bundle_file, delegation_file, *workflow_files):
+    for manifest in manifests:
         if version_from_manifest(manifest) != version:
             error(f"Failed to update version in {manifest}")
 

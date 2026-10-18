@@ -1,0 +1,28 @@
+schema_version: "1.0"
+
+preset:
+  id: "analysis-report"
+  name: "Analysis Report"
+  version: "0.20.0"
+  description: "Wraps speckit.analyze so its report is persisted to FEATURE_DIR/analysis.md."
+  author: "Markus Wondrak"
+  repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
+  license: "MIT"
+
+requires:
+  speckit_version: ">=0.11.2"
+
+provides:
+  templates:
+    # Why a third preset, and why the wrap must be outermost:
+    # docs/reference.md#analysis-report.
+    - type: "command"
+      name: "speckit.analyze"
+      file: "commands/speckit.analyze.md"
+      strategy: "wrap"
+      description: "Wraps analyze to persist its report as analysis.md"
+
+tags:
+  - "analysis"
+  - "qa"
+  - "workflow"

@@ -93,6 +93,18 @@ class PythonRuntimeStaticContracts(unittest.TestCase):
         self.assertLess(gate_index, implement_index)
         self.assertIn("on_reject: abort", content)
 
+    def test_feature_flow_gates_between_analyze_and_implement(self):
+        content = (ROOT / "workflows" / "workflow.yml").read_text(encoding="utf-8")
+        analyze = content.index("command: speckit.analyze")
+        gate = content.index("id: analyze-gate")
+        implement = content.index("command: speckit.implement")
+        self.assertLess(analyze, gate)
+        self.assertLess(gate, implement)
+        gate_block = content[gate:implement]
+        self.assertIn("type: gate", gate_block)
+        self.assertIn("options: [approve, reject]", gate_block)
+        self.assertIn("on_reject: abort", gate_block)
+
     def test_quick_flow_uses_the_approved_plan_and_routes_review_failures_to_a_gate(self):
         workflow = (ROOT / "workflows" / "quick-flow.yml").read_text(encoding="utf-8")
         review = (ROOT / "commands" / "speckit.extendedflow.quick-review.md").read_text(encoding="utf-8")
@@ -239,6 +251,54 @@ class SubAgentDelegationStaticContracts(unittest.TestCase):
                     self.assertIn("|", line, f"line {line_number} leaks a backend mechanism outside the hint table")
         self.assertNotIn("~/.copilot", text)
         self.assertNotIn("~/.claude", text)
+
+
+class AnalysisReportStaticContracts(unittest.TestCase):
+    """The analyze wrap must persist the report without duplicating an existing layer."""
+
+    PRESET_DIR = ROOT / "presets" / "analysis-report"
+    WRAPPER = PRESET_DIR / "commands" / "speckit.analyze.md"
+
+    def test_preset_wraps_analyze_exactly_once(self):
+        manifest = (self.PRESET_DIR / "preset.yml").read_text(encoding="utf-8")
+        self.assertEqual(manifest.count('name: "speckit.analyze"'), 1)
+        self.assertEqual(manifest.count('file: "commands/speckit.analyze.md"'), 1)
+        self.assertEqual(manifest.count('strategy: "wrap"'), 1)
+        command_files = sorted(path.name for path in (self.PRESET_DIR / "commands").glob("*.md"))
+        self.assertEqual(command_files, ["speckit.analyze.md"])
+
+    def test_wrapper_persists_the_report_under_feature_dir(self):
+        text = self.WRAPPER.read_text(encoding="utf-8")
+        self.assertIn("{CORE_TEMPLATE}", text)
+        self.assertIn("FEATURE_DIR/analysis.md", text)
+        self.assertIn("supersedes the read-only", text.lower())
+        # The wrapper states the target and the override, nothing else: the
+        # command already defines FEATURE_DIR and its own read-only contract.
+        self.assertLessEqual(len([line for line in text.splitlines() if line.strip()]), 8)
+
+    def test_bundle_installs_the_wrap_at_the_highest_precedence(self):
+        """A wrap only encloses the layers below it, so it needs the lowest priority number."""
+        bundle = (ROOT / "bundle.yml").read_text(encoding="utf-8")
+        self.assertIn('id: "analysis-report"', bundle)
+        priorities: dict[str, int] = {}
+        component_id = ""
+        for line in bundle.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("- id: "):
+                component_id = stripped.split('"')[1]
+            elif stripped.startswith("priority: ") and component_id:
+                priorities[component_id] = int(stripped.split(":")[1])
+                component_id = ""
+        self.assertIn("analysis-report", priorities)
+        self.assertIn("spec-kit-extended-flow", priorities)
+        self.assertLess(priorities["analysis-report"], priorities["spec-kit-extended-flow"])
+
+    def test_gate_and_preset_are_documented(self):
+        self.assertIn("analyze-gate", (ROOT / "docs" / "flows.md").read_text(encoding="utf-8"))
+        self.assertIn(
+            "### Analysis report",
+            (ROOT / "docs" / "reference.md").read_text(encoding="utf-8"),
+        )
 
 
 class WorkflowIntegrationContract(unittest.TestCase):

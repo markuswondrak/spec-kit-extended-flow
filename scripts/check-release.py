@@ -16,6 +16,7 @@ MANIFEST_FILES = (
     "extension.yml",
     "bundle.yml",
     "presets/sub-agent-delegation/preset.yml",
+    "presets/analysis-report/preset.yml",
 )
 WORKFLOW_FILES = {
     "workflows/workflow.yml": "spec-kit-extended-flow",
@@ -24,13 +25,14 @@ WORKFLOW_FILES = {
 }
 BUNDLE_PINS = {
     "extensions": ("extendedflow",),
-    "presets": ("spec-kit-extended-flow", "sub-agent-delegation"),
+    "presets": ("spec-kit-extended-flow", "sub-agent-delegation", "analysis-report"),
     "workflows": ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow"),
 }
 CATALOG_ENTRIES = (
     ("catalog/extension-catalog.json", "extensions", "extendedflow"),
     ("catalog/preset-catalog.json", "presets", "spec-kit-extended-flow"),
     ("catalog/preset-catalog.json", "presets", "sub-agent-delegation"),
+    ("catalog/preset-catalog.json", "presets", "analysis-report"),
     ("catalog/bundle-catalog.json", "bundles", "spec-kit-extended-flow"),
 )
 WORKFLOW_CATALOG_IDS = ("spec-kit-extended-flow", "spec-kit-bugfix-flow", "spec-kit-quick-flow")
@@ -147,6 +149,7 @@ def check_artifacts(root: Path, version: str, failures: list[str]) -> None:
         root / "catalog" / "artifacts" / f"extendedflow-{version}.zip",
         root / "catalog" / "artifacts" / f"spec-kit-extended-flow-{version}.zip",
         root / "catalog" / "artifacts" / f"sub-agent-delegation-{version}.zip",
+        root / "catalog" / "artifacts" / f"analysis-report-{version}.zip",
         root / "catalog" / "artifacts" / f"spec-kit-extended-flow-bundle-{version}.zip",
         root / "dist" / "spec-kit-extended-flow.zip",
     )
