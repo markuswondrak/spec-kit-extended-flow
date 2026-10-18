@@ -3,7 +3,7 @@ schema_version: "1.0"
 preset:
   id: "analysis-report"
   name: "Analysis Report"
-  version: "0.20.0"
+  version: "0.21.0"
   description: "Wraps speckit.analyze so its report is persisted to FEATURE_DIR/analysis.md."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
