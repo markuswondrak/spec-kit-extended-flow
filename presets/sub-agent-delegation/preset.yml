@@ -4,7 +4,7 @@ preset:
   id: "sub-agent-delegation"
   name: "Sub-Agent Delegation"
   version: "0.18.0"
-  description: "Integration-agnostic sub-agent delegation. Prepends one mechanism-neutral preamble to the parallelizable core commands so independent work is dispatched as delegated sub-agents, with a deterministic per-integration primitive map and a sequential fallback for backends without sub-agents."
+  description: "Capability-first sub-agent delegation. Prepends one mechanism-neutral preamble to the parallelizable core commands so independent work is dispatched as delegated sub-agents through whatever primitive the session actually exposes, with hint rows for known-good calling conventions and a sequential floor when no primitive exists."
   author: "Markus Wondrak"
   repository: "https://github.com/markuswondrak/spec-kit-extended-flow"
   license: "MIT"

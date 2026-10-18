@@ -6,7 +6,7 @@ Shell steps only interpolate the engine-validated `context.run_id`. User-provide
 
 Every flow starts with a `load-models` shell step that resolves model overrides from `model.config.json` (see [Reference](reference.md#per-step-models)). Each command step uses its own model entry first, then the top-level `default` entry, then its integration's agent default.
 
-The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using their backend's sub-agent primitive, and falls back to sequential execution when the backend has none. See [Reference](reference.md#sub-agent-delegation).
+The bundle also installs the `sub-agent-delegation` preset, which prepends a mechanism-neutral delegation preamble to the parallelizable core commands. It lets agents run independent work (research unknowns, `[P]` tasks, analyze passes, issue creation) in parallel using whatever delegation capability the active backend exposes, falling back to sequential execution only when no sub-agent primitive exists. See [Reference](reference.md#sub-agent-delegation).
 
 ## Feature Flow
 

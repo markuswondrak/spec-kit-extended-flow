@@ -123,7 +123,7 @@ Must preserve:
 - **Spec-Kit Contract**: The interface between workflow steps where `stdout` of one step becomes the `args` of the next.
 - **Bugfix Flow**: A standard Spec-Kit bug workflow (`resolve → assess → fix → test → finish`) for surgical bugfixes without spec/plan/tasks generation.
 - **Quick Flow**: A lightweight workflow (`resolve → init-quick → quick-plan → plan-gate → record-scope → implement → review-fix → resolution → doc-check → finish`) for trivial, well-defined changes (label renames, message additions). The reviewer validates the gate-approved plan scope, and a FAIL routes to explicit partial-ship, Feature Flow handoff, or abort choices.
-- **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It maps the active integration (read from `.specify/integration.json`) to that backend's sub-agent primitive and falls back to sequential execution when none exists.
+- **Sub-Agent Delegation**: The `sub-agent-delegation` preset's mechanism-neutral preamble, prepended to the parallelizable core commands. It uses whatever delegation capability the session actually exposes (read from the agent's own tools, or a documented sub-agent subcommand), with `.specify/integration.json` consulted only for hint rows and reporting. The integration key never gates delegation, and work runs sequentially only when no primitive exists.
 
 ## Known Issues
 

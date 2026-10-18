@@ -210,24 +210,41 @@ class SubAgentDelegationStaticContracts(unittest.TestCase):
         self.assertIsNotNone(bundle_version)
         self.assertEqual(delegation_version.group(1), bundle_version.group(1))
 
-    def test_preamble_selects_the_integration_deterministically(self):
+    def test_preamble_reads_integration_json_only_for_hints_and_reporting(self):
         text = self.preamble_text()
         self.assertIn(".specify/integration.json", text)
         self.assertIn("default_integration", text)
 
-    def test_mapping_covers_verified_integrations_and_sequential_fallback(self):
+    def test_hint_table_lists_known_integrations_without_gating_delegation(self):
+        """Rows are hints; the integration key must never decide *whether* to delegate."""
         text = self.preamble_text()
-        for key in ("claude", "copilot", "opencode"):
+        for key in ("claude", "copilot", "opencode", "pi"):
             with self.subTest(integration=key):
                 self.assertIn(f"`{key}`", text)
         self.assertIn("sequentially", text)
+        self.assertIn("hints, not a gate", text)
+        self.assertNotIn("If your integration is not listed above", text)
 
-    def test_preamble_is_mechanism_neutral_outside_the_mapping_table(self):
-        """Backend-specific tool names and paths may only appear on map rows."""
+    def test_preamble_makes_the_chosen_primitive_observable(self):
         text = self.preamble_text()
+        self.assertIn("state the primitive you are using", text)
+
+    def test_preamble_is_mechanism_neutral_outside_the_hint_table(self):
+        """Backend-specific tool names and paths may only appear on hint rows."""
+        text = self.preamble_text()
+        mechanisms = ("Task", "runSubagent", "subagent", "task", ".github/agents/")
         for line_number, line in enumerate(text.splitlines(), start=1):
-            if "runSubagent" in line or ".github/agents/" in line:
-                with self.subTest(line=line_number):
-                    self.assertIn("|", line, f"line {line_number} leaks a backend mechanism outside the map")
+            if any(token in line for token in mechanisms):
+                with self.subTest(line=line_number, text=line):
+                    self.assertIn("|", line, f"line {line_number} leaks a backend mechanism outside the hint table")
         self.assertNotIn("~/.copilot", text)
         self.assertNotIn("~/.claude", text)
+
+
+class WorkflowIntegrationContract(unittest.TestCase):
+    def test_workflows_do_not_gate_on_an_advisory_integration_list(self):
+        """`requires.integrations` is not enforced by the engine, so the flows must not declare it."""
+        for workflow in sorted((ROOT / "workflows").glob("*.yml")):
+            with self.subTest(workflow=workflow.name):
+                text = workflow.read_text(encoding="utf-8")
+                self.assertEqual(re.findall(r"^  integrations:", text, re.MULTILINE), [])

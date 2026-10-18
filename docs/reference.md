@@ -119,15 +119,20 @@ specify workflow run spec-kit-extended-flow --input model_config=./my-models.jso
 
 The `sub-agent-delegation` preset prepends one mechanism-neutral preamble to the parallelizable core commands (`specify`, `plan`, `tasks`, `analyze`, `implement`, `checklist`, `clarify`, `taskstoissues`). When a command has independent work items, the preamble instructs the agent to dispatch each as a delegated sub-agent in an isolated context and collect the results before continuing.
 
-The preset is **integration-agnostic**. The preamble determines the backend deterministically from `.specify/integration.json` (the `default_integration` key, then `integration`) and maps it to a dispatch primitive:
+The preset is **capability-first**. The preamble picks the mechanism from the delegation capability the session actually exposes — the tools it can call, or a sub-agent subcommand its backend documents — not from a lookup that could be stale. It must state the primitive it uses (or that none is available) before dispatching, so the choice shows up in the run output instead of staying implicit.
 
-| integration | dispatch primitive |
-|-------------|--------------------|
+`.specify/integration.json` (the `default_integration` key, then `integration`) is read only to look up a hint row and to report which integration ran. The hint rows record known-good calling conventions for common backends:
+
+| integration | delegation primitive (hint) |
+|-------------|-----------------------------|
 | `claude` | `Task` tool |
 | `copilot` | `runSubagent` (VS Code) / Copilot CLI sub-agent |
 | `opencode` | `task` tool with `subagent_type` |
+| `pi` | `subagent` tool from the `pi-subagents` extension |
 
-If the integration is not listed, or has no sub-agent primitive, the preamble falls back to **sequential execution in the same context**. Sequential execution is always correct, so an unknown backend degrades gracefully rather than emitting a mechanism it cannot perform. Delegation changes only *how* existing steps execute — the core command logic is unchanged, and sub-agents are never mandatory.
+**The integration key never gates delegation.** A missing row never means sequential, and a present row never guarantees the primitive is available — a listed backend can have its sub-agent tool disabled, and most of the ~50 integrations have no row at all. Rows are hints, not a support matrix: add one only after exercising the primitive in a workflow-dispatched session.
+
+If no delegation capability exists, the preamble falls back to **sequential execution in the same context**. Sequential execution is always correct, so a backend without a primitive degrades gracefully rather than emitting a mechanism it cannot perform. Delegation changes only *how* existing steps execute — the core command logic is unchanged, and sub-agents are never mandatory.
 
 The preset is always-on once installed and self-degrading; there is no flag to enable it. To opt out, remove the preset (`specify preset remove sub-agent-delegation`) or omit it from the bundle install.
 
